@@ -1,0 +1,406 @@
+/* Estilo base para las páginas de Login y Registro */
+body {
+  background-color: #0d1117; /* Fondo oscuro */
+  color: #c9d1d9; /* Texto claro */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 500px; /* Ancho máximo para las páginas de login y registro */
+  padding: 20px;
+}
+
+.logo {
+  text-align: center;
+  color: #58a6ff; /* Logo color azul GitHub */
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background-color: #161b22; /* Fondo oscuro de las tarjetas */
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 0 10px #010409; /* Sombra para las tarjetas */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Formulario de registro y login */
+label {
+  color: #8b949e; /* Texto más claro para las etiquetas */
+  font-size: 12px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"] {
+  background-color: #21262d; /* Fondo oscuro para los campos de entrada */
+  border: 1px solid #30363d; /* Borde gris oscuro */
+  border-radius: 5px;
+  color: #c9d1d9; /* Texto claro en los campos */
+  padding: 10px;
+  font-size: 14px;
+}
+
+input[type="submit"],
+button {
+  background-color: #238636; /* Botón verde GitHub */
+  border: none;
+  color: white;
+  padding: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+input[type="submit"]:hover,
+button:hover {
+  background-color: #2ea043; /* Cambio de color al pasar el ratón */
+}
+
+/* Estilos para enlaces */
+a {
+  color: #58a6ff; /* Enlaces de color azul GitHub */
+}
+
+a:hover {
+  text-decoration: underline; /* Subrayar enlaces al pasar el ratón */
+}
+
+p {
+  text-align: center;
+  font-size: 14px;
+  color: #8b949e; /* Color gris claro para el texto */
+}
+
+/* Estilo para el botón de eliminar en el panel de administración */
+button.delete-btn {
+  background-color: crimson;
+}
+
+button.delete-btn:hover {
+  background-color: #e53e3e;
+}
+
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background-color: #161b22;
+  color: #c9d1d9;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #010409;
+  font-size: 14px;
+  animation: fadeInOut 4s forwards;
+}
+
+.toast.success {
+  border-left: 5px solid #2ea043;
+}
+
+.toast.error {
+  border-left: 5px solid crimson;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+#deleteModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#deleteModal .modal-content {
+  background: #161b22;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+#deleteModal button {
+  margin: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+#confirmDelete {
+  background-color: #dc3545;
+  color: rgb(255, 255, 255);
+}
+#cancelDelete {
+  background-color: #6c757d;
+  color: white;
+}
+
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: #161b22;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+.modal-content button {
+  margin: 10px;
+  padding: 10px 20px;
+}
+.calendar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* espacio entre calendario y botón */
+}
+
+#logoutBtn {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+#logoutBtn:hover {
+  background-color: #0056b3;
+}
+
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 0 auto 10px auto;
+  display: block;
+}
+
+
+.logo-text {
+  font-size: 32px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/*css del calendario */
+
+.fc-event-title {
+  font-size: 22px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+}
+
+@media (max-width: 600px) {
+  .fc-event-title {
+      font-size: 18px;
+  }
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 10px;
+  }
+
+  input, button {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+}
+
+.disabled-day {
+  background-color: #555555;
+  pointer-events: none;
+  opacity: 0.6;
+}
+/* Estilo para la página de cambio de contraseña */
+#changePasswordForm {
+  background-color: #161b22; /* Fondo oscuro */
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #010409; /* Sombra */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#changePasswordForm label {
+  color: #8b949e; /* Color gris claro */
+  font-size: 12px;
+}
+
+#changePasswordForm input[type="password"] {
+  background-color: #21262d; /* Fondo oscuro para los campos */
+  border: 1px solid #30363d; /* Borde gris oscuro */
+  border-radius: 5px;
+  color: #c9d1d9; /* Texto claro */
+  padding: 10px;
+  font-size: 14px;
+}
+
+#changePasswordForm button {
+  background-color: #238636; /* Color del botón (verde GitHub) */
+  border: none;
+  color: white;
+  padding: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+#changePasswordForm button:hover {
+  background-color: #2ea043; /* Hover effect */
+}
+
+p {
+  text-align: center;
+  font-size: 14px;
+  color: #8b949e; /* Color gris claro */
+}
+
+/* Estilos para los enlaces de la página de cambio de contraseña */
+a {
+  color: #58a6ff; /* Color azul GitHub */
+}
+
+a:hover {
+  text-decoration: underline; /* Subrayado al pasar el ratón */
+}
+
+/* Resaltar el mensaje de éxito o error */
+.toast {
+  background-color: #161b22;
+  color: #c9d1d9;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #010409;
+  font-size: 14px;
+  animation: fadeInOut 4s forwards;
+}
+
+.toast.success {
+  border-left: 5px solid #2ea043;
+}
+
+.toast.error {
+  border-left: 5px solid crimson;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Para el tamaño y centrado del calendario */
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.calendar-wrapper {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.card {
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  background-color: #161b22;
+}
+
+/* Botón cerrar sesión */
+#logoutBtn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#logoutBtn:hover {
+  background-color: #c82333;
+}
+
+footer {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+footer a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+main {
+  flex: 1; /* El contenido ocupa todo el espacio disponible */
+}
+
+

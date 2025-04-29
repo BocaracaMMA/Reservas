@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservar Clase - Cliente</title>
+
+
+  <!-- 1. Primero carga el CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
+
+  <!-- 2. Luego carga el script principal de FullCalendar -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+  
+  <!-- 3. Después carga el idioma español -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.js"></script>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+
+</head>
+<body>
+  <main class="container">
+    <div class="logo-container">
+      <img src="./assets/android-chrome-512x512.png" alt="Logo de tu empresa" class="logo-img">
+      <h1 class="logo-text">Calendario de Clases</h1>
+    </div>
+
+    <div class="calendar-wrapper">
+      <div class="card">
+        <div id='calendar'></div>
+      </div>
+
+      <button id="logoutBtn">Cerrar sesión</button>
+    </div>
+
+    <div id="reservationModal" style="display:none;">
+      <div>
+        <p>¿Confirmas tu reserva para la clase?</p>
+        <button id="confirmReservation">Confirmar Reserva</button>
+        <button id="cancelReservation">Cancelar</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast-container"></div>
+
+  <script type="module" src="./js/toast.js"></script>
+  <script type="module" src="./js/client.js"></script>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
+    import { app } from './js/firebase-config.js';
+  
+    const auth = getAuth(app);
+  
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Si no hay usuario autenticado, redirige a la página de login
+        window.location.href = './index.html';
+      } else {
+        // Aquí podrías cargar datos específicos del usuario si es necesario
+        console.log("Usuario autenticado:", user.email);
+      }
+    });
+  </script>
+  <footer>
+    <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+  </footer>
+</body>
+</html>

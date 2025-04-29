@@ -1,0 +1,104 @@
+/* Estilos generales para la tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: center; /* Alineación central */
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #2a2a2a;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #ddd;
+}
+
+/* Estilo para el contenedor de la tabla */
+#reservations-table {
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+button {
+    background-color: #28a745; /* Verde similar a GitHub */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+/* Mejorar visualización de la tabla */
+#reservations-table th,
+#reservations-table td {
+    padding: 10px;
+}
+
+
+
+h2 {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 24px;
+    color: #ffffff;
+}
+
+
+button {
+  background-color: #28a745; /* Verde similar a GitHub */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #218838;
+}
+
+#logoutBtn {
+  display: block; /* Hace que el botón se trate como un bloque */
+  margin: 20px auto; /* Centra el botón horizontalmente */
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#logoutBtn:hover {
+  background-color: #c82333;
+}
+
+#reservations-table td {
+  color: #1141e2; /* Color claro para las celdas */
+}
+
+#reservations-table th {
+  color: white; /* Color blanco para los encabezados */
+}
