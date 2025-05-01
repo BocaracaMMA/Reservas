@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-config.js';
 import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Asegúrate de importar getDocs
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
 
 let calendar;
@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function () {
         events: function (info, successCallback, failureCallback) {
             const q = query(collection(db, 'reservations'), where('date', '>=', info.startStr), where('date', '<=', info.endStr));
             
-            // Usamos onSnapshot() para recibir actualizaciones en tiempo real
             onSnapshot(q, (querySnapshot) => {
                 const events = querySnapshot.docs
                     .filter(doc => {
@@ -101,11 +100,32 @@ async function checkExistingReservation(date, time) {
 }
 
 async function addReservation(date, time) {
-    await addDoc(collection(db, 'reservations'), {
-        date: date,
-        time: time,
-        user: auth.currentUser.email,
-    });
+    try {
+        // Buscar el documento del usuario actual en la colección 'users' usando su correo
+        const q = query(collection(db, 'users'), where('correo', '==', auth.currentUser.email));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            showAlert('No se encontró el perfil del usuario en la base de datos.', 'error');
+            return;
+        }
+
+        const userData = querySnapshot.docs[0].data();
+        const nombreCompleto = userData.nombre;
+
+        // Guardar la reserva con nombre y correo
+        await addDoc(collection(db, 'reservations'), {
+            date: date,
+            time: time,
+            user: auth.currentUser.email,
+            nombre: nombreCompleto
+        });
+
+    } catch (error) {
+        console.error("Error al agregar la reserva:", error);
+        showAlert("Error al guardar la reserva.", 'error');
+        throw error;
+    }
 }
 
 async function deleteReservation(reservationId) {
@@ -128,10 +148,28 @@ function openConfirmReservationModal(date, time) {
 
     document.getElementById('confirmBtn').onclick = async () => {
         try {
+            // 🔒 Validar si el usuario está autorizado
+            const q = query(collection(db, 'users'), where('correo', '==', auth.currentUser.email));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                showAlert('Usuario no encontrado en la base de datos.', 'error');
+                closeModal();
+                return;
+            }
+
+            const userData = querySnapshot.docs[0].data();
+            if (!userData.autorizado) {
+                showAlert('No estás autorizado para hacer reservas. Consulta con el administrador.', 'error');
+                closeModal();
+                return;
+            }
+
             await addReservation(date, time);
             showAlert('Reserva confirmada', 'success');
             closeModal();
             calendar.refetchEvents();
+
         } catch (err) {
             console.error('Error al confirmar reserva:', err);
             showAlert('Error al confirmar reserva.', 'error');
@@ -140,6 +178,7 @@ function openConfirmReservationModal(date, time) {
 
     document.getElementById('cancelBtn').onclick = closeModal;
 }
+
 
 function openDeleteReservationModal(reservationId, date, time) {
     closeModal();

@@ -80,15 +80,14 @@ button:hover {
 }
 
 #logoutBtn {
-  display: block; /* Hace que el botón se trate como un bloque */
-  margin: 20px auto; /* Centra el botón horizontalmente */
-  padding: 10px 20px;
-  background-color: #dc3545;
+  background-color: #e74c3c;
   color: white;
   border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: 10px;
+  font-size: 1rem;
   cursor: pointer;
-  font-size: 16px;
+  transition: background-color 0.3s;
 }
 
 #logoutBtn:hover {
@@ -102,3 +101,5 @@ button:hover {
 #reservations-table th {
   color: white; /* Color blanco para los encabezados */
 }
+
+

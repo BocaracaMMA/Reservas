@@ -192,17 +192,6 @@ button.delete-btn:hover {
   gap: 20px; /* espacio entre calendario y botón */
 }
 
-#logoutBtn {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s;
-}
-
 #logoutBtn:hover {
   background-color: #0056b3;
 }
@@ -376,6 +365,7 @@ a:hover {
   border-radius: 10px;
   cursor: pointer;
   font-size: 16px;
+  margin: 20px auto 0 auto;
 }
 
 #logoutBtn:hover {
@@ -403,4 +393,74 @@ main {
   flex: 1; /* El contenido ocupa todo el espacio disponible */
 }
 
+.custom-tooltip {
+  position: absolute;
+  background-color: #161b22; /* Coincide con tu estilo oscuro */
+  color: #c9d1d9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  z-index: 9999;
+  white-space: pre-line;
+}
+
+/* Estilo para los elementos de usuario */
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.users-list h2 {
+  text-align: center;
+}
+
+/* Estilo para el switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  border-radius: 50%;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #4CAF50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
 
