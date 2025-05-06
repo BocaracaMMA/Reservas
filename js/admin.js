@@ -4,15 +4,17 @@ import {
     collection,
     query,
     onSnapshot,
-    updateDoc,
-    doc
+    getDoc,
+    getDocs,
+    doc,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const ADMIN_UIDS = [
-        "TWAkND9zF0UKdMzswAPkgas9zfL2", // ivan.cicc@hotmail.com
-        "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"  // luis.davidsolorzano@outlook.es
+        "TWAkND9zF0UKdMzswAPkgas9zfL2", // ivan
+        "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"  // luis
     ];
 
     onAuthStateChanged(auth, (user) => {
@@ -25,9 +27,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Mostrar/ocultar navbar
+document.getElementById("toggleNav").addEventListener("click", () => {
+    document.getElementById("sidebar").classList.toggle("hidden");
+});
+
+// Botón de cerrar sesión
+const logoutSidebar = document.getElementById('logoutSidebar');
+if (logoutSidebar) {
+    logoutSidebar.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            await signOut(auth);
+            showAlert("Has cerrado sesión", 'success');
+            setTimeout(() => {
+                window.location.href = "./index.html";
+            }, 1500);
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error.message);
+            showAlert('Hubo un problema al cerrar sesión.', 'error');
+        }
+    });
+};
+
+// Botón de cerrar popup
+document.getElementById("cerrarPopupBtn").addEventListener("click", cerrarPopup);
+
+// Función para iniciar el panel con FullCalendar
 function iniciarPanelAdmin() {
-    // Inicializar calendario
-    const calendarEl = document.getElementById('calendar');
+    const calendarEl = document.getElementById('calendar-admin');
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
         locale: 'es',
@@ -71,8 +99,17 @@ function iniciarPanelAdmin() {
                 failureCallback(error);
             });
         },
-        eventClick: function (info) {
-            info.jsEvent.preventDefault();
+        eventClick: async function (info) {
+            const date = info.event.startStr;
+            console.log("Fecha seleccionada:", date);  // Verifica que la fecha sea la correcta
+            const reservas = await getReservasPorDia(date);
+            console.log("Reservas encontradas:", reservas); // 🔍 Agrega esto
+
+            if (reservas.length > 0) {
+                abrirPopupAsistencia(reservas, date);
+            }else {
+        console.log("No se encontraron reservas para esa fecha");
+            }
         },
         eventMouseEnter: function (info) {
             const tooltip = document.createElement('div');
@@ -99,61 +136,83 @@ function iniciarPanelAdmin() {
     });
 
     calendar.render();
+}
 
-    // Mostrar lista de usuarios registrados
-    const usersListContainer = document.getElementById('usersList');
-    const usersQuery = query(collection(db, 'users'));
+// Obtener reservas desde Firestore
+async function getReservasPorDia(dayString) {
+    console.log("Buscando reservas en:", `asistencias/${dayString}/usuarios`);
 
-    onSnapshot(usersQuery, (querySnapshot) => {
-        usersListContainer.innerHTML = '';
+    const reservas = [];
+    const snapshot = await getDocs(collection(db, "asistencias", dayString, "usuarios"));
 
-        querySnapshot.forEach(userDoc => {
-            const data = userDoc.data();
-            const userId = userDoc.id;
-            const nombre = data.nombre;
-            const autorizado = data.autorizado;
+    if (snapshot.empty) {
+        console.log("No se encontró ningún documento en la subcolección.");
+    } else {
+        console.log(`Se encontraron ${snapshot.size} documentos`);
+    }
 
-            const userElement = document.createElement('div');
-            userElement.classList.add('user-item');
-            userElement.innerHTML = `
-                <span>${nombre} (${data.cedula})</span>
-                <label class="switch">
-                    <input type="checkbox" ${autorizado ? 'checked' : ''} data-user-id="${userId}">
-                    <span class="slider round"></span>
-                </label>
-            `;
-
-            usersListContainer.appendChild(userElement);
-
-            const switchInput = userElement.querySelector('input[type="checkbox"]');
-            switchInput.addEventListener('change', async (event) => {
-                const userId = event.target.getAttribute('data-user-id');
-                const authorized = event.target.checked;
-
-                try {
-                    const userRef = doc(db, 'users', userId);
-                    await updateDoc(userRef, { autorizado: authorized });
-                    showAlert(`El usuario ${nombre} ahora está ${authorized ? 'autorizado' : 'desautorizado'}.`, 'success');
-                } catch (error) {
-                    console.error('Error al actualizar la autorización del usuario:', error);
-                    showAlert('Hubo un error al actualizar la autorización.', 'error');
-                }
-            });
+    snapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log("Documento encontrado:", doc.id, data);
+        reservas.push({
+            uid: doc.id,
+            nombre: data.nombre,
+            presente: data.presente || false
         });
     });
+    return reservas;
+}
 
-    // Cierre de sesión
-    const logoutBtn = document.getElementById('logoutBtn');
-    logoutBtn.addEventListener('click', async () => {
-        try {
-            await signOut(auth);
-            showAlert("Has cerrado sesión", 'success');
-            setTimeout(() => {
-                window.location.href = "./index.html";
-            }, 1500);
-        } catch (error) {
-            console.error('Error al cerrar sesión:', error.message);
-            showAlert('Hubo un problema al cerrar sesión.', 'error');
-        }
+// Mostrar pop-up de asistencia
+function abrirPopupAsistencia(reservas, dayString) {
+    const popup = document.getElementById("asistenciaPopup");
+    const listaUsuarios = document.getElementById("listaUsuarios");
+    const fechaReserva = document.getElementById("fechaReserva");
+
+    console.log("Mostrando popup con:", reservas); // Agrega este log
+
+    listaUsuarios.innerHTML = "";
+    fechaReserva.textContent = dayString;
+
+    reservas.forEach((usuario) => {
+        const li = document.createElement("li");
+        li.classList.add("asistencia-item");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = usuario.presente;
+        checkbox.id = usuario.uid;
+        checkbox.addEventListener("change", () => {
+            guardarAsistencia(dayString, usuario.uid, checkbox.checked);
+        });
+
+        const nombre = document.createElement("span");
+        nombre.textContent = usuario.nombre;
+
+        li.appendChild(checkbox);
+        li.appendChild(nombre);
+        listaUsuarios.appendChild(li);
     });
+
+    // Añadir la clase active al pop-up para mostrarlo
+    popup.classList.add("active");
+}
+
+
+// Guardar asistencia en Firestore
+async function guardarAsistencia(dayString, uid, presente) {
+    try {
+        const ref = doc(db, "asistencias", dayString, "usuarios", uid);
+        await updateDoc(ref, { presente });
+        showAlert("Asistencia actualizada", "success");
+    } catch (error) {
+        console.error("Error al guardar asistencia:", error);
+        showAlert("Error al guardar asistencia", "error");
+    }
+}
+
+// Cerrar pop-up
+function cerrarPopup() {
+    const popup = document.getElementById("asistenciaPopup");
+    popup.classList.remove("active"); // Remover la clase para cerrar el pop-up
 }

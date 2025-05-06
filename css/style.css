@@ -464,3 +464,149 @@ input:checked + .slider:before {
   transform: translateX(26px);
 }
 
+/* Navbar lateral estilo GitHub */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 220px;
+  background-color: #161b22;
+  padding-top: 60px;
+  box-shadow: 2px 0 10px #010409;
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar ul li a {
+  display: block;
+  padding: 12px 20px;
+  color: #c9d1d9;
+  text-decoration: none;
+}
+
+.sidebar ul li a:hover {
+  background-color: #21262d;
+}
+
+.hamburger-btn {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  background-color: #238636;
+  border: none;
+  color: white;
+  font-size: 24px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  z-index: 1100;
+  cursor: pointer;
+}
+
+.hamburger-btn:hover {
+  background-color: #2ea043;
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+/* Estilos para mejorar la apariencia de la lista de asistencia */
+#listaAsistencia {
+  list-style: none;
+  padding: 0;
+}
+
+.asistencia-item {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.asistencia-item input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+/* Estilos del botón de hamburguesa */
+.hamburger-btn {
+  background: none;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.asistencia-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.asistencia-modal.active {
+  display: flex;
+}
+
+.asistencia-modal .modal-content {
+  background: #161b22;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.asistencia-modal .modal-content button {
+  margin: 10px;
+  padding: 10px 20px;
+}
+
+/* reportes */
+
+.reporte-container {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #161b22;
+  border: 1px solid #161b22;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(27,31,35,0.12);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: #f3f3f3;
+}
+
+.asistencia-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.asistencia-table th,
+.asistencia-table td {
+  border: 1px solid #161b22;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.asistencia-table th {
+  background-color: #161b22;
+  font-weight: 600;
+}
+
+.asistencia-table td {
+  background-color: #161b22;
+}
+
+.asistencia-table tr:hover {
+  background-color: #161b22;
+}

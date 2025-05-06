@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes - Asistencia Mensual</title>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+
+
+</head>
+<body>
+    <button id="toggleNav" class="hamburger-btn">☰</button>
+
+    <!-- Navbar lateral -->
+    <nav id="sidebar" class="sidebar">
+      <ul>
+        <li><a href="./admin-dashboard.html">Inicio</a></li>
+        <li><a href="./usuarios.html">Usuarios</a></li>
+        <li><a href="./reportes.html">Reportes</a></li>
+        <li><a href="#" id="logoutSidebar">Cerrar sesión</a></li>
+      </ul>
+    </nav>
+
+  <div class="main-content">
+    <div class="container">
+      <h1>Asistencia Mensual</h1>
+
+      <!-- Filtro por mes -->
+      <div class="filter">
+        <label for="monthSelect">Selecciona el mes:</label>
+        <select id="monthSelect">
+          <option value="01">Enero</option>
+          <option value="02">Febrero</option>
+          <option value="03">Marzo</option>
+          <option value="04">Abril</option>
+          <option value="05">Mayo</option>
+          <option value="06">Junio</option>
+          <option value="07">Julio</option>
+          <option value="08">Agosto</option>
+          <option value="09">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+          <!-- Agregar más meses -->
+        </select>
+        <button onclick="getAsistencia('2025-05-10')">Ver reporte</button>
+      </div>
+
+      <!-- Tabla de asistencia -->
+      <div class="card">
+        <table id="asistenciaTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Asistencia</th>
+              <th>Porcentaje</th>
+            </tr>
+          </thead>
+          <tbody id="asistenciaTableBody">
+            <!-- Aquí se llenarán los datos -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="reporte-container" class="reporte-container">
+        <!-- Aquí aparecerá la tabla de asistencia -->
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.1.2/dist/firebase-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.1.2/dist/firebase-firestore.js"></script>
+
+  <script type="module">
+
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
+    import { app } from './js/firebase-config.js';
+    
+    const auth = getAuth(app);
+    
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = './index.html';
+      } else {
+        console.log("Admin autenticado:", user.email);
+      }
+    });
+
+    // Función para obtener la asistencia mensual
+    async function getAsistencia() {
+      const month = document.getElementById('monthSelect').value;
+      const asistenciaRef = db.collection('asistencia');
+      const snapshot = await asistenciaRef.get();
+
+      let totalUsuarios = 0;
+      let totalPresentes = 0;
+
+      const asistenciaData = [];
+
+      snapshot.forEach(doc => {
+        const fecha = doc.id;
+        if (fecha.startsWith('2025-' + month)) { // Filtrar por mes
+          const usuarios = doc.data().usuarios;
+          Object.keys(usuarios).forEach(uid => {
+            const user = usuarios[uid];
+            const presente = user.presente ? 1 : 0;
+            totalUsuarios++;
+            totalPresentes += presente;
+
+            asistenciaData.push({
+              nombre: user.nombre,
+              asistencia: presente ? 'Presente' : 'Ausente',
+              porcentaje: (presente / totalUsuarios) * 100
+            });
+          });
+        }
+      });
+
+      // Mostrar la tabla
+      const tableBody = document.getElementById('asistenciaTableBody');
+      tableBody.innerHTML = ''; // Limpiar tabla antes de llenarla
+
+      asistenciaData.forEach(data => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${data.nombre}</td>
+          <td>${data.asistencia}</td>
+          <td>${data.porcentaje.toFixed(2)}%</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+    
+  </script>
+  
+  <script type="module" src="./js/reportes.js"></script>
+
+  <footer>
+    <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+  </footer>
+
+</body>
+</html>

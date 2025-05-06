@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Usuarios</title>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+
+</head>
+
+<body>
+    <button id="toggleNav" class="hamburger-btn">☰</button>
+
+    <!-- Navbar lateral -->
+    <nav id="sidebar" class="sidebar">
+      <ul>
+        <li><a href="./admin-dashboard.html">Inicio</a></li>
+        <li><a href="./usuarios.html">Usuarios</a></li>
+        <li><a href="./reportes.html">Reportes</a></li>
+        <li><a href="#" id="logoutSidebar">Cerrar sesión</a></li>
+      </ul>
+    </nav>
+
+    <div class="calendar-wrapper">
+    <main class="card">
+        <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
+        <h1>Usuarios Registrados</h1>
+        <div class="table-container">
+        <table id="usuarios-table">
+            <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Autorizado</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Se rellena dinámicamente -->
+            </tbody>
+        </table>
+        </div>
+    </main>
+    </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module" src="./js/usuarios.js"></script>
+
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
+    import { app } from './js/firebase-config.js';
+    
+    const auth = getAuth(app);
+    
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = './index.html';
+      } else {
+        console.log("Admin autenticado:", user.email);
+      }
+    });
+  </script>
+
+  <footer>
+    <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+  </footer>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-config.js';
 import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Asegúrate de importar 'setDoc'
 import { showAlert } from './showAlert.js';
 
 let calendar;
@@ -119,6 +119,15 @@ async function addReservation(date, time) {
             time: time,
             user: auth.currentUser.email,
             nombre: nombreCompleto
+        });
+
+        // 🔽 Crear documento de asistencia asociado
+        const uid = auth.currentUser.uid;
+        const asistenciaRef = doc(db, 'asistencias', date, 'usuarios', uid);
+        await setDoc(asistenciaRef, {
+            nombre: nombreCompleto,
+            hora: time,
+            presente: false
         });
 
     } catch (error) {
