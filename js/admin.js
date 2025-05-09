@@ -25,13 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         iniciarPanelAdmin();
     });
+
+    const toggleButton = document.getElementById("toggleNav");
+    const sidebar = document.getElementById("sidebar");
+
+    toggleButton.addEventListener("click", () => {
+        sidebar.classList.toggle("active");
+    });
+
+    // Si usas Lucide icons
+    lucide.createIcons();
+
 });
 
-// Mostrar/ocultar navbar
-document.getElementById("toggleNav").addEventListener("click", () => {
-    document.getElementById("sidebar").classList.toggle("hidden");
-});
-
+// Toggle sidebar
+document.getElementById('toggleNav').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('active');
+  });
+  
 // Botón de cerrar sesión
 const logoutSidebar = document.getElementById('logoutSidebar');
 if (logoutSidebar) {

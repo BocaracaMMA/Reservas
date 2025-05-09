@@ -50,8 +50,11 @@
   <script type="module">
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
     import { app } from './js/firebase-config.js';
+    import { setupInactivityTimeout } from './js/auth-timeout.js';
   
     const auth = getAuth(app);
+
+    setupInactivityTimeout(); // por defecto 5 minutos
   
     onAuthStateChanged(auth, (user) => {
       if (!user) {

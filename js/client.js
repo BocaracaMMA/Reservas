@@ -5,6 +5,34 @@ import { showAlert } from './showAlert.js';
 
 let calendar;
 
+function isDateInActiveWeekRange(date) {
+    const now = new Date();
+
+    // Obtener inicio y fin de mes actuales
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // Obtener semana actual
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - now.getDay()); // Domingo
+
+    const currentWeekEnd = new Date(currentWeekStart);
+    currentWeekEnd.setDate(currentWeekStart.getDate() + 6); // Sábado
+
+    // Obtener semana de la fecha seleccionada
+    const clickedWeekStart = new Date(date);
+    clickedWeekStart.setDate(date.getDate() - date.getDay());
+
+    const clickedWeekEnd = new Date(clickedWeekStart);
+    clickedWeekEnd.setDate(clickedWeekStart.getDate() + 6);
+
+    // Validar si la semana seleccionada está dentro del mes actual y aún no ha pasado
+    return (
+        clickedWeekStart >= currentWeekStart &&
+        clickedWeekEnd <= endOfMonth
+    );
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -44,32 +72,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 html: '<div style="font-size: 20px; color: green; text-align: center;">✔️</div>'
             };
         },
-        dateClick: function (info) {
-            const selectedDate = info.date;
-            const dayOfWeek = selectedDate.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
-        
-            // Corregir la fecha a UTC-6
-            const adjustedDate = new Date(selectedDate.getTime() - (6 * 60 * 60 * 1000)); // Restamos 6 horas
-        
-            if (dayOfWeek === 5 || dayOfWeek === 6) { // viernes o sábado
-                const selectedTime = dayOfWeek === 5 ? '20:30' : '09:00';
-        
-                checkExistingReservation(adjustedDate.toISOString().split('T')[0], selectedTime)
-                    .then((exists) => {
-                        if (exists) {
-                            showAlert(`Ya tienes una reserva para el ${adjustedDate.toLocaleDateString()} a las ${selectedTime}.`, 'error');
-                        } else {
-                            openConfirmReservationModal(adjustedDate.toISOString().split('T')[0], selectedTime);
-                        }
-                    })
-                    .catch((err) => {
-                        console.error('Error al verificar reserva:', err);
-                        showAlert('Error al verificar reserva.', 'error');
-                    });
-            } else {
-                showAlert('Solo puedes reservar clases los viernes y sábados.', 'error');
-            }
-        },
+
+dateClick: function (info) {
+    const selectedDate = info.date;
+    const dayOfWeek = selectedDate.getDay(); // 0=domingo, ..., 6=sábado
+
+    // Corregir la fecha a UTC-6
+    const adjustedDate = new Date(selectedDate.getTime() - (6 * 60 * 60 * 1000)); // Restamos 6 horas
+
+    if (dayOfWeek === 5 || dayOfWeek === 6) { // solo viernes o sábado
+        if (isDateInActiveWeekRange(adjustedDate)) {
+            const selectedTime = dayOfWeek === 5 ? '20:30' : '09:00';
+
+            checkExistingReservation(adjustedDate.toISOString().split('T')[0], selectedTime)
+                .then((exists) => {
+                    if (exists) {
+                        showAlert(`Ya tienes una reserva para el ${adjustedDate.toLocaleDateString()} a las ${selectedTime}.`, 'error');
+                    } else {
+                        openConfirmReservationModal(adjustedDate.toISOString().split('T')[0], selectedTime);
+                    }
+                })
+                .catch((err) => {
+                    console.error('Error al verificar reserva:', err);
+                    showAlert('Error al verificar reserva.', 'error');
+                });
+        } else {
+            showAlert('Solo puedes reservar dentro de las semanas activas del mes actual.', 'error');
+        }
+    } else {
+        showAlert('Solo puedes reservar clases los viernes y sábados.', 'error');
+    }
+},
         
         eventClick: function (info) {
             const event = info.event;

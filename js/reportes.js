@@ -98,4 +98,21 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  const toggleButton = document.getElementById("toggleNav");
+  const sidebar = document.getElementById("sidebar");
+
+  toggleButton.addEventListener("click", () => {
+      sidebar.classList.toggle("active");
+  });
+
+  // Si usas Lucide icons
+  lucide.createIcons();
+
+
+  // Toggle sidebar
+document.getElementById('toggleNav').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('active');
+});
+
 });

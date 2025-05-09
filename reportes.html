@@ -7,21 +7,25 @@
 
   <link rel="stylesheet" href="./css/style.css">
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
-
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 </head>
 <body>
-    <button id="toggleNav" class="hamburger-btn">☰</button>
+<!-- Botón hamburguesa -->
+<button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+  <i data-lucide="menu"></i>
+</button>
 
-    <!-- Navbar lateral -->
-    <nav id="sidebar" class="sidebar">
-      <ul>
-        <li><a href="./admin-dashboard.html">Inicio</a></li>
-        <li><a href="./usuarios.html">Usuarios</a></li>
-        <li><a href="./reportes.html">Reportes</a></li>
-        <li><a href="#" id="logoutSidebar">Cerrar sesión</a></li>
-      </ul>
-    </nav>
+<!-- Navbar lateral moderna -->
+<nav id="sidebar" class="sidebar">
+  <ul>
+    <li><a href="./admin-dashboard.html"><span>🏠</span> Inicio</a></li>
+    <li><a href="./usuarios.html"><span>👥</span> Usuarios</a></li>
+    <li><a href="./reportes.html"><span>📄</span> Reportes</a></li>
+    <li><a href="#" id="logoutSidebar"><span>🚪</span> Cerrar sesión</a></li>
+  </ul>
+</nav>
 
   <div class="main-content">
     <div class="container">
@@ -48,20 +52,10 @@
         <button onclick="getAsistencia('2025-05-10')">Ver reporte</button>
       </div>
 
-      <!-- Tabla de asistencia -->
-      <div class="card">
-        <table id="asistenciaTable">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Asistencia</th>
-              <th>Porcentaje</th>
-            </tr>
-          </thead>
-          <tbody id="asistenciaTableBody">
-            <!-- Aquí se llenarán los datos -->
-          </tbody>
-        </table>
+            <div style="margin-top: 1rem; text-align: center;">
+        <button id="btnDescargar">📥 Descargar Excel</button>
+        </div>
+
       </div>
 
       <div id="reporte-container" class="reporte-container">
@@ -69,41 +63,58 @@
       </div>
 
     </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/firebase@9.1.2/dist/firebase-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@9.1.2/dist/firebase-firestore.js"></script>
 
-  <script type="module">
+<script type="module">
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
+  import { app } from './js/firebase-config.js';
+  import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-firestore.js";
+  import { setupInactivityTimeout } from './js/auth-timeout.js';
 
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
-    import { app } from './js/firebase-config.js';
-    
-    const auth = getAuth(app);
-    
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = './index.html';
-      } else {
-        console.log("Admin autenticado:", user.email);
-      }
-    });
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    // Función para obtener la asistencia mensual
-    async function getAsistencia() {
-      const month = document.getElementById('monthSelect').value;
-      const asistenciaRef = db.collection('asistencia');
-      const snapshot = await asistenciaRef.get();
+  setupInactivityTimeout(); // por defecto 5 minutos
+
+  // Comprobación de autenticación
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = './index.html';
+    } else {
+      console.log("Admin autenticado:", user.email);
+    }
+  });
+
+  // Función para obtener la asistencia mensual
+  async function getAsistencia() {
+    console.log("Iniciando la obtención de asistencia...");
+
+    const month = document.getElementById('monthSelect').value;
+    console.log("Mes seleccionado:", month);
+
+    try {
+      const asistenciaRef = collection(db, 'asistencias');
+      console.log("Referencia a la colección 'asistencias' obtenida correctamente");
+
+      const snapshot = await getDocs(asistenciaRef);
+      console.log("Documentos de asistencia obtenidos:", snapshot.docs.length);
 
       let totalUsuarios = 0;
       let totalPresentes = 0;
-
       const asistenciaData = [];
 
       snapshot.forEach(doc => {
         const fecha = doc.id;
+        console.log("Procesando documento con fecha:", fecha);
+
         if (fecha.startsWith('2025-' + month)) { // Filtrar por mes
+          console.log("Fecha correspondiente al mes actual:", fecha);
           const usuarios = doc.data().usuarios;
+
           Object.keys(usuarios).forEach(uid => {
             const user = usuarios[uid];
             const presente = user.presente ? 1 : 0;
@@ -119,6 +130,8 @@
         }
       });
 
+      console.log("Datos de asistencia procesados:", asistenciaData);
+
       // Mostrar la tabla
       const tableBody = document.getElementById('asistenciaTableBody');
       tableBody.innerHTML = ''; // Limpiar tabla antes de llenarla
@@ -132,11 +145,23 @@
         `;
         tableBody.appendChild(row);
       });
+
+      console.log("Tabla de asistencia mostrada correctamente");
+    } catch (error) {
+      console.error("Error al obtener los datos de asistencia:", error);
     }
-    
-  </script>
+  }
+
+  // Mostrar/ocultar navbar
+  document.getElementById("toggleNav").addEventListener("click", () => {
+    document.getElementById("sidebar").classList.toggle("active");
+  });
+
+</script>
+
   
   <script type="module" src="./js/reportes.js"></script>
+  <script type="module" src="./js/descargar-reportes.js"></script>
 
   <footer>
     <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>

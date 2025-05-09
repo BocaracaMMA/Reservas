@@ -469,44 +469,102 @@ input:checked + .slider:before {
   position: fixed;
   top: 0;
   left: 0;
+  width: 200px; /* Antes posiblemente 250px o más */
   height: 100%;
-  width: 220px;
   background-color: #161b22;
   padding-top: 60px;
-  box-shadow: 2px 0 10px #010409;
+  transform: translateX(-100%);
   transition: transform 0.3s ease;
   z-index: 1000;
 }
 
+/* Mostrar la barra lateral */
+.sidebar.active {
+  transform: translateX(0);
+}
+
+/* Lista de enlaces */
 .sidebar ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+.sidebar ul li {
+  margin: 20px 0;
+  text-align: center;
+}
+
 .sidebar ul li a {
-  display: block;
-  padding: 12px 20px;
-  color: #c9d1d9;
+  color: #fff;
   text-decoration: none;
+  display: flex;               /* Mejor que block para alinear icono y texto */
+  align-items: center;
+  justify-content: center;     /* Centrado horizontal */
+  padding: 10px;
+  font-size: 16px;
+  transition: background 0.2s;
+  width: 100%;                 /* Asegura que no se salga del nav */
+  box-sizing: border-box;      /* Importante: incluye padding en el ancho */
 }
 
 .sidebar ul li a:hover {
-  background-color: #21262d;
+  background-color: #0fe067;
+  border-radius: 8px;
 }
 
+.sidebar ul li a span {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Enlaces */
+.sidebar a {
+  color: #c9d1d9;
+  text-decoration: none;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  width: 100%;
+  transition: background-color 0.2s;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.sidebar a:hover {
+  background-color: #1a54a7;
+}
+
+/* Íconos (si se usan emojis o SVGs) */
+.sidebar a span {
+  font-size: 18px;
+}
+
+/* Responsive opcional */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .sidebar a {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}
+
+/* Botón hamburguesa */
 .hamburger-btn {
-  position: fixed;
-  top: 15px;
-  left: 15px;
-  background-color: #238636;
+  background: none;
   border: none;
-  color: white;
-  font-size: 24px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  z-index: 1100;
+  color: #fff;
+  font-size: 1.5rem;
+  padding: 0.5rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .hamburger-btn:hover {
@@ -532,14 +590,6 @@ input:checked + .slider:before {
 
 .asistencia-item input[type="checkbox"] {
   margin-right: 10px;
-}
-
-/* Estilos del botón de hamburguesa */
-.hamburger-btn {
-  background: none;
-  border: none;
-  font-size: 30px;
-  cursor: pointer;
 }
 
 .asistencia-modal {

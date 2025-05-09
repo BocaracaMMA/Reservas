@@ -7,6 +7,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const tableBody = document.querySelector("#usuarios-table tbody");
   const logoutSidebar = document.getElementById("logoutSidebar");
 
+
+  const toggleButton = document.getElementById("toggleNav");
+  const sidebar = document.getElementById("sidebar");
+
+  toggleButton.addEventListener("click", () => {
+      sidebar.classList.toggle("active");
+  });
+
+  // Si usas Lucide icons
+  lucide.createIcons();
+
+  // Toggle sidebar
+document.getElementById('toggleNav').addEventListener('click', () => {
+document.getElementById('sidebar').classList.toggle('active');
+
+
+
   // Evento de cerrar sesión
   logoutSidebar.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -20,6 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error al cerrar sesión:", error.message);
       showAlert("Hubo un problema al cerrar sesión.", "error");
     }
+
+});
+
   });
 
   // Obtener la lista de usuarios
@@ -61,8 +81,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showAlert("No se pudo cargar la lista de usuarios.", "error");
   });
 
-  // Mostrar/ocultar navbar
-  document.getElementById("toggleNav").addEventListener("click", () => {
-    document.getElementById("sidebar").classList.toggle("hidden");
-  });
 });

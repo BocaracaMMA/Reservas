@@ -8,21 +8,25 @@
 
   <link rel="stylesheet" href="./css/style.css">
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+  <script src="https://unpkg.com/lucide@latest"></script>
 
 </head>
 
 <body>
-    <button id="toggleNav" class="hamburger-btn">☰</button>
 
-    <!-- Navbar lateral -->
-    <nav id="sidebar" class="sidebar">
-      <ul>
-        <li><a href="./admin-dashboard.html">Inicio</a></li>
-        <li><a href="./usuarios.html">Usuarios</a></li>
-        <li><a href="./reportes.html">Reportes</a></li>
-        <li><a href="#" id="logoutSidebar">Cerrar sesión</a></li>
-      </ul>
-    </nav>
+<!-- Botón hamburguesa -->
+<button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+  <i data-lucide="menu"></i>
+</button>
+<!-- Navbar lateral moderna -->
+<nav id="sidebar" class="sidebar">
+  <ul>
+    <li><a href="./admin-dashboard.html"><span>🏠</span> Inicio</a></li>
+    <li><a href="./usuarios.html"><span>👥</span> Usuarios</a></li>
+    <li><a href="./reportes.html"><span>📄</span> Reportes</a></li>
+    <li><a href="#" id="logoutSidebar"><span>🚪</span> Cerrar sesión</a></li>
+  </ul>
+</nav>
 
     <div class="calendar-wrapper">
     <main class="card">
@@ -51,9 +55,12 @@
 
   <script type="module">
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
-    import { app } from './js/firebase-config.js';
-    
+    import { app  } from './js/firebase-config.js';
+    import { setupInactivityTimeout } from './js/auth-timeout.js';
+
     const auth = getAuth(app);
+
+    setupInactivityTimeout(); // por defecto 5 minutos
     
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -62,6 +69,12 @@
         console.log("Admin autenticado:", user.email);
       }
     });
+
+// Mostrar/ocultar navbar
+document.getElementById("toggleNav").addEventListener("click", () => {
+  document.getElementById("sidebar").classList.toggle("active");
+});
+
   </script>
 
   <footer>
