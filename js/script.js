@@ -90,3 +90,4 @@ if (logoutButton) {
         }, 1000);
     });
 }
+

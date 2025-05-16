@@ -1,71 +1,65 @@
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { db } from './firebase-config.js';
+import { showAlert } from './showAlert.js';
 
 async function descargarReporteAsistencia() {
-  try {
-    const asistenciaRef = collection(db, 'asistencias');
-    const snapshot = await getDocs(asistenciaRef);
-    console.log("Número de documentos en 'asistencias':", snapshot.size);
+  const boton = document.getElementById('btnDescargar');
+  boton.disabled = true;
 
-    if (snapshot.empty) {
-      console.log("No se encontraron documentos en la colección 'asistencias'");
+  try {
+    if (typeof XLSX === "undefined") {
+      showAlert("La librería XLSX no está cargada", "error");
       return;
     }
 
-    let datosPresentes = [["Fecha", "Nombre", "Hora", "Presente"]];
-    let datosAusentes = [["Fecha", "Nombre", "Hora", "Presente"]];
+    const asistenciaRef = collection(db, 'asistencias');
+    const snapshot = await getDocs(asistenciaRef);
+
+    if (snapshot.empty) {
+      showAlert('No hay registros de asistencia disponibles', 'error');
+      return;
+    }
+
+    let datos = [["Fecha", "Nombre", "Hora", "Presente"]];
 
     for (const doc of snapshot.docs) {
       const fecha = doc.id;
-      console.log("Procesando fecha:", fecha);
-
       const usuariosRef = collection(db, `asistencias/${fecha}/usuarios`);
       const usuariosSnap = await getDocs(usuariosRef);
-      console.log("Número de usuarios en esta fecha:", usuariosSnap.size);
 
-      if (usuariosSnap.empty) {
-        console.log("No hay usuarios registrados en la fecha:", fecha);
-        continue;
+      const presentes = [];
+      const ausentes = [];
+
+      for (const userDoc of usuariosSnap.docs) {
+      const data = userDoc.data();
+        if (data.presente) {
+          usuariosPresentes.push([fecha, data.nombre, data.hora, "Sí"]);
+        } else {
+          usuariosAusentes.push([fecha, data.nombre, data.hora, "No"]);
+        }
       }
 
-      usuariosSnap.forEach(userDoc => {
-        const data = userDoc.data();
-        console.log("Usuario encontrado:", data);
+    datos = datos.concat(usuariosPresentes);
+    datos = datos.concat(usuariosAusentes);
 
-        if (data.presente) {
-          datosPresentes.push([
-            fecha,
-            data.nombre,
-            data.hora,
-            "Sí"
-          ]);
-        } else {
-          datosAusentes.push([
-            fecha,
-            data.nombre,
-            data.hora,
-            "No"
-          ]);
-        }
-      });
+      // Ordenar por nombre
+      presentes.sort((a, b) => a[1].localeCompare(b[1]));
+      ausentes.sort((a, b) => a[1].localeCompare(b[1]));
+
+      datos = datos.concat(presentes, ausentes);
     }
 
-    if (datosPresentes.length === 1 && datosAusentes.length === 1) {
-      console.log("No se encontraron registros de asistencia para el mes actual.");
-      alert("No se encontraron registros de asistencia para el mes actual.");
-      return;
-    }
-
-    const wsPresentes = XLSX.utils.aoa_to_sheet(datosPresentes);
-    const wsAusentes = XLSX.utils.aoa_to_sheet(datosAusentes);
-
+    const ws = XLSX.utils.aoa_to_sheet(datos);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsPresentes, "Presentes");
-    XLSX.utils.book_append_sheet(wb, wsAusentes, "Ausentes");
+    XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
     XLSX.writeFile(wb, "reporte_asistencia.xlsx");
 
+    showAlert("Reporte descargado exitosamente", "success");
   } catch (error) {
     console.error("Error al generar el reporte:", error);
+    showAlert("Hubo un error al generar el reporte", "error");
+  } finally {
+    boton.disabled = false;
   }
 }
 

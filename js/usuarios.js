@@ -23,7 +23,6 @@ document.getElementById('toggleNav').addEventListener('click', () => {
 document.getElementById('sidebar').classList.toggle('active');
 
 
-
   // Evento de cerrar sesión
   logoutSidebar.addEventListener("click", async (e) => {
     e.preventDefault();

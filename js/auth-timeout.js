@@ -28,24 +28,38 @@ function showToast(message, type = 'success') {
   }, 4000);
 }
 
-function setupInactivityTimeout(minutes = 1 ) {
+function setupInactivityTimeout(minutes = 3) {
   let inactivityTimer;
+  let warningTimer;
+
+  const warningTime = 110 * 1000; // 1 min 50 seg en ms
+  const logoutTime = minutes * 60 * 1000; // 3 min en ms
 
   const resetTimer = () => {
     clearTimeout(inactivityTimer);
+    clearTimeout(warningTimer);
+
+    warningTimer = setTimeout(() => {
+      showToast("Tu sesión se cerrará pronto por inactividad.", "error");
+
+      // El toast dura 2 segundos, pero showToast ya lo elimina en 4s,
+      // si quieres 2s exacto podríamos ajustar showToast o eliminar manualmente
+    }, warningTime);
+
     inactivityTimer = setTimeout(() => {
       signOut(auth).then(() => {
-        showToast("Sesión cerrada por inactividad");
+        showToast("Sesión cerrada por inactividad", "success");
         window.location.href = "./index.html";
       });
-    }, minutes * 60 * 1000);
+    }, logoutTime);
   };
 
-  ["mousemove", "keydown", "scroll", "click"].forEach((event) =>
+  ["mousemove", "keydown", "scroll", "click"].forEach(event =>
     window.addEventListener(event, resetTimer)
   );
 
   resetTimer();
 }
+
 
 export { setupInactivityTimeout };

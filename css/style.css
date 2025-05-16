@@ -11,12 +11,6 @@ body {
   margin: 0;
 }
 
-.container {
-  width: 100%;
-  max-width: 500px; /* Ancho máximo para las páginas de login y registro */
-  padding: 20px;
-}
-
 .logo {
   text-align: center;
   color: #58a6ff; /* Logo color azul GitHub */
@@ -70,19 +64,10 @@ button:hover {
   background-color: #2ea043; /* Cambio de color al pasar el ratón */
 }
 
-/* Estilos para enlaces */
-a {
-  color: #58a6ff; /* Enlaces de color azul GitHub */
-}
-
-a:hover {
-  text-decoration: underline; /* Subrayar enlaces al pasar el ratón */
-}
-
 p {
   text-align: center;
   font-size: 14px;
-  color: #8b949e; /* Color gris claro para el texto */
+  color: #ffffff; /* Color gris claro para el texto */
 }
 
 /* Estilo para el botón de eliminar en el panel de administración */
@@ -102,31 +87,6 @@ button.delete-btn:hover {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.toast {
-  background-color: #161b22;
-  color: #c9d1d9;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px #010409;
-  font-size: 14px;
-  animation: fadeInOut 4s forwards;
-}
-
-.toast.success {
-  border-left: 5px solid #2ea043;
-}
-
-.toast.error {
-  border-left: 5px solid crimson;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translateY(-20px); }
-  10% { opacity: 1; transform: translateY(0); }
-  90% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-20px); }
 }
 
 #deleteModal {
@@ -295,12 +255,6 @@ button.delete-btn:hover {
   background-color: #2ea043; /* Hover effect */
 }
 
-p {
-  text-align: center;
-  font-size: 14px;
-  color: #8b949e; /* Color gris claro */
-}
-
 /* Estilos para los enlaces de la página de cambio de contraseña */
 a {
   color: #58a6ff; /* Color azul GitHub */
@@ -338,6 +292,7 @@ a:hover {
 
 /* Para el tamaño y centrado del calendario */
 .container {
+  width: 100%;
   max-width: 500px;
   margin: 0 auto;
   padding: 20px;
@@ -346,13 +301,6 @@ a:hover {
 .calendar-wrapper {
   margin-top: 20px;
   text-align: center;
-}
-
-.card {
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
-  background-color: #161b22;
 }
 
 /* Botón cerrar sesión */
@@ -468,14 +416,16 @@ input:checked + .slider:before {
 .sidebar {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 200px; /* Antes posiblemente 250px o más */
-  height: 100%;
-  background-color: #161b22;
+  right: 0;
+  width: 240px;
+  height: 100vh;
+  background-color: #161b22; /* tono oscuro tipo GitHub */
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.5);
   padding-top: 60px;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
   z-index: 1000;
+  overflow-y: auto;
 }
 
 /* Mostrar la barra lateral */
@@ -486,31 +436,33 @@ input:checked + .slider:before {
 /* Lista de enlaces */
 .sidebar ul {
   list-style: none;
-  padding: 0;
+  padding: 0 20px;
   margin: 0;
 }
 
 .sidebar ul li {
-  margin: 20px 0;
-  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
 .sidebar ul li a {
-  color: #fff;
-  text-decoration: none;
-  display: flex;               /* Mejor que block para alinear icono y texto */
+  display: flex;
   align-items: center;
-  justify-content: center;     /* Centrado horizontal */
-  padding: 10px;
-  font-size: 16px;
-  transition: background 0.2s;
-  width: 100%;                 /* Asegura que no se salga del nav */
-  box-sizing: border-box;      /* Importante: incluye padding en el ancho */
+  color: #c9d1d9;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: color 0.2s;
 }
 
+.sidebar ul li a i {
+  margin-right: 12px;
+  font-size: 1.3rem;
+  color: #58a6ff; /* azul GitHub */
+}
+
+
 .sidebar ul li a:hover {
-  background-color: #0fe067;
-  border-radius: 8px;
+  color: #238636; /* verde GitHub */
 }
 
 .sidebar ul li a span {
@@ -557,22 +509,59 @@ input:checked + .slider:before {
 
 /* Botón hamburguesa */
 .hamburger-btn {
-  background: none;
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background-color: transparent;
   border: none;
-  color: #fff;
-  font-size: 1.5rem;
-  padding: 0.5rem;
+  color: #c9d1d9;
+  font-size: 1.8rem;
   cursor: pointer;
-  display: flex;
-  align-items: center;
+  z-index: 1100;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
 }
 
 .hamburger-btn:hover {
-  background-color: #2ea043;
+  background-color: rgba(35, 134, 54, 0.2);
+  color: #238636;
 }
 
-.sidebar.hidden {
-  transform: translateX(-100%);
+/* Para que el main no quede tapado cuando el sidebar esté activo, puedes desplazarlo un poco */
+.sidebar.active ~ main.container {
+  margin-right: 240px;
+  transition: margin-right 0.3s ease-in-out;
+}
+
+/* Ajusta el main para que ocupe el 100% ancho cuando sidebar está oculto */
+main.container {
+  transition: margin-right 0.3s ease-in-out;
+  margin-right: 0;
+  padding: 20px;
+  max-width: calc(100% - 20px);
+}
+
+/* Scroll del sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #238636;
+  border-radius: 4px;
+}
+
+/* Responsivo: en pantallas pequeñas, el sidebar ocupa toda la pantalla */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    transform: translateX(100%);
+  }
+
+  .sidebar.active ~ main.container {
+    margin-right: 0;
+  }
 }
 
 /* Estilos para mejorar la apariencia de la lista de asistencia */
@@ -659,4 +648,21 @@ input:checked + .slider:before {
 
 .asistencia-table tr:hover {
   background-color: #161b22;
+}
+
+.gif-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 100px); /* Ajusta según navbar/footer */
+  padding: 2rem;
+  text-align: center;
+}
+
+.gif-central {
+  max-width: 400px;
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
 }

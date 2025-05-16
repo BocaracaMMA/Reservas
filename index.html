@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Iniciar Sesión - Bocaraca MMA</title>
 
-  <title>Login - Bocaraca MMA</title>
-  <link rel="stylesheet" href="./css/style.css">
-  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="icon" type="image/png" href="./assets/favicon.ico" />
+  
 </head>
 <body>
-
-<main class="container">
-  <!-- Logo Imagen -->
-  <img src="./assets/android-chrome-512x512.png" alt="Logo Bocaraca MMA" class="logo-img">
   
-  <h1 class="logo">Bocaraca MMA</h1>
-  
-  <form id="loginForm" class="card" autocomplete="off">
+  <main class="container">
+    <div class="container">
+      <img src="./assets/android-chrome-512x512.png" alt="Logo Bocaraca MMA" class="logo-img" />
+      <p class="company-name">Bocaraca MMA</p>
+    </div>
+    <div class="container">
+      <form id="loginForm" class="card" autocomplete="off">
     <h2>Iniciar sesión</h2>
     <label for="email">Correo Electrónico</label>
     <input type="email" id="email" required autocomplete="off" />
@@ -29,10 +30,11 @@
     <p id="forgotPasswordLink" style="display: none;">
       <a href="./change-password.html">¿Olvidaste tu contraseña?</a>
     </p>
-  </form>
-</main>
+      </form>
+    </div>
+  </main>
 
-<!-- Scripts -->
+  <!-- Scripts -->
 <script type="module" src="./js/login.js"></script>
 <script type="module">
   // Importa la configuración de Firebase desde firebase-config.js
@@ -41,28 +43,11 @@
 
   // Inicializa la autenticación
   const auth = getAuth(app);
-
-  // Verifica el estado de autenticación del usuario
- // onAuthStateChanged(auth, (user) => {
-    //if (!user) {
-      // Si el usuario está autenticado y no está en la página de login, redirige al dashboard correspondiente
-      //if (window.location.pathname === './index.html') {
-        //window.location.href = user.email && ["luis.davidsolorzano@outlook.es", "ivan.cicc@hotmail.com"].includes(user.email) 
-          //? 'admin-dashboard.html' : 'client-dashboard.html';
-      //}
-    //} else {
-      // Si no hay usuario autenticado y no estamos en index.html, redirige a login
-     // if (window.location.pathname !== './index.html') {
-       // window.location.href = './index.html';
-      //}
-    //}
-  //}
 </script>
 
 <footer>
-  <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+  <p class="footer">© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
 </footer>
-
 
 </body>
 </html>

@@ -3,36 +3,26 @@ import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Asegúrate de importar 'setDoc'
 import { showAlert } from './showAlert.js';
 
+
 let calendar;
 
 function isDateInActiveWeekRange(date) {
     const now = new Date();
 
-    // Obtener inicio y fin de mes actuales
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    // Obtener semana actual
     const currentWeekStart = new Date(now);
-    currentWeekStart.setDate(now.getDate() - now.getDay()); // Domingo
+    currentWeekStart.setDate(now.getDate() - now.getDay());
 
-    const currentWeekEnd = new Date(currentWeekStart);
-    currentWeekEnd.setDate(currentWeekStart.getDate() + 6); // Sábado
-
-    // Obtener semana de la fecha seleccionada
     const clickedWeekStart = new Date(date);
     clickedWeekStart.setDate(date.getDate() - date.getDay());
 
-    const clickedWeekEnd = new Date(clickedWeekStart);
-    clickedWeekEnd.setDate(clickedWeekStart.getDate() + 6);
-
-    // Validar si la semana seleccionada está dentro del mes actual y aún no ha pasado
     return (
         clickedWeekStart >= currentWeekStart &&
-        clickedWeekEnd <= endOfMonth
+        clickedWeekStart <= endOfMonth
     );
 }
-
 document.addEventListener('DOMContentLoaded', function () {
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -135,7 +125,7 @@ async function checkExistingReservation(date, time) {
 async function addReservation(date, time) {
     try {
         // Buscar el documento del usuario actual en la colección 'users' usando su correo
-        const q = query(collection(db, 'users'), where('correo', '==', auth.currentUser.email));
+        const q = query(collection(db, 'users'), where('correo', '==', auth.currentUser.email.toLowerCase()));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -191,7 +181,7 @@ function openConfirmReservationModal(date, time) {
     document.getElementById('confirmBtn').onclick = async () => {
         try {
             // 🔒 Validar si el usuario está autorizado
-            const q = query(collection(db, 'users'), where('correo', '==', auth.currentUser.email));
+            const q = query(collection(db, 'users'), where('correo', '==', auth.currentUser.email.toLowerCase()));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
