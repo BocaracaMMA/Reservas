@@ -4,80 +4,127 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reportes - Asistencia Mensual</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="./css/style.css">
-  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+  <!-- Bootstrap Icons (si los necesitas) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  />
+
+  <!-- Tu CSS personalizado -->
+  <link rel="stylesheet" href="./css/style.css">
+
+  <!-- Favicon -->
+  <link
+    rel="icon"
+    href="./assets/favicon-32x32.png"
+    type="image/x-icon"
+  />
+
+  <!-- SheetJS (para exportar a Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
+  <!-- --------------------------
+       Botón hamburguesa y sidebar
+       (se deja igual que en tu código original)
+  --------------------------- -->
+  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+    <i class="bi bi-list"></i>
+  </button>
 
-<!-- Botón hamburguesa -->
-<button id="toggleNav" class="hamburger-btn" aria-label="Menú">
-  <i class="bi bi-list"></i>
-</button>
-
-<nav id="sidebar" class="sidebar">
-  <ul>
-    <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
-    <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
-    <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
-    <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
-  </ul>
-</nav>
-
+  <nav id="sidebar" class="sidebar">
+    <ul>
+      <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+      <li><a href="./marcar-asistencia.html"><i class="bi bi-file-earmark-text-fill"></i> Asistencias </a></li>
+      <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+    </ul>
+  </nav>
 
   <div class="main-content">
-    <div class="container">
-      <h1>Asistencia Mensual</h1>
+      <div class="container">
+        <h1>Asistencia Mensual</h1>
 
-      <!-- Filtro por mes -->
-      <div class="filter">
-        <label for="monthSelect">Selecciona el mes:</label>
-        <select id="monthSelect">
-          <option value="01">Enero</option>
-          <option value="02">Febrero</option>
-          <option value="03">Marzo</option>
-          <option value="04">Abril</option>
-          <option value="05">Mayo</option>
-          <option value="06">Junio</option>
-          <option value="07">Julio</option>
-          <option value="08">Agosto</option>
-          <option value="09">Septiembre</option>
-          <option value="10">Octubre</option>
-          <option value="11">Noviembre</option>
-          <option value="12">Diciembre</option>
-          <!-- Agregar más meses -->
-        </select>
-        <button onclick="getAsistencia()">Ver reporte</button>
-      </div>
-
-            <div style="margin-top: 1rem; text-align: center;">
-        <button id="btnDescargar">📥 Descargar Excel</button>
+        <div class="filter">
+          <label for="monthSelect">Selecciona el mes:</label>
+          <select id="monthSelect">
+            <option value="01">Enero - 01</option>
+            <option value="02">Febrero - 02</option>
+            <option value="03">Marzo - 03</option>
+            <option value="04">Abril - 04</option>
+            <option value="05">Mayo - 05</option>
+            <option value="06">Junio - 06</option>
+            <option value="07">Julio - 07</option>
+            <option value="08">Agosto - 08</option>
+            <option value="09">Septiembre - 09</option>
+            <option value="10">Octubre - 10</option>
+            <option value="11">Noviembre - 11</option>
+            <option value="12">Diciembre - 12</option>
+          </select>
+          <button id="btnVerReporte">Ver reporte</button>
         </div>
 
-      </div>
+        <div style="margin-top: 1rem; text-align: center;">
+          <button id="btnDescargar">📥 Descargar Excel</button>
+        </div>
 
-      <div id="reporte-container" class="reporte-container">
-        <!-- Aquí aparecerá la tabla de asistencia -->
+        <div id="reporte-container" class="reporte-container mt-4">
+          <!-- Acá irán las tablas que genere reportes.js en tiempo real -->
+        </div>
       </div>
-
     </div>
 
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/firebase@9.1.2/dist/firebase-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@9.1.2/dist/firebase-firestore.js"></script>
-
-
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <script type="module" src="./js/reportes.js"></script>
-  <script type="module" src="./js/descargar-reportes.js"></script>
-
   <footer>
-    <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+    <p>
+      © 2025
+      <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>.
+      Todos los derechos reservados.
+    </p>
   </footer>
 
+  <!-- -------------------------------------------------------
+       1) SDKs de Firebase (v9.1.2) para App y Firestore
+       2) Tu configuración de Firebase (módulo)
+       3) reportes.js (módulo) y descargar-reportes.js (módulo)
+
+<script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+  -------------------------------------------------------- -->
+  
+  <!-- Asegúrate de que firebase-config.js exporte 'db' y 'auth' -->
+  <script type="module" src="./js/firebase-config.js"></script>
+
+  <!-- Lógica para obtener y mostrar los reportes -->
+  <script type="module" src="./js/reportes.js"></script>
+
+  <!-- Lógica para descargar a Excel lo que se muestra en #reporte-container -->
+  <script type="module" src="./js/descargar-reportes.js"></script>
+
+  <!-- script.js (controla el comportamiento de navbar/sidebar) -->
+  <script type="module" src="./js/script.js"></script>
+
+  <!-- Script inline para asignar los listeners del botón “Ver reporte” -->
+  <script>
+    // Nos aseguramos de que reportes.js haya expuesto window.getAsistencia
+    document.addEventListener("DOMContentLoaded", () => {
+      const btnVer = document.getElementById("btnVerReporte");
+      btnVer.addEventListener("click", () => {
+        if (typeof window.getAsistencia === "function") {
+          window.getAsistencia();
+        } else {
+          console.warn("getAsistencia() no está disponible.");
+        }
+      });
+    });
+
+    // Inicializar Lucide Icons (para que reemplace los <i data-lucide="...">)
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
 </body>
 </html>

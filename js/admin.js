@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Toggle sidebar
 document.getElementById('toggleNav').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('active');
-  });
-  
+});
+
 // Botón de cerrar sesión
 const logoutSidebar = document.getElementById('logoutSidebar');
 if (logoutSidebar) {

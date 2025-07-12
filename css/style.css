@@ -666,3 +666,27 @@ main.container {
   border-radius: 1rem;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
 }
+
+
+/* Boton que genera el codigo */
+.btn.code-btn {
+  background-color: #238636;  /* mismo verde GitHub */
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn.code-btn:hover {
+  background-color: #2ea043;
+}
+
+/* Código de asistencia en client-dashboard */
+.attendance-code {
+  margin-top: 8px;
+  font-size: 1rem;
+  color: #58a6ff;
+  text-align: center;
+}

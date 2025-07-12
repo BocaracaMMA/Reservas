@@ -20,12 +20,13 @@
 </button>
 
 <nav id="sidebar" class="sidebar">
-  <ul>
-    <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
-    <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i></i> Usuarios</a></li>
-    <li><a href="./reportes2.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
-    <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
-  </ul>
+    <ul>
+      <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+      <li><a href="./marcar-asistencia.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+    </ul>
 </nav>
 
 
@@ -35,12 +36,13 @@
         <h1>Usuarios Registrados</h1>
         <div class="table-container">
         <table id="usuarios-table">
-            <thead>
-            <tr>
+          <thead>
+              <tr>
                 <th>Nombre</th>
                 <th>Correo</th>
-                <th>Autorizado</th>
-            </tr>
+                <th>Código</th>
+                <th>Acciones</th>
+              </tr>
             </thead>
             <tbody>
             <!-- Se rellena dinámicamente -->

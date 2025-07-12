@@ -1,76 +1,20 @@
-import { db } from './firebase-config.js';
-import { collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+// ./js/reportes.js
 
-      // Toggle sidebar
-    document.getElementById('toggleNav').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('active');
+import { db } from "./firebase-config.js";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+//
+// ──────────────────────────────────────────────────────────────────────────────
+// UTILIDADES PARA RENDERIZAR
+// ──────────────────────────────────────────────────────────────────────────────
 
-      // Evento de cerrar sesión
-      logoutSidebar.addEventListener("click", async (e) => {
-        e.preventDefault();
-        try {
-          await signOut(auth);
-          showAlert("Has cerrado sesión", "success");
-          setTimeout(() => {
-            window.location.href = "index.html";
-          }, 1500);
-        } catch (error) {
-          console.error("Error al cerrar sesión:", error.message);
-          showAlert("Hubo un problema al cerrar sesión.", "error");
-        }
-
-    });
-
-  });
-
-// Expone la función globalmente para que funcione con onclick
-window.getAsistencia = async function () {
-  const month = document.getElementById('monthSelect').value;
-  console.log('Mes seleccionado:', month);
-  const asistenciaRef = collection(db, "asistencias");
-
-  try {
-    const snapshot = await getDocs(asistenciaRef);
-    console.log("Documentos encontrados en 'asistencias':", snapshot.docs.map(doc => doc.id));
-    const fechasFiltradas = [];
-
-    snapshot.forEach(docSnap => {
-      const fecha = docSnap.id;
-      if (fecha.startsWith(`2025-${month}`)) {
-        fechasFiltradas.push(fecha);
-      }
-    });
-
-    fechasFiltradas.sort();
-
-    const container = document.getElementById("reporte-container");
-    container.innerHTML = ""; // Limpiar antes de agregar nuevo contenido
-
-    for (const fecha of fechasFiltradas) {
-      const usuariosCol = collection(db, "asistencias", fecha, "usuarios");
-
-      const usuariosSnap = await getDocs(usuariosCol);
-      console.log(`Usuarios para fecha ${fecha}:`, usuariosSnap.docs.map(d => d.data()));
-      const asistenciaData = [];
-      usuariosSnap.forEach(doc => {
-        const data = doc.data();
-        asistenciaData.push({ id: doc.id, ...data });
-      });
-
-      if (asistenciaData.length > 0) {
-        container.innerHTML += generarTablaPorFecha(fecha, asistenciaData);
-      }
-    }
-
-  } catch (error) {
-    console.error("Error al obtener asistencias:", error);
-  }
-};
-;
-
+// Genera el HTML de la tabla para una fecha concreta
 function generarTablaPorFecha(fecha, data) {
   let tableHTML = `
     <h3>Asistencia del ${fecha}</h3>
@@ -85,7 +29,7 @@ function generarTablaPorFecha(fecha, data) {
       <tbody>
   `;
 
-  data.forEach(user => {
+  data.forEach((user) => {
     tableHTML += `
       <tr>
         <td>${user.nombre}</td>
@@ -99,39 +43,156 @@ function generarTablaPorFecha(fecha, data) {
       </tbody>
     </table>
   `;
-
   return tableHTML;
 }
 
-// Detectar cuando el DOM esté completamente cargado
-document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.getElementById("logoutSidebar");
+// Renderiza (o actualiza) la tabla de un día concreto en el DOM
+function renderizarTablaEnDOM(fecha, asistenciaData) {
+  const container = document.getElementById("reporte-container");
+  const wrapperId = `tabla-${fecha.replace(/:/g, "-")}`;
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(getAuth());
-        window.location.href = './index.html';
-      } catch (error) {
-        console.error("Error al cerrar sesión:", error);
+  let wrapper = document.getElementById(wrapperId);
+  if (wrapper) {
+    wrapper.innerHTML = generarTablaPorFecha(fecha, asistenciaData);
+  } else {
+    wrapper = document.createElement("div");
+    wrapper.id = wrapperId;
+    wrapper.classList.add("mb-4"); // margen inferior opcional
+    wrapper.innerHTML = generarTablaPorFecha(fecha, asistenciaData);
+    container.appendChild(wrapper);
+  }
+}
+
+// Elimina la tabla de una fecha (cuando deja de pertenecer al mes)
+function eliminarTablaDeDOM(fecha) {
+  const wrapperId = `tabla-${fecha.replace(/:/g, "-")}`;
+  const wrapper = document.getElementById(wrapperId);
+  if (wrapper) wrapper.remove();
+}
+
+//
+// ──────────────────────────────────────────────────────────────────────────────
+// LÓGICA EN TIEMPO REAL (MEZCLA getDocs PARA VERIFICAR Y onSnapshot PARA REFRESCAR)
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Para guardar los listeners de cada subcolección “usuarios”
+let subUnsubsUsuarios = {};
+
+// Para el listener global de “asistencias”
+let unsubscribeAsistencias = null;
+
+/**
+ * startRealTimeReporting(month)
+ *
+ * 1) Limpia el contenedor #reporte-container (para no mostrar datos viejos).
+ * 2) Hace un getDocs() puntual para ver si hay documentos en “asistencias”:
+ *    – Si no hay ninguno, muestra “No hay reportes para el mes seleccionado.”
+ *    – Si los hay, filtra los IDs que empiecen por “YYYY-MM” y los imprime en consola.
+ * 3) Sobre cada fecha filtrada, se suscribe con onSnapshot() a “asistencias/{fecha}/usuarios”:
+ *    – Cada cambio en esa subcolección renderiza (o actualiza) la tabla correspondiente.
+ * 4) Cancela automáticamente los listeners de fechas que ya no pertenezcan al mes seleccionado.
+ */
+export async function startRealTimeReporting(month) {
+  const container = document.getElementById("reporte-container");
+  container.innerHTML = ""; // 1) Limpiar contenedor
+
+  const currentYear = new Date().getFullYear();
+  const prefijo = `${currentYear}-${month}`; // ej. "2025-06"
+
+  try {
+    // 2) getDocs puntual para comprobar SI hay documentos en “asistencias”
+    const asistenciasColl = collection(db, "asistencias");
+    const snapshotAll = await getDocs(asistenciasColl);
+    const fechasDisponibles = snapshotAll.docs.map((doc) => doc.id);
+    console.log("→ getDocs: fechas disponibles en Firestore:", fechasDisponibles);
+
+    // Filtrar por mes actual (“YYYY-MM”)
+    const fechasDelMes = fechasDisponibles.filter((fecha) =>
+      fecha.startsWith(prefijo)
+    );
+    console.log(`→ Fechas que coinciden con ${prefijo}:`, fechasDelMes);
+
+    if (fechasDelMes.length === 0) {
+      container.innerHTML = `<p>No hay reportes para el mes seleccionado.</p>`;
+      return;
+    }
+
+    // 3) SUBSCRIBIRSE A CADA subcolección “asistencias/{fecha}/usuarios”
+    fechasDelMes.forEach((fecha) => {
+      if (!subUnsubsUsuarios[fecha]) {
+        const usuariosRef = collection(db, "asistencias", fecha, "usuarios");
+        const qUsuarios = query(usuariosRef, orderBy("hora", "asc"));
+
+        const unsubUsuarios = onSnapshot(
+          qUsuarios,
+          (usuariosSnap) => {
+            const asistenciaData = [];
+            usuariosSnap.forEach((docUser) => {
+              const data = docUser.data();
+              asistenciaData.push({ id: docUser.id, ...data });
+            });
+            console.log(`→ Datos de asistencia para ${fecha}:`, asistenciaData);
+            renderizarTablaEnDOM(fecha, asistenciaData);
+          },
+          (err) => {
+            console.error(
+              `Error escuchando subcolección usuarios de ${fecha}: `,
+              err
+            );
+          }
+        );
+
+        subUnsubsUsuarios[fecha] = unsubUsuarios;
       }
     });
+
+    // 4) CANCELAR listeners de fechas que ya no pertenezcan al mes
+    Object.keys(subUnsubsUsuarios).forEach((fechaRegistrada) => {
+      if (!fechasDelMes.includes(fechaRegistrada)) {
+        subUnsubsUsuarios[fechaRegistrada]();
+        delete subUnsubsUsuarios[fechaRegistrada];
+        eliminarTablaDeDOM(fechaRegistrada);
+      }
+    });
+
+    // 5) OPCIONAL: listener “global” en toda la colección asistencias, para detectar
+    //    si alguien crea/elimina un documento de fecha “{YYYY-MM-DD}” durante esta sesión.
+    //    (Si no lo necesitas, puedes comentar este bloque.)
+    if (unsubscribeAsistencias) unsubscribeAsistencias();
+    unsubscribeAsistencias = onSnapshot(
+      asistenciasColl,
+      (snapshotGlobal) => {
+        // Cada vez que cambie la colección “asistencias” entera, recargo el mes
+        const todasFechas = snapshotGlobal.docs.map((d) => d.id);
+        const fechasNuevasDelMes = todasFechas.filter((f) =>
+          f.startsWith(prefijo)
+        );
+        // Si detectamos que cambió la lista de fechasDelMes,
+        // reejecutamos esta función para refrescar listeners/tables:
+        if (
+          JSON.stringify(fechasNuevasDelMes.sort()) !==
+          JSON.stringify(fechasDelMes.sort())
+        ) {
+          console.log(
+            "→ Cambio detectado en colección asistencias; recargando mes."
+          );
+          startRealTimeReporting(month);
+        }
+      },
+      (err) => {
+        console.error("Error en listener global de asistencias: ", err);
+      }
+    );
+  } catch (err) {
+    console.error("❌ Error en startRealTimeReporting:", err);
+    container.innerHTML = `<p>Error al cargar los reportes. Revisa la consola.</p>`;
   }
+}
 
-  const toggleButton = document.getElementById("toggleNav");
-  const sidebar = document.getElementById("sidebar");
-
-  toggleButton.addEventListener("click", () => {
-      sidebar.classList.toggle("active");
-  });
-
-  // Si usas Lucide icons
-  lucide.createIcons();
-
-
-  // Toggle sidebar
-document.getElementById('toggleNav').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.toggle('active');
-});
-
-});
+// ──────────────────────────────────────────────────────────────────────────────
+// EXPONER getAsistencia AL GLOBAL
+// ──────────────────────────────────────────────────────────────────────────────
+window.getAsistencia = function () {
+  const mes = document.getElementById("monthSelect").value; // ej. "06"
+  startRealTimeReporting(mes);
+};

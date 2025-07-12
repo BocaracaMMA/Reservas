@@ -16,6 +16,10 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.js"></script>
 
   <link rel="stylesheet" href="./css/style.css">
+
+  <!-- html5-qrcode -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.7/html5-qrcode.min.js"></script>
+
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
 
 </head>
@@ -25,6 +29,8 @@
     <div class="logo-container">
       <img src="./assets/android-chrome-512x512.png" alt="Logo de tu empresa" class="logo-img">
       <h1 class="logo-text">Calendario de Clases</h1>
+      <h2 id="attendanceCodeDisplay" class="attendance-code">Cargando código de asistencia...</h2>
+      <div id="local-time" class="mt-1 text-muted"></div>
     </div>
     
     <div class="calendar-wrapper">
@@ -33,6 +39,16 @@
       </div>
 
       <button id="logoutBtn">Cerrar sesión</button>
+          <!-- Lector QR -->
+<div class="qr-scan-section mt-6" style="text-align:center;">
+  <h2>Escanear Código QR</h2>
+  <div id="reader" style="width:300px; margin:0 auto;"></div>
+  <div class="mt-4">
+    <button id="btnStartScan" class="btn">Iniciar Escáner</button>
+    <button id="btnStopScan"  class="btn" disabled>Detener Escáner</button>
+  </div>
+</div>
+
     </div>
 
     <div id="reservationModal" style="display:none;">
@@ -48,6 +64,8 @@
 
   <script type="module" src="./js/toast.js"></script>
   <script type="module" src="./js/client.js"></script>
+  <!-- script del lector QR -->
+  <script type="module" src="./js/scan-asistencia.js"></script>
   <script type="module">
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
     import { app } from './js/firebase-config.js';
