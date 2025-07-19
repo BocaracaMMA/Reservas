@@ -25,8 +25,10 @@
     <ul>
       <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
       <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
-      <li><a href="./marcar-asistencia.html"><i class="bi bi-file-earmark-text-fill"></i> Asistencias </a></li>
+      <li><a href="./control-mensualidades.html"><i class="bi bi-calendar-week"></i> Mensualidades</a></li>
+      <li><a href="./marcar-asistencia.html"><i class="bi bi-person-bounding-box"></i> Asistencias</a></li>
       <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="./admin-events.html"><i class="bi bi-calendar-week"></i>Crear Evento</a></li>
       <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
     </ul>
 </nav>
@@ -43,6 +45,9 @@
         <div id='calendar-admin'></div>
       </div>
     </div>
+
+  </section>
+
   </main>
 
     <!-- Pop-up para mostrar la lista de usuarios y marcar asistencia -->
@@ -60,6 +65,12 @@
 
   <!-- Agrega esto en el head o justo antes de tu script admin.js -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- EmailJS SDK (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
+  <script>
+    emailjs.init("TU_USER_ID_EMAILJS");  // ← reemplaza con tu User ID
+  </script>
 
   <!-- Después carga tu admin.js -->
   <script type="module" src="./js/admin.js"></script>

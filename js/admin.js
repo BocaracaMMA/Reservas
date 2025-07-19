@@ -227,3 +227,105 @@ function cerrarPopup() {
     const popup = document.getElementById("asistenciaPopup");
     popup.classList.remove("active"); // Remover la clase para cerrar el pop-up
 }
+
+// --- 1) Cargar y mostrar estado de expiryDate ---
+async function loadExpiryStatus() {
+  const tbody = document.querySelector('#payment-status tbody');
+  tbody.innerHTML = '';
+  const today = new Date().toLocaleDateString('en-CA', { timeZone:'America/Costa_Rica' });
+
+  const snap = await getDocs(collection(db, 'users'));
+  snap.forEach(d => {
+    const u = d.data();
+    const exp = u.expiryDate || '—';
+    let state = 'Vigente';
+    if (exp === '—' || exp < today)      state = 'Vencida';
+    else if (exp === today)              state = 'Vence hoy';
+    else if (exp <= new Date(new Date().setDate(new Date().getDate()+3))
+                      .toLocaleDateString('en-CA',{timeZone:'America/Costa_Rica'}))
+                                         state = 'Próxima a vencer';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.nombre}</td>
+      <td>${u.correo}</td>
+      <td>${exp}</td>
+      <td>${state}</td>
+      <td>
+        <button class="btnReactivate btn">Reactivar</button>
+      </td>`;
+    tbody.appendChild(tr);
+
+    tr.querySelector('.btnReactivate').addEventListener('click', async () => {
+      // Reactivar para el mes actual
+      const newExp = new Date().toLocaleDateString('en-CA',{timeZone:'America/Costa_Rica'});
+      await updateDoc(doc(db,'users',d.id), { expiryDate: newExp });
+      showAlert('Usuario reactivado','success');
+      loadExpiryStatus();
+    });
+  });
+}
+
+// --- 2) Buscar quienes vencen pronto y vencidos ---
+async function getUsersWithUpcomingExpiry(daysAhead = 3) {
+  const today = new Date();
+  const limit = new Date(today);
+  limit.setDate(limit.getDate()+daysAhead);
+  const upTo  = limit.toLocaleDateString('en-CA',{timeZone:'America/Costa_Rica'});
+
+  const arr = [];
+  const snap = await getDocs(collection(db,'users'));
+  snap.forEach(d => {
+    const u = d.data();
+    if (u.expiryDate && u.expiryDate > today.toLocaleDateString('en-CA',{timeZone:'America/Costa_Rica'})
+       && u.expiryDate <= upTo) {
+      arr.push({ uid: d.id, nombre: u.nombre, email: u.correo, due: u.expiryDate });
+    }
+  });
+  return arr;
+}
+
+async function getUsersWithOverdue() {
+  const today = new Date().toLocaleDateString('en-CA',{timeZone:'America/Costa_Rica'});
+  const arr = [];
+  const snap = await getDocs(collection(db,'users'));
+  snap.forEach(d => {
+    const u = d.data();
+    if (!u.expiryDate || u.expiryDate < today) {
+      arr.push({ uid: d.id, nombre: u.nombre, email: u.correo, due: u.expiryDate||'—' });
+    }
+  });
+  return arr;
+}
+
+// --- 3) Enviar e‑mail con EmailJS ---
+async function sendReminderEmail(user, templateId) {
+  try {
+    await emailjs.send(
+      "TU_SERVICE_ID",      // ← tu Service ID de EmailJS
+      templateId,           // 'template_payment_reminder_soon' o 'template_payment_reminder_overdue'
+      {
+        to_email:   user.email,
+        to_name:    user.nombre,
+        due_date:   user.due,
+        payment_link: "https://tusitio.com/pagar"
+      }
+    );
+  } catch (err) {
+    console.error("EmailJS error:", err);
+  }
+}
+
+// --- 4) Handler del botón “Enviar recordatorios” ---
+document.getElementById('btnSendReminders')
+  .addEventListener('click', async () => {
+    showAlert('Enviando recordatorios…','success');
+    const soon    = await getUsersWithUpcomingExpiry(3);
+    const overdue = await getUsersWithOverdue();
+    await Promise.all(soon.map(u=>sendReminderEmail(u,'template_payment_reminder_soon')));
+    await Promise.all(overdue.map(u=>sendReminderEmail(u,'template_payment_reminder_overdue')));
+    showAlert(`Correos enviados: ${soon.length} (próximos) + ${overdue.length} (vencidos)`,'success');
+  });
+
+// --- 5) Invocar carga inicial de la tabla ---
+document.addEventListener('DOMContentLoaded', loadExpiryStatus);
