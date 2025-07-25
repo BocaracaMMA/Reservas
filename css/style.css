@@ -707,45 +707,107 @@ main.container {
 
 /* Eventos */
 /* GRID de tarjetas */
+/* ─── GRID 4x4 PARA EVENTOS ───────────────────────────────────────────────── */
 .events-grid {
   display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  margin: 2rem 0;
+  margin: 2rem auto;
+  max-width: 1200px;
 }
-
-/* Cada tarjeta */
+/* ─── TARJETA DE EVENTO ─────────────────────────────────────────────────────── */
 .event-card {
-  background-color: #161b22;
-  border-radius: 10px;
+  background: #161b22;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  transition: transform .2s;
+  transition: transform .2s, box-shadow .2s;
+  display: flex;
+  flex-direction: column;
 }
 .event-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.5);
 }
-
-/* Imagen de la tarjeta */
 .event-card img {
   width: 100%;
-  height: 150px;
+  height: 180px;
   object-fit: cover;
 }
-
-/* Texto de la tarjeta */
 .event-card .info {
-  padding: 0.75rem;
+  padding: 1rem;
+  flex: 1;
 }
 .event-card .info h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
   color: #58a6ff;
 }
+
 .event-card .info p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: .9rem;
   color: #c9d1d9;
 }
 
+/* ─── BOTÓN SUCCESS PARA “Comprar Entradas” ──────────────────────────────── */
+.btn.success {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #238636;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn.success:hover {
+  background-color: #2ea043;
+}
+/* ─── BOTÓN error PARA Cerrar el model de  “Comprar Entradas” ──────────────────────────────── */
+.btn.error {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  border: none;
+  white-space: nowrap;
+}
+.btn.error:hover {
+  background-color: #c82333;
+}
+
+/* ─── MODAL DE ADVERTENCIA “Sin enlace disponible” ───────────────────────── */
+#noLinkModal .modal-content {
+  background: #161b22;
+  color: #c9d1d9;
+}
+#noLinkModal .btn-close-white {
+  filter: invert(100%);
+}
+
+/* ─── Animacion shake ───────────────────────── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+.btn.shake {
+  animation: shake 0.5s;
+}
+
+/* Limita alto del popup y permite scroll interno */
+.asistencia-modal .modal-content {
+  max-width: 400px;
+  max-height: 100vh;
+}
+
+/* Recorta la imagen sin deformar y la limita al 50% de altura */
+.asistencia-modal img {
+  width: 100%;
+  max-height: 20vh;
+  object-fit: cover;
+  border-radius: 8px;
+}

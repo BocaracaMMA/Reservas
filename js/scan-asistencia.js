@@ -54,12 +54,43 @@ btnClose.addEventListener("click", async () => {
   modal.classList.remove("active");
 });
 
-// 5) Función de éxito en escaneo
+// 5) Animación JS de check
+function showSuccessAnimation() {
+  return new Promise(resolve => {
+    const check = document.createElement("div");
+    check.textContent = "✓";
+    Object.assign(check.style, {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%) scale(0)",
+      fontSize: "4rem",
+      color: "#2ea043",
+      zIndex: 2000,
+      pointerEvents: "none"
+    });
+    modal.querySelector(".modal-content").appendChild(check);
+    // Animamos con WAAPI
+    const anim = check.animate([
+      { transform: "translate(-50%, -50%) scale(0)" },
+      { transform: "translate(-50%, -50%) scale(1.2)" },
+      { transform: "translate(-50%, -50%) scale(1)" }
+    ], {
+      duration: 600,
+      easing: "ease-out"
+    });
+    anim.onfinish = () => {
+      check.remove();
+      resolve();
+    };
+  });
+}
+
+// 6) Función de éxito en escaneo
 async function onScanSuccess(decodedText) {
   if (!isScanning) return;
   // Detenemos antes de procesar
   await stopScanner();
-  modal.classList.remove("active");
 
   let payload;
   try {
@@ -79,6 +110,9 @@ async function onScanSuccess(decodedText) {
   try {
     const ref = doc(db, "asistencias", fecha, "usuarios", user.uid);
     await updateDoc(ref, { presente: true });
+    // mostramos animación antes de cerrar...
+    await showSuccessAnimation();
+    modal.classList.remove("active");
     showAlert("¡Asistencia registrada!", "success");
   } catch (err) {
     console.error("Error registrando asistencia:", err);
@@ -86,7 +120,7 @@ async function onScanSuccess(decodedText) {
   }
 }
 
-// 6) Función para detener y limpiar
+// 7) Función para detener y limpiar
 async function stopScanner() {
   if (!scanner || !isScanning) return;
   try {

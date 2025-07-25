@@ -9,12 +9,25 @@
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
 
+  <!-- Cropper.js -->
+  <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css"
+  />
+
+  <!-- Quill CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
   <!-- Tu CSS global -->
   <link rel="stylesheet" href="./css/style.css"/>
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
 
   <!-- Estilos específicos para esta página -->
   <style>
+  .custom-modal { 
+    z-index: 1100; 
+  }
+  
     /* Contenedor principal centrado y de ancho limitado */
     .event-container {
       max-width: 900px;    /* aumentamos de 800 a 900 */
@@ -150,8 +163,27 @@
             <input id="title" type="text" required />
           </div>
           <div class="form-group">
-            <label for="imageUrl">Imagen (URL)</label>
-            <input id="imageUrl" type="url" />
+            <label for="imageFile">Imagen (sube archivo)</label>
+            <input id="imageFile" type="file" accept="image/*" />
+          </div>
+          <!-- Modal Cropper -->
+          <div id="cropperModal" class="custom-modal" style="display:none;">
+            <div class="modal-content" style="max-width:500px;">
+              <h3>Recorta tu imagen</h3>
+              <img id="cropperImage" style="max-width:100%;" />
+              <div style="text-align:center; margin-top:1rem;">
+                <button id="cropBtn" class="btn">Recortar & Subir</button>
+                <button id="cancelCropBtn" class="btn error">Cancelar</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="imageUrl">O ingresa URL de imagen</label>
+            <input
+              id="imageUrl"
+              type="url"
+              placeholder="Ingrese el URL de la imagen"
+            />
           </div>
         </div>
         <div class="form-row">
@@ -165,8 +197,13 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="description">Descripción</label>
-          <textarea id="description" rows="3"></textarea>
+          <div class="form-group">
+          <label for="descriptionEditor">Descripción</label>
+          <!-- aquí irá Quill -->
+          <div id="descriptionEditor" style="height: 150px; background: #21262d;"></div>
+        </div>
+        <!-- campo oculto para enviar HTML al backend -->
+        <input type="hidden" id="description" name="description">
         </div>
         <div class="form-group">
           <label for="ticketsUrl">Enlace Tickets</label>
@@ -201,6 +238,12 @@
   <footer>
     <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
   </footer>
+
+  <!-- Quill JS -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+  <!-- Cropper.js -->
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 
   <!-- Firebase + tu lógica -->
   <script type="module" src="./js/firebase-config.js"></script>

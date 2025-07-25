@@ -5,14 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Eventos</title>
 
-  <!-- Global CSS -->
+  <!-- Bootstrap Icons (necesario para el ícono hamburguesa) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  />
+
+  <!-- Bootstrap CSS para el modal -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Tu CSS global -->
   <link rel="stylesheet" href="./css/style.css">
-  <!-- Iconos -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
-  <!-- Lucide Icons -->
+  <link rel="icon" href="./assets/favicon-32x32.png">
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <link rel="icon" href="./assets/favicon-32x32.png">
+  <style>
+    /* Asegurar que el botón hamburguesa quede encima */
+    .hamburger-btn {
+      z-index: 1100;
+    }
+  </style>
 </head>
 <body>
 
@@ -30,35 +45,87 @@
     </ul>
   </nav>
 
+  <!-- Contenido principal -->
   <main class="container">
     <div class="logo-container">
       <img src="./assets/android-chrome-512x512.png" class="logo-img" alt="Logo">
       <h1 class="logo-text">Próximos Eventos</h1>
     </div>
 
-    <!-- Aquí van las tarjetas -->
+    <!-- GRID DE TARJETAS -->
     <div id="eventsGrid" class="events-grid"></div>
   </main>
 
-  <!-- Modal detalle de evento -->
+  <!-- Modal detalle evento -->
   <div id="eventModal" class="asistencia-modal">
     <div class="modal-content" style="max-width:400px;">
       <h2 id="modalTitle"></h2>
       <img id="modalImg" style="width:100%; border-radius:8px; margin-bottom:1rem;" alt="">
-      <p id="modalDates" style="font-style:italic;"></p>
-      <p id="modalDesc"></p>
-      <a id="modalLink" target="_blank" class="btn" style="background:#238636;">Comprar Entradas</a>
-      <button id="modalClose" class="btn" style="background:#dc3545; margin-top:1rem;">Cerrar</button>
+      <p id="modalDates" style="font-style:italic; margin-bottom:.5rem;"></p>
+      <p id="modalDesc" style="margin-bottom:1rem;"></p>
+      <button id="modalLink" class="btn success">Comprar Entradas</button>
+      <button id="modalClose" class="btn error" style="margin-top:1rem;">Cerrar</button>
     </div>
   </div>
 
+  <!-- Modal Bootstrap “No hay enlace” -->
+  <div class="modal fade" id="noLinkModal" tabindex="-1" aria-labelledby="noLinkModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header">
+          <h5 class="modal-title" id="noLinkModalLabel">Sin enlace disponible</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          No hay un enlace para la compra de entradas.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn error" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer común -->
   <footer>
     <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
   </footer>
 
-  <!-- Toggle sidebar + logout + lucide icons -->
-  <script src="./js/script.js"></script>
-  <!-- Lógica de eventos -->
+  <!-- Bootstrap Bundle (JS + Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Tu lógica de Firebase + eventos -->
   <script type="module" src="./js/events.js"></script>
+
+  <!-- Toggle del sidebar, logout y lucide-icons -->
+  <script>
+    // Mostrar/ocultar sidebar
+    document.getElementById("toggleNav")
+      .addEventListener("click", () => {
+        document.getElementById("sidebar").classList.toggle("active");
+      });
+
+    // Logout
+    document.getElementById("logoutSidebar")
+      .addEventListener("click", async e => {
+        e.preventDefault();
+        const { showAlert } = await import('./js/showAlert.js');
+        const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+        const auth = getAuth();
+        try {
+          await signOut(auth);
+          showAlert("Has cerrado sesión","success");
+        } catch {
+          showAlert("Error al cerrar sesión","error");
+        } finally {
+          setTimeout(()=> location.href="index.html",1000);
+        }
+      });
+
+    // Inicializar lucide icons
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
 </body>
 </html>
