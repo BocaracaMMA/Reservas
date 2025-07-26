@@ -811,3 +811,16 @@ main.container {
   object-fit: cover;
   border-radius: 8px;
 }
+
+/* ─── Responsive para eventos en móvil ───────────────────────────── */
+@media (max-width: 767px) {
+  .events-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .event-card .info p {
+    display: none;
+  }
+  .event-card img {
+    height: 140px;
+  }
+}
