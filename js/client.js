@@ -115,12 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3) Inicializar FullCalendar
     calendar = new FullCalendar.Calendar(calEl, {
       locale: 'es',
-      initialView: 'dayGridMonth',
+      initialView: '',
       timeZone: 'America/Costa_Rica',
       headerToolbar: {
-        left: 'prev,next today',
+        left: '',
         center: 'title',
-        right: 'dayGridMonth,dayGridWeek,dayGridDay'
+        right: ''
       },
       events(info, success, failure) {
         const q = query(
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       },
       eventContent() {
-        return { html: '<div style="font-size:20px;color:green;text-align:center;">✔️</div>' };
+        return { html: '<div style="font-size:20px;color:green;text-align:center;">✅</div>' };
       },
       dateClick(info) {
         const dateStr = info.dateStr;
@@ -204,19 +204,23 @@ async function checkExistingReservation(date, time) {
 
 async function addReservation(date, time) {
   try {
-    const qUsers = query(
-      collection(db, 'users'),
-      where('correo','==',auth.currentUser.email.toLowerCase())
-    );
-    const uSnap = await getDocs(qUsers);
-    if (uSnap.empty) {
+    // ¡Directo por UID!
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) {
       showAlert('Perfil no encontrado.', 'error');
       return;
     }
-    const u = uSnap.docs[0].data();
+    const u = userDoc.data();
+
     await addDoc(collection(db,'reservations'), {
-      date, time, user: auth.currentUser.email, nombre: u.nombre
+      date,
+      time,
+      user: auth.currentUser.email,   // mantiene tu lógica para reglas de update/delete
+      nombre: u.nombre
     });
+
+    // asistencia del día
     await setDoc(doc(db,'asistencias',date), { creadaEl: Date.now() }, { merge: true });
     await setDoc(doc(db,'asistencias',date,'usuarios',auth.currentUser.uid), {
       nombre: u.nombre, hora: time, presente: false
@@ -227,6 +231,7 @@ async function addReservation(date, time) {
     throw err;
   }
 }
+
 
 async function deleteReservation(resId) {
   try {
@@ -256,32 +261,33 @@ function openConfirmReservationModal(date, time) {
     </div>`;
   document.body.appendChild(modal);
 
-  document.getElementById('confirmBtn').onclick = async () => {
-    try {
-      const qUsers = query(
-        collection(db,'users'),
-        where('correo','==',auth.currentUser.email.toLowerCase())
-      );
-      const uSnap = await getDocs(qUsers);
-      if (uSnap.empty) {
-        showAlert('Usuario no encontrado.', 'error');
-        closeModal();
-        return;
-      }
-      if (!uSnap.docs[0].data().autorizado) {
-        showAlert('No autorizado.', 'error');
-        closeModal();
-        return;
-      }
-      await addReservation(date, time);
-      showAlert('Reserva confirmada', 'success');
-      calendar.refetchEvents();
-    } catch {
-      showAlert('Error confirmando reserva.', 'error');
-    } finally {
+document.getElementById('confirmBtn').onclick = async () => {
+  try {
+    // Leer tu propio doc por UID (cumple reglas)
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) {
+      showAlert('Usuario no encontrado.', 'error');
       closeModal();
+      return;
     }
-  };
+    const me = userDoc.data();
+    if (!me.autorizado) {
+      showAlert('No autorizado.❌', 'error');
+      closeModal();
+      return;
+    }
+
+    await addReservation(date, time);
+    showAlert('Reserva confirmada👍', 'success');
+    calendar.refetchEvents();
+  } catch (e) {
+    console.error(e);
+    showAlert('❗Error confirmando reserva.❗', 'error');
+  } finally {
+    closeModal();
+  }
+};
   document.getElementById('cancelBtn').onclick = closeModal;
 }
 

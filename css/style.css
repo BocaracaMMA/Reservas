@@ -172,7 +172,6 @@ button.delete-btn:hover {
   display: block;
 }
 
-
 .logo-text {
   font-size: 32px;
   font-weight: bold;
@@ -460,7 +459,6 @@ input:checked + .slider:before {
   color: #58a6ff; /* azul GitHub */
 }
 
-
 .sidebar ul li a:hover {
   color: #238636; /* verde GitHub */
 }
@@ -667,7 +665,6 @@ main.container {
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
 }
 
-
 /* Boton que genera el codigo */
 .btn.code-btn {
   background-color: #238636;  /* mismo verde GitHub */
@@ -812,6 +809,14 @@ main.container {
   border-radius: 8px;
 }
 
+/* Toolbard mensualidades */
+#mensuToolbar .form-select {
+  background-color:#21262d !important;
+  color:#c9d1d9 !important;
+  border-color:#30363d !important;
+}
+
+
 /* ─── Responsive para eventos en móvil ───────────────────────────── */
 @media (max-width: 767px) {
   .events-grid {
@@ -823,4 +828,839 @@ main.container {
   .event-card img {
     height: 140px;
   }
+}
+
+/* ─── Tienda: grid y tarjetas ─────────────────────────────────────────── */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 1rem;
+  margin: 2rem auto;
+  max-width: 1200px;
+}
+@media (max-width: 1024px) {
+  .products-grid { grid-template-columns: repeat(3,1fr); }
+}
+@media (max-width: 768px) {
+  .products-grid { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 420px) {
+  .products-grid { grid-template-columns: 1fr; }
+}
+
+.product-card {
+  background:#161b22;
+  border-radius:12px;
+  overflow:hidden;
+  display:flex; flex-direction:column;
+  transition: transform .2s, box-shadow .2s;
+}
+.product-card:hover { transform: translateY(-4px); box-shadow:0 8px 16px rgba(0,0,0,.5); }
+
+.product-thumb {
+  background:#0d1117;
+}
+.product-thumb img {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  background: transparent;
+}
+.product-card .info { padding:1rem; display:flex; flex-direction:column; gap:.5rem; }
+.product-card .info h3 { margin:0; text-align:center; color:#58a6ff; font-size:1.05rem; }
+.prod-meta { display:flex; justify-content:space-between; align-items:center; color:#c9d1d9; font-size:.9rem; }
+.prod-meta .price { font-weight:700; }
+
+/* Modal producto imagen */
+.product-modal-imgwrap {
+  width:100%; aspect-ratio: 1 / 1; overflow:hidden; border-radius:8px; margin-bottom:.5rem;
+}
+.product-modal-imgwrap img { width:100%; height:100%; object-fit:cover; }
+
+/* FAB carrito */
+.cart-fab {
+  position: fixed; right: 16px; bottom: 16px;
+  background:#238636; color:#fff; border:none;
+  padding:10px 14px; border-radius:999px; cursor:pointer;
+  z-index: 1100; box-shadow: 0 6px 16px rgba(0,0,0,.4);
+}
+.cart-fab span { font-weight:700; margin-left:6px; }
+
+/* Lista carrito */
+.cart-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem; }
+.cart-row img { width:48px; height:48px; object-fit:cover; border-radius:8px; }
+.cart-row .cart-info { flex:1; }
+.cart-row .cart-info .t { font-weight:600; }
+.cart-row .cart-info .p { font-size:.9rem; color:#8b949e; }
+
+/* ----- Checkout ----- */
+.checkout-wrap{
+  max-width: 1100px;
+  margin: 1rem auto 3rem;
+  display:grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 992px){
+  .checkout-wrap{ grid-template-columns: 1.2fr .8fr; } /* más ancho y balanceado */
+}
+.checkout-card{ background:#161b22; border-radius:12px; padding:1rem; }
+.checkout-item{ display:flex; gap:.75rem; align-items:center; }
+.checkout-item img{ width:64px; height:64px; object-fit:cover; border-radius:8px; }
+.qty-ctrl{ display:flex; gap:.375rem; align-items:center; }
+.qty-ctrl button{ background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; padding:.25rem .5rem; }
+.remove-btn{ background:#dc3545; color:#fff; border:none; border-radius:8px; padding:.35rem .6rem; }
+
+/* ===================================================================== */
+/* =====================  OVERRIDES ESPECÍFICOS  ======================= */
+/* ===================================================================== */
+
+/* 1) Tienda: miniaturas con altura real (evita “cuadro blanco”) */
+.product-thumb{
+  width: 100%;
+  aspect-ratio: 1 / 1;     /* cuadrado estable en la grilla */
+  overflow: hidden;
+  background:#0d1117;
+}
+.product-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 2) Modal de producto (solo tienda): ensancha y muestra imagen completa */
+#productModal .modal-content{
+  max-width: 520px;
+  width: min(92vw, 520px);
+}
+#productModal .product-modal-imgwrap{
+  width: 100%;
+  aspect-ratio: 4 / 3;     /* 4:3 luce más natural; cambia a 1 / 1 si prefieres */
+  background:#0d1117;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+#productModal .product-modal-imgwrap img{
+  width: 100%;
+  height: 100%;
+  max-height: none !important; /* anula el 20vh global */
+  object-fit: contain;         /* muestra la foto completa */
+  object-position: center;
+  display: block;
+}
+#productModal h2{ margin: .75rem 0 .25rem; text-align:center; }
+#productModal #pmPrice{ text-align:center; }
+#productModal #pmStock{ text-align:center; color:#8b949e; }
+#productModal #pmDesc{ text-align:center; }
+
+/* 3) Botón “Ver” verde dentro de tarjetas de producto */
+.product-card .info .btn{
+  background-color:#238636;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:.5rem 1rem;
+  font-weight:600;
+}
+.product-card .info .btn:hover{
+  background-color:#2ea043;
+}
+
+/* ───────── Mensualidades: ajuste mobile first (SOLO para esta página) ───────── */
+.calendar-wrapper main.card{
+  width: min(96vw, 1100px);
+  margin: 0 auto;
+}
+.calendar-wrapper h1{
+  font-size: clamp(1.35rem, 5.6vw, 2.2rem);
+  text-align: center;
+}
+.calendar-wrapper .logo-img{
+  width: clamp(64px, 16vw, 110px);
+  height: clamp(64px, 16vw, 110px);
+}
+
+/* Fallback de desplazamiento horizontal (desktop/tablet) */
+.table-container{
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ajustes generales de la tabla */
+#mensualidades-table{
+  width: 100%;
+}
+#mensualidades-table th,
+#mensualidades-table td{
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: middle;
+}
+
+/* ── MODO TARJETA en móviles: convierte la tabla en bloques legibles ── */
+
+  /* Etiquetas por columna */
+  #mensualidades-table td:nth-child(1)::before{ content:"Nombre"; }
+  #mensualidades-table td:nth-child(2)::before{ content:"Correo"; }
+  #mensualidades-table td:nth-child(3)::before{ content:"Autorizado"; }
+  #mensualidades-table td:nth-child(4)::before{ content:"Expira"; }
+  #mensualidades-table td:nth-child(5)::before{ content:"Estado"; }
+  #mensualidades-table td:nth-child(6)::before{ content:"Mes a pagar"; }
+  #mensualidades-table td:nth-child(7)::before{ content:"Acción"; }
+
+  /* inputs y botones a ancho completo dentro de la tarjeta */
+  #mensualidades-table input[type="month"]{
+    width:100%;
+    max-width:none;
+    background:#21262d;
+    border:1px solid #30363d;
+    color:#c9d1d9;
+    border-radius:6px;
+    padding:6px 8px;
+  }
+  #mensualidades-table .btn{
+    width:100%;
+  }
+
+  /* switch más compacto en móvil */
+  #mensualidades-table .switch{ width:46px; height:26px; }
+  #mensualidades-table .slider:before{ width:20px; height:20px; }
+
+/* ==== Tablas de administración 100% usables en móviles ==== */
+
+/* Contenedor con scroll horizontal (iOS-friendly) */
+.table-container{
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: .75rem;
+  border-radius: 12px;
+}
+
+/* Barra de scroll más discreta (opcional) */
+.table-container::-webkit-scrollbar{ height: 8px; }
+.table-container::-webkit-scrollbar-thumb{
+  background: #ffffff; border-radius: 8px;
+}
+
+/* Mensualidades: 7 columnas → pedimos un ancho mínimo cómodo */
+#mensualidades-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 920px; /* evita que se “aplasten” columnas; el resto se ve con scroll */
+}
+
+/* Usuarios: 4 columnas → un poco menos */
+#usuarios-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 700px;
+}
+
+/* Celdas y cabeceras: tipografía/paddings fluidos */
+#mensualidades-table th, #mensualidades-table td,
+#usuarios-table th,      #usuarios-table td{
+  padding: clamp(6px, 1.6vw, 10px);
+  font-size: clamp(12px, 2.7vw, 14px);
+  white-space: nowrap;      /* evita cortes feos; el usuario hace scroll horizontal */
+  text-overflow: ellipsis;
+  overflow: hidden;
+  border-bottom: 1px solid #262b33;
+}
+
+/* Cabeceras fijas dentro del contenedor (mejora lectura en scroll horizontal) */
+#mensualidades-table thead th,
+#usuarios-table thead th{
+  position: sticky;
+  top: 0;
+  background: #161b22;
+  z-index: 1;
+}
+
+/* Inputs/controles dentro de celdas: compactos en móvil */
+#mensualidades-table input[type="month"]{
+  background:#21262d; border:1px solid #37679e; color:#c9d1d9;
+  border-radius:6px; padding:6px 8px; width: 130px;
+}
+@media (max-width: 480px){
+  #mensualidades-table input[type="month"]{ width: 115px; }
+}
+
+/* Botones dentro de celdas */
+#mensualidades-table .btn, #usuarios-table .btn{
+  padding: 6px 10px; font-size: 12px; border-radius: 8px;
+}
+
+/* Switch compacto en tablas (reutiliza tu .switch) */
+#mensualidades-table .switch, #usuarios-table .switch{
+  transform: scale(.85);
+  transform-origin: left center;
+}
+
+/* Título, logo y tarjeta contenedora: escala mejor en móvil */
+.calendar-wrapper .card h1{
+  font-size: clamp(1.4rem, 5.5vw, 2.2rem);
+  margin: .25rem 0 1rem;
+}
+.logo-img{ width: clamp(70px, 22vw, 110px); height: clamp(70px, 22vw, 110px); }
+
+/* La tarjeta que envuelve la tabla no debe forzar ancho en móvil */
+.calendar-wrapper .card{
+  width: 100%;
+  max-width: 1100px;
+  box-sizing: border-box;
+}
+
+/* ───────────────── Mensualidades: barra de orden ───────────────── */
+#mensualidades .subs-controls{
+  display:flex; 
+  align-items:center; 
+  gap:.5rem;
+  margin: .25rem 0 .5rem;
+}
+#mensualidades .subs-controls label{ color:#eeeeee; }
+#mensualidades .subs-controls select{
+  background:#21262d; border:1px solid #30363d; color:#c9d1d9;
+  border-radius:8px; padding:.4rem .6rem;
+}
+
+/* El contenedor-card principal */
+#mensualidades.card{ width:min(96vw,1100px); margin:auto; }
+
+/* Tabla normal en desktop; tarjetas elegantes en móvil */
+@media (max-width: 768px){
+  #mensualidades-table thead{ display:none; }
+  #mensualidades-table, #mensualidades-table tbody,
+  #mensualidades-table tr, #mensualidades-table td{
+    display:block; width:100%;
+  }
+
+  /* Tarjeta */
+  #mensualidades-table tr{
+    margin-bottom: 14px;
+    background:#161b22;
+    border:1px solid #30363d;
+    border-radius:14px;
+    padding:12px 12px 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+
+  /* Celdas en dos columnas: etiqueta + valor/control */
+  #mensualidades-table td{
+    border:0;
+    padding:8px 0;
+    display:grid;
+    grid-template-columns: 44% 56%;
+    align-items:center;
+    gap:10px;
+  }
+  #mensualidades-table td::before{
+    color:#8b949e;
+    font-weight:600;
+    content: attr(data-label);
+  }
+
+  /* Etiquetas automáticamente por orden de columna */
+  #mensualidades-table td:nth-child(1){ --label:"Nombre"; }
+  #mensualidades-table td:nth-child(2){ --label:"Correo"; }
+  #mensualidades-table td:nth-child(3){ --label:"Autorizado"; }
+  #mensualidades-table td:nth-child(4){ --label:"Expira"; }
+  #mensualidades-table td:nth-child(5){ --label:"Estado"; }
+  #mensualidades-table td:nth-child(6){ --label:"Mes a pagar"; }
+  #mensualidades-table td:nth-child(7){ --label:"Acción"; }
+
+  /* Truco: inyectamos la etiqueta en data-label si no la has puesto en JS */
+  #mensualidades-table td:not([data-label])::before{
+    content: var(--label);
+  }
+
+  /* Controles compactos */
+  #mensualidades-table input[type="month"],
+  #mensualidades-table select{
+    width:100%;
+    background:#21262d; border:1px solid #30363d; color:#c9d1d9;
+    border-radius:8px; padding:.45rem .6rem;
+  }
+  #mensualidades-table .switch{ width:50px; height:28px; }
+  #mensualidades-table .slider:before{ width:22px; height:22px; }
+
+  /* Celda de Acción: botón corto y a la derecha */
+  #mensualidades-table td:last-child{
+    display:flex; justify-content:flex-end; align-items:center;
+  }
+  #mensualidades-table td:last-child .btn{
+    padding:.5rem .9rem;
+    border-radius:10px;
+    width:auto;              /* deja de ocupar todo el ancho */
+    min-width: 120px;
+  }
+}
+
+/* Desktop: un poco más compacto y con scroll horizontal si hace falta */
+.table-container{
+  width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  border-radius:12px; margin-top:.5rem;
+}
+.table-container::-webkit-scrollbar{ height:8px; }
+.table-container::-webkit-scrollbar-thumb{ background:#30363d; border-radius:8px; }
+
+/* Título y logo un poquito más fluidos */
+#mensualidades .logo-img{
+  width: clamp(70px, 18vw, 110px); height: clamp(70px, 18vw, 110px);
+}
+#mensualidades h1{
+  font-size: clamp(1.4rem, 5.5vw, 2.2rem);
+  text-align:center; margin:.25rem 0 .5rem;
+}
+
+/* ====== Bootstrap modal “bonito” (look de tu captura) ====== */
+.appmodal { border: none; border-radius: 1rem; }
+.appmodal .modal-header { border-bottom: none; color:#fff; border-radius: 1rem 1rem 0 0; }
+.appmodal .btn-close { filter: brightness(0) invert(1); opacity:.8; }
+.appmodal .btn-close:hover { opacity:1; }
+.appmodal .modal-body { background:#fff; color:#495057; }
+.appmodal .modal-footer { border-top: none; background:#fff; }
+
+.gradient-danger{ background: linear-gradient(90deg,#ff6b6b,#ff8787); }
+.gradient-success{ background: linear-gradient(90deg,#22c55e,#4ade80); }
+.gradient-info{ background: linear-gradient(90deg,#3b82f6,#60a5fa); }
+.gradient-warning{ background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+
+.appmodal .btn { padding:.6rem 1.5rem; border-radius:.5rem; font-weight:500; }
+
+/* ====== Página de Mensualidades: texto claro y controles dark ====== */
+.page-mensualidades .card,
+.page-mensualidades table,
+.page-mensualidades label,
+.page-mensualidades h1,
+.page-mensualidades th,
+.page-mensualidades td {
+  color: #e6edf3 !important;   /* blanco GitHub */
+}
+
+.page-mensualidades input,
+.page-mensualidades select,
+.page-mensualidades button.btn,
+.page-mensualidades .form-select {
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+}
+
+.page-mensualidades .form-select:focus,
+.page-mensualidades input:focus {
+  outline: none;
+  box-shadow: 0 0 0 .2rem rgba(35,134,54,.25);
+  border-color: #238636;
+}
+
+/* Botón Guardar de ancho contenido en móvil */
+@media (max-width: 768px){
+  #mensualidades-table .btnPay.btn{
+    width: 100%;
+    max-width: 360px;
+  }
+}
+
+/* Filtros arriba (si los usas) */
+#mensaFilterBar .form-select {
+  min-width: 150px;
+}
+
+/* ======= Filtros (Usuarios) centrados bajo el título ======= */
+.users-filters{
+  width: 100%;
+  display: flex;
+  justify-content: center;     /* <— centra horizontalmente */
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: .5rem 0 1rem;
+}
+
+.users-filters label{
+  color: #e6edf3;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;      /* en móviles: etiqueta arriba, select abajo */
+  align-items: center;
+  gap: .35rem;
+  text-align: center;
+  min-width: 160px;
+}
+
+@media (min-width: 768px){
+  .users-filters label{
+    flex-direction: row;       /* en desktop: etiqueta y select en una fila */
+    text-align: left;
+  }
+}
+
+/* Select oscuro que ya veníamos usando */
+.dark-select{
+  background: #21262d;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 6px 10px;
+  outline: none;
+}
+.dark-select:focus{
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 2px rgba(88,166,255,.15);
+}
+
+/* === Login con pestañas (no afecta otras vistas) =================== */
+.auth-card{
+  /* tu .card ya define fondo, bordes y sombra; aquí solo anchura */
+  max-width: 520px;       /* como tu login original */
+  margin: 0 auto;         /* centrado */
+  width: 100%;
+}
+
+.auth-tabs{
+  display: flex;
+  gap: .5rem;
+  border-bottom: 1px solid #30363d;
+  margin: -4px -4px 12px -4px; /* cuadra visual con padding interno de .card */
+  padding: 0 4px 8px 4px;
+}
+
+.auth-tab{
+  background: transparent;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  padding: .45rem .9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.auth-tab.active{
+  background: #21262d;
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+
+.auth-panel{ display: none; }
+.auth-panel.active{ display: block; }
+
+/* el formulario mantiene tu look original */
+.auth-panel form h2{
+  margin-top: 0;
+  margin-bottom: .75rem;
+}
+.auth-panel form button[type="submit"]{
+  width: 100%;
+}
+
+/* ====== Tarjetas de precios, compactas y elegantes ====== */
+.pricing-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .75rem;
+}
+
+.price-card{
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.price-head{
+  padding: .75rem 1rem;
+  text-align: center;
+  color: #fff;
+}
+.head-blue { background: linear-gradient(90deg,#2563eb,#3b82f6); }
+.head-green{ background: linear-gradient(90deg,#15803d,#22c55e); }
+
+.price-title{ margin: 0; font-weight: 700; }
+
+.price-body{ padding: .9rem 1rem; }
+.price-amount{
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: .25rem;
+}
+.price-amount small{ font-size: .9rem; color: #8b949e; }
+
+.price-list{
+  list-style: none; padding: 0; margin: .5rem 0 1rem;
+  color: #c9d1d9; line-height: 1.35;
+}
+.price-list .muted{ color:#8b949e; }
+
+.price-cta{ text-align:center; }
+.pill{
+  display:inline-block; padding:.25rem .6rem; border-radius:999px;
+  font-size:.8rem; border:1px solid #30363d; color:#8b949e;
+}
+.pill.success{ border-color:#2ea043; color:#2ea043; }
+
+/* en pantallas anchas (pero sigue dentro de la card) */
+@media (min-width: 720px){
+  .pricing-grid{ grid-template-columns: 1fr 1fr; }
+}
+
+/* ====== LOGIN (pestaña "Ingreso") – Overrides seguros ====== */
+#tab-login .card {
+  max-width: 640px;                  /* evita que se estire en pantallas grandes */
+  margin: 0 auto;
+}
+
+/* Contenedor interior para centrar el formulario */
+#tab-login #loginForm {
+  width: 100%;
+  max-width: 520px;                  /* ancho cómodo del formulario */
+  margin: 0 auto;
+}
+
+/* Apilar etiquetas y campos (nada en línea) */
+#tab-login #loginForm label {
+  display: block;
+  margin: 10px 0 6px;
+  color: #8b949e;                    /* igual que el resto del sitio */
+  font-size: 14px;
+}
+
+#tab-login #loginForm input[type="email"],
+#tab-login #loginForm input[type="password"] {
+  width: 100%;
+  display: block;
+  background-color: #21262d;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Botón: centrado, altura cómoda y sin ocupar TODO el ancho en desktop */
+#tab-login #loginForm button[type="submit"] {
+  display: block;
+  width: 100%;
+  max-width: 360px;                  /* reduce el ancho del botón en desktop */
+  margin: 14px auto 8px;             /* centrado */
+  padding: 10px 16px;                /* altura justa */
+  background-color: #238636;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+#tab-login #loginForm button[type="submit"]:hover {
+  background-color: #2ea043;
+}
+
+/* Pie del formulario */
+#tab-login #loginForm p {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+/* Responsive: en móviles el botón vuelve a 100% y todo ocupa bien */
+@media (max-width: 480px) {
+  #tab-login #loginForm { max-width: 100%; }
+  #tab-login #loginForm button[type="submit"] { max-width: 100%; }
+}
+
+/* ===== Perfil ===== */
+.profile-card{
+  width: min(96vw, 720px);
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.profile-header{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.profile-header .avatar{
+  width: 64px; height: 64px; border-radius: 50%;
+  background:#21262d; border:1px solid #30363d; color:#c9d1d9;
+  display:grid; place-items:center; font-weight:800; font-size:1.1rem;
+}
+
+.ph-info h2{ margin: 0 0 6px; }
+.ph-email{ color:#8b949e; font-size:.95rem; }
+.ph-badges{ display:flex; gap:8px; flex-wrap:wrap; }
+.ph-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+/* Chips estado/plan (verde/amarillo/rojo) */
+.tag{
+  display:inline-block; padding:.2rem .6rem; border-radius:999px;
+  font-size:.82rem; font-weight:600; border:1px solid transparent;
+}
+.tag.info{    background:#0d2b4d; color:#cfe9ff; border-color:#1f4b7b; }
+.tag.success{ background:#1f6f2a; color:#d4f1d8; border-color:#2c8a3a; } /* Activa (verde) */
+.tag.warn{    background:#5b3a06; color:#ffe1b2; border-color:#8a5b0b; } /* Por Vencer (amarillo) */
+.tag.error{   background:#5a1f23; color:#ffd6da; border-color:#a23a42; } /* Vencida (rojo) */
+
+/* Grid de datos */
+.profile-grid{
+  margin-top: 8px;
+  display:grid; grid-template-columns: 1fr 2fr; gap:8px 14px;
+}
+.profile-grid .label{ color:#8b949e; }
+.profile-grid .value{ color:#c9d1d9; word-break:break-word; }
+
+/* Form edición */
+.edit-form{ margin: 8px 0 10px; background:#0f141a; border:1px solid #30363d; border-radius:10px; padding:10px; }
+.ef-grid{ display:grid; grid-template-columns: 120px 1fr; gap:10px 12px; align-items:center; }
+.ef-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+
+.btn.small{ padding:6px 10px; font-size:.85rem; border-radius:8px; }
+.btn.outline{ background:transparent; color:#58a6ff; border:1px solid #58a6ff; }
+.btn.outline:hover{ background:rgba(88,166,255,.12); }
+
+/* Mejoras móviles */
+@media (max-width: 560px){
+  .profile-card{ width: min(96vw, 96vw); }
+  .profile-header .avatar{ width:56px; height:56px; font-size:1rem; }
+  .profile-grid{ grid-template-columns: 1fr; }
+  .ef-grid{ grid-template-columns: 1fr; }
+}
+
+
+/* ============================================================
+   FIX: Mensualidades SIEMPRE en formato tabla (también móvil)
+   - Mantiene encabezados
+   - Desactiva el modo "tarjeta" previo en @media max-width:768px
+   - Habilita scroll horizontal elegante en pantallas pequeñas
+   ============================================================ */
+
+/* Contenedor con scroll horizontal (no cambia tu marca) */
+.table-container{
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: .75rem;
+  border-radius: 12px;
+}
+
+/* Mantén la tabla con ancho mínimo para que no se aplaste */
+#mensualidades-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 920px;          /* <- ajusta si quieres más compacto */
+}
+
+/* Cabeceras pegajosas al hacer scroll horizontal/vertical */
+#mensualidades-table thead th{
+  position: sticky;
+  top: 0;
+  background: #161b22;
+  z-index: 1;
+}
+
+/* Tipografía y separación coherente */
+#mensualidades-table th,
+#mensualidades-table td{
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #fdfeff;           /* Fuerza texto claro en la tabla */
+  border-bottom: 1px solid #262b33;
+  white-space: nowrap;       /* Evita cortes feos; usarás scroll horizontal */
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Botones y controles más compactos dentro de la tabla */
+#mensualidades-table .btn{
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  width: auto;               /* <- evita "botón a 100%" */
+}
+#mensualidades-table input[type="month"]{
+  background:#21262d;
+  border:1px solid #30363d;
+  color:#fafdff;
+  border-radius:6px;
+  padding:6px 8px;
+  width: 130px;
+}
+
+/* Switch ligeramente reducido para celdas estrechas */
+#mensualidades-table .switch{
+  transform: scale(.9);
+  transform-origin: left center;
+}
+
+/* ---------- OVERRIDE clave: anula el "modo tarjeta" móvil ---------- */
+@media (max-width: 768px){
+  /* Asegura estructura de TABLA, no bloques */
+  #mensualidades-table thead{ display: table-header-group !important; }
+  #mensualidades-table tbody{ display: table-row-group !important; }
+  #mensualidades-table tr   { display: table-row !important; }
+  #mensualidades-table td,
+  #mensualidades-table th   { display: table-cell !important; width: auto !important; }
+
+  /* Elimina etiquetas generadas por ::before en el modo tarjeta */
+  #mensualidades-table td::before{ content: none !important; }
+
+  /* Mantén el scroll horizontal en móviles */
+  .table-container{ overflow-x: auto !important; }
+}
+
+/* ─── Mensualidades: barra de filtros fija ───────────────────────────── */
+.mensu-controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin: 6px auto 12px;
+}
+.mensu-controls label{
+  color:#8b949e;
+  font-size:12px;
+}
+.mensu-controls select{
+  background:#21262d;
+  border:1px solid #30363d;
+  color:#c9d1d9;
+  border-radius:8px;
+  padding:8px 10px;
+  min-width: 170px;
+}
+@media (max-width:480px){
+  .mensu-controls{ gap:8px; }
+  .mensu-controls select{ min-width: 150px; }
+}
+
+/* ─── Notificaciones (campana junto al botón de escaneo) ─── */
+.notify-bell{
+  display:inline-flex;
+  align-items:center;
+  gap:.15rem;
+  position: static;         /* queda dentro del contenedor del botón de escaneo */
+  margin-right: .5rem;      /* separada del botón QR */
+}
+.notify-bell .badge{
+  display:inline-flex;
+  min-width: 10px;
+  height: 20px;
+  padding: 0 6px;
+  align-items:center;
+  justify-content:center;
+  border-radius: 999px;
+  background: #a83030;      /* rojo GitHub */
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
 }

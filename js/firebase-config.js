@@ -7,13 +7,14 @@ import { getFirestore }   from "https://www.gstatic.com/firebasejs/11.6.1/fireba
 import { getStorage }     from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 import { getDatabase }    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-// 2) Tu configuración (reemplaza con la de tu proyecto)
+// 2) La configuración
 const firebaseConfig = {
   apiKey: "AIzaSyD6CUddDq2jRZ3XzNT5FfXAc-ALStQ4hdo",
   authDomain: "bocaracadb.firebaseapp.com",
   databaseURL: "https://bocaracadb-default-rtdb.firebaseio.com",
   projectId: "bocaracadb",
-  storageBucket: "bocaracadb.appspot.com",    // asegúrate de que coincide
+  storageBucket: "bocaracadb.firebasestorage.app",
+  
   messagingSenderId: "420681635696",
   appId: "1:420681635696:web:c4c1a47be59fb45912a1b5",
   measurementId: "G-QZS4RL1H5Q"
@@ -23,7 +24,7 @@ const firebaseConfig = {
 const app       = initializeApp(firebaseConfig);
 const auth      = getAuth(app);
 const db        = getFirestore(app);
-const storage   = getStorage(app);
+const storage   = getStorage(app, "gs://bocaracadb.firebasestorage.app");
 const database  = getDatabase(app);
 
 // 4) Exportar para usarlos en el resto de módulos

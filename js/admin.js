@@ -74,11 +74,11 @@ function iniciarPanelAdmin() {
 
   const calendar = new FullCalendar.Calendar(calendarEl, {
     locale: 'es',
-    initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+    initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'dayGridMonth',
     headerToolbar: {
-      left: 'prev,next today',
+      left: '',
       center: 'title',
-      right: 'dayGridMonth,dayGridWeek,dayGridDay'
+      right: ''
     },
     events(info, success, failure) {
       const q = query(collection(db, 'reservations'));

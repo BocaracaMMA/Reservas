@@ -43,7 +43,7 @@ loginForm.addEventListener('submit', async (event) => {
 
         // Verificamos si el objeto 'user' no es null y tiene la propiedad email
         if (user && user.email) {
-            showAlert("¡Bienvenido!", 'success');
+            showAlert("¡Bienvenido!👍", 'success');
             localStorage.setItem('failedAttempts', 0); // Reiniciar los intentos fallidos en el login
 
             // Redirigir después de un pequeño delay

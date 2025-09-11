@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Productos</title>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
+
+  <!-- Cropper -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css"/>
+
+  <!-- Quill -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+  <!-- CSS global -->
+  <link rel="stylesheet" href="./css/style.css"/>
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon"/>
+
+  <style>
+    .product-container { max-width: 900px; margin:2rem auto; padding:0 1rem; }
+    .card.product-form { max-width:900px; margin:0 auto 2rem; padding:1.5rem; }
+    .product-form .form-row { display:flex; gap:1rem; flex-wrap:wrap; }
+    .product-form .form-row .form-group { flex:1; min-width:200px; }
+    .product-form .form-group { display:flex; flex-direction:column; margin-bottom:1rem; }
+    .product-form label { margin-bottom:.25rem; font-size:.9rem; color:#c9d1d9; }
+    .product-form input, .product-form textarea {
+      background:#21262d; border:1px solid #30363d; border-radius:5px; color:#c9d1d9; padding:8px; font-size:.9rem;
+    }
+    .products-table-container { padding:1.5rem; }
+    .products-table { width:100%; border-collapse:collapse; }
+    .products-table th, .products-table td {
+      border-bottom:1px solid #30363d; padding:.75rem 1rem; text-align:left; font-size:.9rem;
+    }
+    .products-table th { color:#8b949e; } .products-table td{ color:#c9d1d9; }
+  </style>
+</head>
+<body>
+
+  <!-- Botón hamburguesa -->
+  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar admin -->
+  <nav id="sidebar" class="sidebar">
+    <ul>
+      <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+      <li><a href="./control-mensualidades.html"><i class="bi bi-calendar-week"></i> Mensualidades</a></li>
+      <li><a href="./marcar-asistencia.html"><i class="bi bi-person-bounding-box"></i> Asistencias</a></li>
+      <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="./admin-events.html"><i class="bi bi-calendar-week"></i> Crear Evento</a></li>
+      <li><a href="./admin-products.html"><i class="bi bi-bag-fill"></i>Tienda</a></li>
+      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+    </ul>
+  </nav>
+
+  <main class="product-container">
+    <div class="logo-container">
+      <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img"/>
+      <h1>Gestión de Productos</h1>
+    </div>
+
+    <div class="card product-form">
+      <form id="productForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pTitle">Título</label>
+            <input id="pTitle" required>
+          </div>
+          <div class="form-group">
+            <label for="pPrice">Precio</label>
+            <input id="pPrice" type="number" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label for="pStock">Stock</label>
+            <input id="pStock" type="number" step="1" min="0" value="0" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pImageFile">Imagen (sube archivo)</label>
+            <input id="pImageFile" type="file" accept="image/*">
+          </div>
+          <div class="form-group">
+            <label for="pImageUrl">o URL de imagen</label>
+            <input id="pImageUrl" type="url" placeholder="https://...">
+            <img id="pImagePreview" style="margin-top:.5rem;max-width:160px;border-radius:8px;display:none;">
+          </div>
+          <div class="form-group" style="display:flex; align-items:center; gap:.5rem;">
+              <label class="switch">
+                <input id="pActive" type="checkbox" checked>
+                <span class="slider round"></span>
+              </label>
+              <span>Activo</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <div id="pDescEditor" style="height:150px; background:#21262d;"></div>
+          <input type="hidden" id="pDesc">
+        </div>
+
+        <div class="form-group">
+          <button class="btn" type="submit">Guardar</button>
+          <button class="btn error" type="button" id="cancelBtn">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card products-table-container">
+      <table class="products-table" id="productsTable">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="productsTbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal Cropper 1:1 -->
+  <div id="cropperModal" class="custom-modal" style="display:none;">
+    <div class="modal-content" style="max-width:520px;">
+      <h3>Recorta tu imagen (1:1)</h3>
+      <img id="cropperImage" style="max-width:100%;"/>
+      <div style="margin-top:1rem; display:flex; gap:.5rem; justify-content:center;">
+        <button id="cropBtn" class="btn">Recortar & Subir</button>
+        <button id="cancelCropBtn" class="btn error">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toast-container"></div>
+  <script type="module" src="./js/toast.js"></script>
+
+  <!-- Quill + Cropper -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+
+  <!-- Firebase + lógica -->
+  <script type="module" src="./js/firebase-config.js"></script>
+  <script type="module" src="./js/admin-products.js"></script>
+
+    <!-- Toggle del sidebar, logout y lucide-icons -->
+    <script src="./js/script.js"></script>
+
+  <!-- Toggle + logout -->
+  <script>
+    document.getElementById("toggleNav")
+      .addEventListener("click", ()=> document.getElementById("sidebar").classList.toggle("active"));
+    document.getElementById("logoutSidebar")
+      .addEventListener("click", async (e)=>{
+        e.preventDefault();
+        const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+        const { showAlert } = await import("./js/showAlert.js");
+        try { await signOut(getAuth()); showAlert("Has cerrado sesión","success"); }
+        catch { showAlert("Error al cerrar sesión","error"); }
+        finally { setTimeout(()=> location.href="index.html",1000); }
+      });
+  </script>
+</body>
+</html>

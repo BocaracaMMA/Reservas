@@ -37,10 +37,13 @@
   <nav id="sidebar" class="sidebar">
     <ul>
       <li><a href="./client-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./profile.html"><i class="bi bi-person-badge-fill"></i> Perfil</a></li>
       <li><a href="./events.html"><i class="bi bi-calendar-event"></i> Eventos</a></li>
+      <li><a href="./store.html"><i class="bi bi-bag-fill"></i> Tienda</a></li>
       <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
     </ul>
   </nav>
+
 
   <main class="container">
     <div class="logo-container">
@@ -48,6 +51,11 @@
       <h1 class="logo-text">Calendario de Clases</h1>
       <h2 id="attendanceCodeDisplay" class="attendance-code">Cargando código de asistencia...</h2>
       <div id="local-time" class="mt-1 text-muted"></div>
+    </div>
+
+    <!-- Aviso de membresía (in-app) -->
+    <div id="mshipBanner" class="mship-banner" style="display:none;">
+      <span id="mshipText"></span>
     </div>
 
     <!-- Botón para abrir el popup de escaneo -->
@@ -84,6 +92,7 @@
 
   <div id="toast-container"></div>
 
+  <script type="module" src="./js/notifications.js"></script>
   <!-- Toasts -->
   <script type="module" src="./js/toast.js"></script>
   <!-- Lógica del cliente (reservas, mostrar código, reloj...) -->

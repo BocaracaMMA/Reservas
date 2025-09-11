@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Perfil</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+</head>
+<body>
+
+  <!-- Botón hamburguesa -->
+  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <nav id="sidebar" class="sidebar">
+    <ul>
+      <li><a href="./client-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./profile.html"><i class="bi bi-person-badge-fill"></i> Perfil</a></li>
+      <li><a href="./events.html"><i class="bi bi-calendar-event"></i> Eventos</a></li>
+      <li><a href="./store.html"><i class="bi bi-bag-fill"></i> Tienda</a></li>
+      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+    </ul>
+  </nav>
+
+  <main class="container">
+    <div class="logo-container">
+      <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
+      <h1 class="logo-text">Mi perfil</h1>
+    </div>
+
+    <section class="card profile-card" id="profileCard">
+      <!-- Encabezado -->
+      <div class="profile-header">
+        <div class="avatar" id="pfAvatar">U</div>
+        <div class="ph-info">
+          <div class="ph-top">
+            <h2 id="pfDisplay">—</h2>
+            <button id="pfEdit" class="btn outline small" type="button" title="Editar nombre y apellidos">
+              <i class="bi bi-pencil-square"></i> Editar
+            </button>
+          </div>
+          <div class="ph-badges">
+            <span class="tag info" id="pfPlan">—</span>
+            <span class="tag success" id="pfStatus">—</span>
+          </div>
+          <div class="ph-email" id="pfEmail">—</div>
+        </div>
+      </div>
+
+      <!-- Formulario de edición (oculto por defecto) -->
+      <form id="editForm" class="edit-form" hidden>
+        <div class="ef-grid">
+          <label for="efNombre">Nombre</label>
+          <input id="efNombre" type="text" required autocomplete="off" />
+
+          <label for="efApellidos">Apellidos</label>
+          <input id="efApellidos" type="text" autocomplete="off" />
+
+          <!-- NUEVO: Cédula -->
+          <label for="efCedula">Cédula (opcional)</label>
+          <input id="efCedula" type="text" inputmode="numeric" autocomplete="off"
+                 placeholder="Solo dígitos (8–20)" />
+        </div>
+
+        <div class="ef-actions">
+          <button type="submit" class="btn success small">Guardar</button>
+          <button type="button" id="efCancel" class="btn error small">Cancelar</button>
+        </div>
+      </form>
+
+      <!-- Datos -->
+      <div class="profile-grid">
+        <div class="label">Nombre</div>      <div class="value" id="pfNombre">—</div>
+        <div class="label">Apellidos</div>   <div class="value" id="pfApellidos">—</div>
+        <div class="label">Correo</div>      <div class="value" id="pfCorreo">—</div>
+        <div class="label">Cédula</div>      <div class="value" id="pfCedula">—</div> <!-- NUEVO -->
+        <div class="label">Membresía</div>   <div class="value" id="pfMembresia">—</div>
+        <div class="label">Estado</div>      <div class="value" id="pfEstado">—</div>
+        <div class="label">Expira</div>      <div class="value" id="pfExpira">—</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+  </footer>
+
+  <script type="module" src="./js/notifications.js"></script>
+  <script type="module" src="./js/profile.js"></script>
+</body>
+</html>

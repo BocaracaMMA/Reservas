@@ -13,7 +13,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
 
-// ─── 0) Función auxiliar para enganchar el toggleNav ─────────────────────────
+// ─── Sidebar ─────────────────────────────────────────────────────────
 function setupSidebarToggle() {
   const toggleButton = document.getElementById("toggleNav");
   const sidebar      = document.getElementById("sidebar");
@@ -23,18 +23,27 @@ function setupSidebarToggle() {
     });
   }
 }
-
-// ➤ Enganchamos también **ANTES** de DOMContentLoaded, igual que en admin.js
 setupSidebarToggle();
 
-document.addEventListener("DOMContentLoaded", () => {
-  // 1) Auto‑logout por inactividad
-  setupInactivityTimeout();
+// ─── Estado de UI ───────────────────────────────────────────────────
+let usersCache = []; // { id, nombre, correo, autorizado, attendanceCode, ... }
 
-  // 2) Volver a enganchar toggle (por si llegó tarde)
+const $tbody      = () => document.querySelector("#usuarios-table tbody");
+const $filter     = () => document.getElementById("filterState");
+const $sort       = () => document.getElementById("sortBy");
+
+// Normaliza para ordenar ignorando acentos y mayúsculas
+const norm = s => (s ?? '')
+  .toString()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g,'')
+  .toLowerCase();
+
+// ─── Inicio ─────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  setupInactivityTimeout();
   setupSidebarToggle();
 
-  // 3) Seguridad: solo admins
   onAuthStateChanged(auth, user => {
     const ADMIN_UIDS = [
       "TWAkND9zF0UKdMzswAPkgas9zfL2",
@@ -45,7 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 4) Logout desde el sidebar
   const logoutSidebar = document.getElementById("logoutSidebar");
   if (logoutSidebar) {
     logoutSidebar.addEventListener("click", async e => {
@@ -53,24 +61,28 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await signOut(auth);
         showAlert("Has cerrado sesión", "success");
-        setTimeout(() => window.location.href = "index.html", 1000);
+        setTimeout(() => (window.location.href = "index.html"), 1000);
       } catch {
         showAlert("Error al cerrar sesión", "error");
       }
     });
   }
 
-  // 5) Cargar tabla de usuarios
-  loadUsers();
+  // cargar y enganchar filtros
+  loadUsers().then(() => {
+    if ($filter()) $filter().addEventListener('change', renderUsers);
+    if ($sort())   $sort().addEventListener('change', renderUsers);
+  });
 });
 
-
-// ─── Generador de código de 4 dígitos ────────────────────────────────────────
-function randomCode() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
+// ─── Helpers de datos ───────────────────────────────────────────────
+function updateUserInCache(id, patch) {
+  const i = usersCache.findIndex(u => u.id === id);
+  if (i >= 0) usersCache[i] = { ...usersCache[i], ...patch };
 }
 
 async function generateUniqueCode() {
+  const randomCode = () => Math.floor(1000 + Math.random() * 9000).toString();
   let code, exists = true;
   while (exists) {
     code = randomCode();
@@ -81,53 +93,79 @@ async function generateUniqueCode() {
   return code;
 }
 
-
-// ─── Renderizado de usuarios ─────────────────────────────────────────────────
+// ─── Carga inicial ──────────────────────────────────────────────────
 async function loadUsers() {
-  const tbody = document.querySelector("#usuarios-table tbody");
+  const snap = await getDocs(collection(db, "users"));
+  usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderUsers();
+}
+
+// ─── Render con filtros y orden ─────────────────────────────────────
+function renderUsers() {
+  const tbody = $tbody();
+  if (!tbody) return;
   tbody.innerHTML = "";
 
-  const usersSnap = await getDocs(collection(db, "users"));
-  usersSnap.forEach(docSnap => {
-    const u   = docSnap.data();
-    const uid = docSnap.id;
+  const state = $filter() ? $filter().value : 'all'; // all | auth | noauth
+  const order = $sort() ? $sort().value   : 'az';   // az  | za
+
+  // 1) filtrar
+  let list = usersCache.filter(u => {
+    if (state === 'auth')   return !!u.autorizado;
+    if (state === 'noauth') return !u.autorizado;
+    return true; // all
+  });
+
+  // 2) ordenar
+  list.sort((a, b) => {
+    const an = norm(a.nombre);
+    const bn = norm(b.nombre);
+    const cmp = an.localeCompare(bn);
+    return order === 'za' ? -cmp : cmp;
+  });
+
+  // 3) dibujar
+  list.forEach(u => {
     const tr  = document.createElement("tr");
-    tr.id     = `row-${uid}`;
+    tr.id     = `row-${u.id}`;
     tr.innerHTML = `
-      <td>${u.nombre}</td>
-      <td>${u.correo}</td>
+      <td>${u.nombre ?? ''}</td>
+      <td>${u.correo ?? ''}</td>
       <td>
         <label class="switch">
-          <input type="checkbox" ${u.autorizado ? 'checked' : ''} data-id="${uid}">
+          <input type="checkbox" ${u.autorizado ? 'checked' : ''} data-id="${u.id}">
           <span class="slider round"></span>
         </label>
       </td>
-      <td id="code-${uid}">${u.attendanceCode || '—'}</td>
-      <td>
-        <button class="btn code-btn" data-uid="${uid}">🎲</button>
-      </td>
+      <td id="code-${u.id}">${u.attendanceCode || '—'}</td>
+      <td><button class="btn code-btn" data-uid="${u.id}">🎲</button></td>
     `;
     tbody.appendChild(tr);
 
-    // listener para el switch “autorizado”
+    // Toggle autorizado
     tr.querySelector("input[type='checkbox']").addEventListener("change", async e => {
+      const checked = e.target.checked;
       try {
-        await updateDoc(doc(db, "users", uid), { autorizado: e.target.checked });
+        await updateDoc(doc(db, "users", u.id), { autorizado: checked });
+        updateUserInCache(u.id, {autorizado: checked});
         showAlert("Estado actualizado correctamente", "success");
+        // Reaplicar filtros/orden (por si el registro ya no debe verse)
+        renderUsers();
       } catch {
         showAlert("No se pudo actualizar el estado.", "error");
+        // revertir visual si falló
+        e.target.checked = !checked;
       }
     });
-  });
 
-  // listener para los botones “🎲” de regenerar código
-  document.querySelectorAll('.code-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const uid = btn.dataset.uid;
+    // Botón para regenerar el código
+    tr.querySelector('.code-btn').addEventListener('click', async () => {
       try {
         const newCode = await generateUniqueCode();
-        await updateDoc(doc(db, 'users', uid), { attendanceCode: newCode });
-        document.getElementById(`code-${uid}`).textContent = newCode;
+        await updateDoc(doc(db, 'users', u.id), { attendanceCode: newCode });
+        updateUserInCache(u.id, { attendanceCode: newCode });
+        const cell = document.getElementById(`code-${u.id}`);
+        if (cell) cell.textContent = newCode;
         showAlert(`Código actualizado: ${newCode}`, "success");
       } catch (err) {
         console.error("Error generando attendanceCode:", err);
