@@ -73,7 +73,6 @@ function validBirthDate(iso) {
 }
 
 /* ───────────── Referencias UI ───────────── */
-const avatarEl   = document.getElementById('pfAvatar');   // puede no existir (ya no hay avatar)
 const displayEl  = document.getElementById('pfDisplay');
 const emailChip  = document.getElementById('pfEmail');
 const planChip   = document.getElementById('pfPlan');
@@ -121,7 +120,6 @@ onAuthStateChanged(auth, async (user) => {
   const state     = computeState(u);
 
   // Header (todos seguros)
-  if (avatarEl) setText(avatarEl, initialsFrom(nombre, apellidos));
   setText(displayEl, `${nombre} ${apellidos}`.trim());
   setText(emailChip, correo);
 
@@ -205,7 +203,6 @@ editForm?.addEventListener('submit', async (e) => {
     }
 
     // Refleja en UI (seguros)
-    if (avatarEl) setText(avatarEl, initialsFrom(nombre, apellidos));
     setText(displayEl, `${nombre} ${apellidos}`.trim());
     setText(pfNombre, nombre);
     setText(pfApellidos, apellidos || '—');

@@ -24,32 +24,103 @@
   <!-- Chart.js (gráficas) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    /* Ajustes mínimos para cards/charts en móvil */
-    .metrics-wrap { max-width: 1000px; margin: 0 auto; padding: 0 12px; }
-    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .card {
-      background: var(--card-bg, #12171c);
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 12px; padding: 12px;
-      box-shadow: 0 6px 24px rgba(0,0,0,.25);
-    }
-    .card h4 { margin: 0 0 6px; font-size: 14px; opacity: .8; }
-    .card .big { font-size: 22px; font-weight: 700; }
-    .charts { display: grid; gap: 12px; margin-top: 14px; }
-    .chart-card { padding: 12px; border-radius: 12px; background: var(--card-bg, #12171c); border:1px solid rgba(255,255,255,.06); }
-    .chart-card h3 { margin: 0 0 6px; font-size: 16px; }
-    @media(min-width:768px){
-      .cards { grid-template-columns: repeat(4,1fr); gap: 12px; }
-      .charts { grid-template-columns: 1fr 1fr; }
-      .chart-full { grid-column: 1 / -1; }
-    }
-    .muted { opacity: .7; font-size: 12px; }
-    .pill {
-      display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-left:8px;
-      background: #0e3a20; color:#c2ffd8; border:1px solid #1f8a4d;
-    }
-  </style>
+<style>
+  /* ===== MÉTRICAS – LAYOUT CENTRADO ===== */
+  html,body{overflow-x:hidden}
+  .metrics-wrap{
+    max-width:1024px;
+    margin:80px auto 24px;
+    padding:0 16px;
+    box-sizing:border-box;
+  }
+  h1{ text-align:center; margin:18px 0 6px; }
+  .muted{ opacity:.75; font-size:12px; text-align:center; }
+
+  /* ===== KPI CARDS – fuerza estilos sobre .card global ===== */
+/* ===== MÉTRICAS (aislado) ===== */
+.m-cards{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+  align-items:stretch;
+  margin:14px 0 18px;
+}
+@media (min-width:560px){ .m-cards{ grid-template-columns:repeat(3,1fr); } }
+@media (min-width:820px){ .m-cards{ grid-template-columns:repeat(4,1fr); } }
+
+.m-card{
+  --m-bg:#0f141a;
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,.03), transparent 60%),
+    var(--m-bg);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:16px 14px;
+  box-shadow:
+    0 10px 28px rgba(0,0,0,.30),
+    inset 0 1px 0 rgba(255,255,255,.03);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:132px;           /* mismas alturas */
+  text-align:center;
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.m-card:hover{
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.16);
+  box-shadow: 0 14px 36px rgba(0,0,0,.36);
+}
+.m-card > h4{
+  margin:0 0 8px;
+  font-size:12.5px;
+  letter-spacing:.35px;
+  font-weight:800;
+  color:#9fb0c2;
+  text-transform:uppercase;
+}
+.m-card > .big{
+  font-size:28px;
+  line-height:1;
+  font-weight:900;
+  color:#e9eef6;
+  text-shadow:0 1px 0 rgba(255,255,255,.04);
+}
+.m-card > .muted{ margin-top:6px; opacity:.75; font-size:12px; }
+
+
+  /* ===== GRÁFICAS ===== */
+  .charts{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+    margin-top:6px;
+  }
+  @media (min-width:820px){
+    .charts{ grid-template-columns:1fr 1fr; }
+    .chart-full{ grid-column:1 / -1; }
+  }
+  .chart-card{
+    background:#12171c !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    border-radius:16px !important;
+    padding:16px !important;
+    box-shadow:0 8px 26px rgba(0,0,0,.25);
+    overflow:visible;
+  }
+  .chart-card h3{ margin:0 0 10px; font-size:17px; }
+  .chart-card canvas{ width:100% !important; height:auto !important; display:block; }
+
+  /* Badge del año */
+  .pill{
+    display:inline-block; padding:2px 10px; border-radius:999px;
+    font-size:12px; margin-left:8px;
+    background:#0e3a20; color:#c2ffd8; border:1px solid #1f8a4d;
+  }
+</style>
+
+
 </head>
 <body>
 <!-- Botón hamburguesa -->
@@ -75,18 +146,19 @@
     <h1 style="text-align:center;margin:18px 0 12px;">Panel de métricas</h1>
     <p class="muted" id="lastUpdate" style="text-align:center;"></p>
 
-    <!-- Tarjetas -->
-    <section class="cards" id="cards">
-      <div class="card"><h4>Usuarios totales</h4><div class="big" id="kpiTotal">—</div></div>
-      <div class="card"><h4>Activos</h4><div class="big" id="kpiActivos">—</div></div>
-      <div class="card"><h4>Inactivos</h4><div class="big" id="kpiInactivos">—</div></div>
-      <div class="card"><h4>Permanencia promedio</h4><div class="big" id="kpiPermanencia">—</div><div class="muted">en meses</div></div>
+    <!-- Tarjetas (aisladas) -->
+    <section class="m-cards" id="cards">
+      <div class="m-card"><h4>Usuarios totales</h4><div class="big" id="kpiTotal">—</div></div>
+      <div class="m-card"><h4>Activos</h4><div class="big" id="kpiActivos">—</div></div>
+      <div class="m-card"><h4>Inactivos</h4><div class="big" id="kpiInactivos">—</div></div>
+      <div class="m-card"><h4>Permanencia promedio</h4><div class="big" id="kpiPermanencia">—</div><div class="muted">en meses</div></div>
 
-      <div class="card"><h4>Admins</h4><div class="big" id="kpiAdmins">—</div></div>
-      <div class="card"><h4>Profesores</h4><div class="big" id="kpiProfes">—</div></div>
-      <div class="card"><h4>Estudiantes</h4><div class="big" id="kpiStudents">—</div></div>
-      <div class="card"><h4>Usuarios nuevos 30 días</h4><div class="big" id="kpiNuevos">—</div></div>
+      <div class="m-card"><h4>Admins</h4><div class="big" id="kpiAdmins">—</div></div>
+      <div class="m-card"><h4>Profesores</h4><div class="big" id="kpiProfes">—</div></div>
+      <div class="m-card"><h4>Estudiantes</h4><div class="big" id="kpiStudents">—</div></div>
+      <div class="m-card"><h4>Usuarios nuevos 30 días</h4><div class="big" id="kpiNuevos">—</div></div>
     </section>
+
 
     <!-- Gráficas -->
     <section class="charts">
@@ -115,7 +187,7 @@
     <footer>
         <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
     </footer>
-    
+
     <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

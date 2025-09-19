@@ -1738,3 +1738,105 @@ html, body {
 }
 .profile-header .ph-badges { gap: 8px; margin-top: 6px; }
 .profile-header #pfEdit { margin-top: 8px; }
+
+/* ======== FIX LAYOUT MÓVIL & CENTRADO GLOBAL ======== */
+/* Elimina cualquier sangría lateral heredada y scroll horizontal */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+/* Contenedores principales: centrados de verdad */
+main,
+.container,
+.app-container,
+.page,
+.page-content {
+  max-width: 960px;                 /* ancho cómodo en desktop */
+  width: 100%;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+}
+
+/* En pantallas pequeñas, evita “empujes” desde reglas viejas */
+@media (max-width: 768px) {
+  main,
+  .container,
+  .page,
+  .page-content {
+    max-width: 640px;               /* más estrecho para móviles */
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+/* Si alguna regla histórica hacía “layout con sidebar” empujando el contenido,
+   la neutralizamos: (clases típicas que suelen aparecer en themes) */
+body.with-sidebar main,
+body.sidebar-open main,
+main.shifted,
+.content.shifted,
+body.push-left main,
+body.push-left .container {
+  margin-left: auto !important;
+  transform: none !important;
+  padding-left: 0 !important;
+}
+
+/* Cards y secciones: sin desplazamientos laterales */
+.card,
+.section,
+.panel,
+.block {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transform: none !important;
+}
+
+/* Sidebar siempre flotante, no debe “empujar” el layout */
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 280px;
+  max-width: 85vw;
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+  z-index: 1000;
+}
+.sidebar.active { transform: translateX(0); }
+
+/* Botón hamburguesa siempre clicable por encima del sidebar */
+.hamburger-btn,
+#toggleNav {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1100;          /* > sidebar */
+}
+
+/* Evita que dropdowns (ej. <select>) se recorten dentro de tarjetas */
+.card,
+.panel,
+.section {
+  overflow: visible;      /* importante para selects en Android */
+}
+
+/* Perfil: bloque más compacto en móviles */
+.profile-card {
+  max-width: 560px;       /* un poco más estrecho */
+  margin-inline: auto;
+}
+
+/* Select estilizado sin salirse del contenedor */
+select,
+.ef-grid select {
+  max-width: 100%;
+  background-clip: padding-box;
+}
+
