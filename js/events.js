@@ -1,18 +1,18 @@
 // ./js/events.js
-
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
   collection,
   getDocs,
-  onSnapshot
+  onSnapshot,
+  query, where, orderBy
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // formateador fallback “día mes año”
 const dateFmt = new Intl.DateTimeFormat('es-CR', {
-  day:   'numeric',
+  day: 'numeric',
   month: 'long',
-  year:  'numeric'
+  year: 'numeric'
 });
 
 /**
@@ -21,15 +21,15 @@ const dateFmt = new Intl.DateTimeFormat('es-CR', {
  * - distinto mes/año → “1 de mayo de 2025 – 31 de julio de 2025”
  */
 function formatRange(start, end) {
-  const [y1, m1, d1] = start.split('-').map(Number);
-  const [y2, m2, d2] = end.split('-').map(Number);
+  const [y1, m1, d1] = (start || '').split('-').map(Number);
+  const [y2, m2, d2] = (end   || '').split('-').map(Number);
+  if (!y1 || !y2) return '';
   const dt1 = new Date(y1, m1 - 1, d1);
   const dt2 = new Date(y2, m2 - 1, d2);
 
   if (dt1.getMonth() === dt2.getMonth() && dt1.getFullYear() === dt2.getFullYear()) {
-    const day = { day: 'numeric' };
-    const my  = dt1.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
-    return `${dt1.toLocaleDateString('es-CR', day)}–${dt2.toLocaleDateString('es-CR', day)} ${my}`;
+    const my = dt1.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
+    return `${dt1.getDate()}–${dt2.getDate()} ${my}`;
   }
   return `${dateFmt.format(dt1)} – ${dateFmt.format(dt2)}`;
 }
@@ -45,10 +45,9 @@ const linkEl   = document.getElementById('modalLink');
 const closeBtn = document.getElementById('modalClose');
 const closeX   = document.getElementById('modalCloseX');
 
-/**
- * Dibuja tarjetas en el grid
- */
+/** Dibuja tarjetas en el grid */
 function renderEvents(docs) {
+  if (!grid) return;
   grid.innerHTML = '';
   docs.forEach(docSnap => {
     const e       = docSnap.data();
@@ -72,39 +71,14 @@ function renderEvents(docs) {
   });
 }
 
-// onAuth + carga
-document.addEventListener('DOMContentLoaded', () => {
-  onAuthStateChanged(auth, user => {
-    if (!user) return window.location.href = './index.html';
-  });
-
-  (async () => {
-    try {
-      const snap = await getDocs(collection(db, 'events'));
-      renderEvents(snap.docs);
-    } catch (err) {
-      console.error('Error getDocs(/events):', err);
-    }
-  })();
-
-  onSnapshot(collection(db, 'events'),
-    snap => renderEvents(snap.docs),
-    err  => console.error('onSnapshot(/events) error:', err)
-  );
-});
-
-// Abre modal con la info
+// Modal
 function openModal({ title, imgSrc, start, end, desc, ticket }) {
-  titleEl.textContent   = title;
-
-  // imagen clicable → abre en pestaña nueva
-  imgEl.src             = imgSrc;
-  imgEl.onclick         = () => window.open(imgSrc, '_blank');
-
-  datesEl.textContent   = start && end ? formatRange(start, end) : '';
-  descEl.innerHTML      = desc;
-
-  // botón Entradas
+  if (!modal) return;
+  titleEl.textContent = title || '';
+  imgEl.src = imgSrc || '';
+  imgEl.onclick = () => imgSrc && window.open(imgSrc, '_blank');
+  datesEl.textContent = start && end ? formatRange(start, end) : '';
+  descEl.innerHTML = desc || '';
   linkEl.onclick = e => {
     if (!ticket) {
       e.preventDefault();
@@ -114,10 +88,35 @@ function openModal({ title, imgSrc, start, end, desc, ticket }) {
       window.open(ticket, '_blank');
     }
   };
-
   modal.classList.add('active');
 }
+closeBtn?.addEventListener('click', () => modal?.classList.remove('active'));
+closeX  ?.addEventListener('click', () => modal?.classList.remove('active'));
 
-// Cierra modal (rojo y X)
-closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-closeX   .addEventListener('click', () => modal.classList.remove('active'));
+// ---------- Auth gate + lecturas (¡aquí está el fix!) ----------
+let unsubscribe = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  onAuthStateChanged(auth, async (user) => {
+    // si no hay usuario, redirige y NO inicies lecturas (evita permission-denied)
+    if (!user) { window.location.href = './index.html'; return; }
+
+    // 1) Carga inicial (opcional)
+    try {
+      // si tienes flags, puedes filtrar con where('active','==',true)
+      const qInit = query(collection(db, 'events'), orderBy('startDate', 'asc'));
+      const snap  = await getDocs(qInit);
+      renderEvents(snap.docs);
+    } catch (err) {
+      console.error('Error getDocs(/events):', err);
+    }
+
+    // 2) Live updates (solo una suscripción activa)
+    if (typeof unsubscribe === 'function') { try { unsubscribe(); } catch {} }
+    const qLive = query(collection(db, 'events'), orderBy('startDate', 'asc'));
+    unsubscribe = onSnapshot(qLive,
+      (snap) => renderEvents(snap.docs),
+      (err)  => console.error('onSnapshot(/events) error:', err)
+    );
+  });
+});

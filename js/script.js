@@ -130,3 +130,41 @@ if (logoutSidebarLink) {
     }, 1000);
   });
 }
+
+// ─── Notificacion de nuevo parche ────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    const reg = await navigator.serviceWorker.register('./service-worker.js');
+
+    function promptUpdate(sw) {
+      // Muestra un toast y, al aceptar, manda SKIP_WAITING
+      // Si tu showAlert no soporta botones, puedes crear un botón flotante.
+      if (confirm('Nueva versión disponible. Toca aceptar para actualizar.')) {
+        sw.postMessage({ type: 'SKIP_WAITING' });
+      }
+    }
+
+    // SW nuevo quedó en "waiting"
+    if (reg.waiting) promptUpdate(reg.waiting);
+
+    // Cuando llegue un SW nuevo a "installed"
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW?.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          promptUpdate(newSW);
+        }
+      });
+    });
+
+    // Cuando el SW cambia (después de SKIP_WAITING) recargamos
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  });
+
+  // opcional: escuchar mensajes desde el SW
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    // manejar mensajes si los envías desde el SW
+  });
+}

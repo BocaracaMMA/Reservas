@@ -1664,3 +1664,62 @@ main.container {
   font-size:12px;
   font-weight:700;
 }
+
+/* ---------- Profile: mejoras visuales y mobile-first ---------- */
+
+/* sutil separador */
+.soft-divider{
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #2b313a, transparent);
+  margin: 6px 0 10px;
+}
+
+/* métricas rápidas (3 columnas fluidas) */
+.quick-metrics{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.qm-item{
+  background:#0f141a;
+  border:1px solid #262b33;
+  border-radius: 10px;
+  padding: 10px;
+  text-align:center;
+}
+.qm-label{ color:#8b949e; font-size:.78rem; margin-bottom:4px; }
+.qm-value{ color:#e6edf3; font-weight:700; font-size:.95rem; }
+
+/* en móviles muy angostos, que las métricas salten a 2 columnas */
+@media (max-width: 420px){
+  .quick-metrics{ grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Ajustes de la card del perfil para pantallas pequeñas */
+.profile-card{
+  border-radius: 16px;
+  padding: 14px;
+}
+.profile-header{
+  grid-template-columns: 64px 1fr;
+}
+.ph-top h2{
+  font-size: clamp(1.05rem, 5vw, 1.35rem);
+}
+.ph-badges .tag{ transform: translateY(-1px); }
+
+/* Inputs del formulario con look consistente */
+.edit-form input{
+  background:#21262d;
+  border:1px solid #30363d;
+  color:#c9d1d9;
+  border-radius:8px;
+  padding:10px 12px;
+}
+.edit-form input:focus{
+  outline:none;
+  border-color:#58a6ff;
+  box-shadow:0 0 0 .16rem rgba(88,166,255,.15);
+}

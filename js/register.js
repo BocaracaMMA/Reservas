@@ -1,133 +1,141 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
+// ./js/register.js (versión segura con unicidad de cédula)
+import { app } from './firebase-config.js';
 import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  setDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js";
+  getAuth, createUserWithEmailAndPassword, deleteUser, sendEmailVerification, signOut
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import {
+  getFirestore, writeBatch, doc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db   = getFirestore(app);
 
-// Formulario
-const registerForm = document.getElementById("registerForm");
+const form   = document.getElementById("registerForm");
+const nameI  = document.getElementById("nombre");
+const idI    = document.getElementById("cedula");
+const phoneI = document.getElementById("phone");
+const emailI = document.getElementById("email");
+const passI  = document.getElementById("password");
+const btn    = form?.querySelector('button[type="submit"]');
 
-registerForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const fullName = document.getElementById("nombre").value.trim();
-  const cedula = document.getElementById("cedula").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-
-  if (!fullName || !cedula || !phone || !email || !password) {
-    showToast("Por favor, completa todos los campos", "error");
-    return;
-  }
-
-    // 🟡 Validación de formato para cédula y celular
-  const cedulaRegex = /^\d{9}$/;
-  if (!cedulaRegex.test(cedula)) {
-    showToast("La cédula debe contener exactamente 9 dígitos, incluido los 0 y sin guiones", "error");
-    return;
-  }
-
-  const phoneRegex = /^\d{8}$/;
-  if (!phoneRegex.test(phone)) {
-    showToast("El celular debe contener exactamente 8 dígitos", "error");
-    return;
-  }
-
-  const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-
-  if (!nameRegex.test(fullName)) {
-    showToast("El nombre solo debe contener letras y espacios", "error");
-    return;
-  }
-
-  try {
-    // Verificar si la cédula ya existe
-    const q = query(collection(db, "users"), where("cedula", "==", cedula));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      showToast("Ya existe un usuario registrado con esta cédula", "error");
-      return;
-    }
-
-    // Crear el usuario en Auth
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    // Guardar información en Firestore en /users/{uid}
-    console.log("🔥 Guardando en Firestore...");
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
-      nombre: fullName,
-      cedula,
-      correo: email.toLowerCase(),
-      celular: phone,
-      autorizado: false,
-      reservas: 0,
-    });
-    console.log("✅ Documento guardado correctamente");
-
-    showToast("Registro exitoso. Redirigiendo...", "success");
-
-  // Cierra sesión y redirige al login
-  setTimeout(async () => {
-    await signOut(auth);
-    window.location.href = "./index.html"; // O "./login.html" si ese es tu archivo
-  }, 2000);
-
-  } catch (error) {
-    console.log("🔥 ERROR DETECTADO:", error); // <-- Añade esta línea
-    const mensaje = mapAuthError(error.code);
-    showToast(mensaje, "error");
-  }
-  if (error.code === "auth/popup-blocked") {
-  showToast("Activa las ventanas emergentes o usa otro navegador", "error");
-}
-});
-
-// Función para mostrar mensajes
-function showToast(message, type = "success") {
-  const container = document.getElementById("toast-container");
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.innerText = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+function showToast(msg, type="success") {
+  const c = document.getElementById("toast-container") || document.body;
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(()=> t.remove(), 4000);
 }
 
-// Mapeo de errores de Firebase
 function mapAuthError(code) {
   switch (code) {
-    case "auth/email-already-in-use":
-      return "Este correo ya está registrado";
-    case "auth/weak-password":
-      return "La contraseña debe tener al menos 6 caracteres";
-    case "auth/invalid-email":
-      return "El correo no es válido";
-    default:
-      return "Error al registrar. Intenta de nuevo.";
+    case "auth/email-already-in-use": return "Este correo ya está registrado.";
+    case "auth/weak-password":        return "La contraseña debe tener al menos 6 caracteres.";
+    case "auth/invalid-email":        return "El correo no es válido.";
+    case "auth/network-request-failed": return "Sin conexión estable. Verifica tu internet e intenta de nuevo.";
+    default: return "No se pudo completar el registro. Intenta otra vez.";
   }
 }
 
-// Bloquear letras en cedula y celular
-document.getElementById('cedula').addEventListener('input', function() {
-  this.value = this.value.replace(/\D/g, '');
+const online = () => navigator.onLine;
+
+nameI?.addEventListener('input', () => {
+  nameI.value = nameI.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+/g, ' ').trimStart();
+});
+idI?.addEventListener('input', () => {
+  idI.value = idI.value.replace(/\D+/g, '').slice(0, 9);
+});
+phoneI?.addEventListener('input', () => {
+  phoneI.value = phoneI.value.replace(/\D+/g, '').slice(0, 8);
 });
 
-document.getElementById('phone').addEventListener('input', function() {
-  this.value = this.value.replace(/\D/g, '');
+async function withTimeout(promise, ms = 20000) {
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+  ]);
+}
+
+form?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!online()) { showToast("Estás sin conexión. Conéctate e intenta de nuevo.", "error"); return; }
+
+  const nombre   = (nameI?.value || '').trim();
+  const cedula   = (idI?.value   || '').trim();
+  const celular  = (phoneI?.value|| '').trim();
+  const correo   = (emailI?.value|| '').trim().toLowerCase();
+  const password = (passI?.value || '');
+
+  // Validaciones espejo de reglas
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,}$/.test(nombre)) { showToast("El nombre solo debe contener letras y espacios.", "error"); return; }
+  if (!/^\d{9}$/.test(cedula))                      { showToast("La cédula debe tener 9 dígitos.", "error"); return; }
+  if (!/^\d{8}$/.test(celular))                     { showToast("El celular debe tener 8 dígitos.", "error"); return; }
+  if (!correo || !password)                         { showToast("Completa correo y contraseña.", "error"); return; }
+
+  btn?.setAttribute('disabled','true');
+
+  let createdUser = null;
+  try {
+    // 1) Crear cuenta Auth
+    const cred = await withTimeout(createUserWithEmailAndPassword(auth, correo, password));
+    createdUser = cred.user;
+
+    // 2) Batch atómico: primero índice de cédula, luego /users/{uid}
+    const batch = writeBatch(db);
+
+    const idxRef = doc(db, 'cedula_index', cedula);      // ID = cédula
+    batch.set(idxRef, { uid: createdUser.uid, createdAt: serverTimestamp() });
+
+    const userRef = doc(db, 'users', createdUser.uid);
+    batch.set(userRef, {
+      uid: createdUser.uid,
+      nombre,
+      cedula,
+      celular,
+      correo,
+      autorizado: false,
+      reservas: 0,
+      createdAt: new Date().toISOString()
+    });
+
+    await withTimeout(batch.commit());
+
+    // 3) Verificación de email (no bloqueante)
+    try { await sendEmailVerification(createdUser); } catch {}
+
+    showToast("¡Cuenta creada! Revisa tu correo para verificar.", "success");
+
+    // 4) Cerrar sesión y llevar a login (evita entrar sin perfil cargado)
+    setTimeout(async () => {
+      try { await signOut(auth); } catch {}
+      window.location.href = './index.html';
+    }, 1300);
+
+  } catch (err) {
+    console.error('[register] fallo en registro:', err);
+
+    // Duplicado de cédula: la regla del índice lo impedirá y fallará el batch
+    if (err?.message === 'timeout' || err?.code === 'deadline-exceeded') {
+      showToast("La red está lenta. Intenta de nuevo.", "error");
+    } else if (err?.code === 'permission-denied') {
+      showToast("La cédula ya está registrada.", "error");
+    } else if (err?.code?.startsWith('auth/')) {
+      showToast(mapAuthError(err.code), "error");
+    } else {
+      showToast("No se pudo completar el registro. Intenta de nuevo.", "error");
+    }
+
+    // Limpieza: si creamos el usuario en Auth pero falló Firestore, lo borramos para no dejar cuenta “huérfana”
+    try {
+      if (createdUser && auth.currentUser && auth.currentUser.uid === createdUser.uid) {
+        await deleteUser(auth.currentUser);
+      }
+    } catch {
+      // si no se puede borrar (p.ej. offline), al menos cerramos sesión
+      try { await signOut(auth); } catch {}
+    }
+
+  } finally {
+    btn?.removeAttribute('disabled');
+  }
 });

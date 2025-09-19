@@ -53,24 +53,30 @@
       cursor: pointer; /* para indicar que se puede clickar */
     }
   </style>
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#0d1117">
+
+  <!-- iOS “Add to Home Screen” soporte -->
+  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 </head>
 <body>
 
   <!-- Botón hamburguesa -->
-  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
-    <i class="bi bi-list"></i>
-  </button>
+  <button id="toggleNav" class="hamburger-btn" aria-label="Abrir menú">☰</button>
 
-  <!-- Sidebar común -->
-  <nav id="sidebar" class="sidebar">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
     <ul>
-      <li><a href="./client-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
-      <li><a href="./profile.html"><i class="bi bi-person-badge-fill"></i> Perfil</a></li>
-      <li><a href="./events.html"><i class="bi bi-calendar-event"></i> Eventos</a></li>
-      <li><a href="./store.html"><i class="bi bi-bag-fill"></i> Tienda</a></li>
-      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+      <li><a href="client-dashboard.html"><span>🏠</span>Inicio</a></li>
+      <li><a href="profile.html"><span>👤</span>Mi perfil</a></li>
+      <li><a href="events.html"><span>🎫</span>Eventos</a></li>
+      <li><a id="logoutSidebar" href="#"><span>🚪</span>Cerrar sesión</a></li>
     </ul>
-  </nav>
+  </aside>
 
   <!-- Contenido principal -->
   <main class="container">
@@ -139,6 +145,15 @@
         finally { setTimeout(()=> location.href="index.html",1000); }
       });
     document.addEventListener("DOMContentLoaded", () => { if (window.lucide) lucide.createIcons(); });
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .catch(console.error);
+      });
+    }
   </script>
 
 </body>

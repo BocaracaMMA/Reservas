@@ -10,6 +10,15 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- QR generator -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#0d1117">
+
+  <!-- iOS “Add to Home Screen” soporte -->
+  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 </head>
 <body>
   
@@ -22,7 +31,8 @@
     <ul>
       <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
       <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
-      <li><a href="./control-mensualidades.html"><i class="bi bi-calendar-week"></i> Mensualidades</a></li>
+      <li><a href="./control-mensualidades.html"><i class="bi bi-cash-coin"></i> Mensualidades</a></li>
+      <li><a href="./admin-users.html"><i class="bi bi-person-rolodex"></i></i> Roles</a></li>
       <li><a href="./marcar-asistencia.html"><i class="bi bi-person-bounding-box"></i> Asistencias</a></li>
       <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
       <li><a href="./admin-events.html"><i class="bi bi-calendar-week"></i>Crear Evento</a></li>
@@ -54,5 +64,15 @@
   <footer>
     <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
   </footer>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .catch(console.error);
+      });
+    }
+  </script>
+
 </body>
 </html>

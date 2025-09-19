@@ -1,0 +1,15 @@
+{
+  "name": "Bocaraca MMA",
+  "short_name": "Bocaraca",
+  "description": "Reservas, eventos, tienda y control de membresías.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "./assets/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./assets/favicon-32x32.png", "sizes": "32x32", "type": "image/png" }
+  ]
+}

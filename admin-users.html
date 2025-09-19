@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel de Usuarios</title>
+
+  <!-- PWA -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#0d1117">
+
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+
+  <!-- iOS A2HS -->
+  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ====== Layout ====== */
+    .container{max-width:1000px;margin:0 auto;padding:16px}
+    .page-title{font-size:1.4rem;font-weight:800;text-align:center;margin:10px 0 12px}
+
+    /* ====== Filtros compactos ====== */
+    .filters{display:grid;gap:8px;grid-template-columns:1fr;margin-bottom:10px}
+    .filters .f{display:flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:10px;border:1px solid #2b2f38;
+      background:#0f131a;color:#e6e8eb;font-size:.9rem
+    }
+    .filters .f input{all:unset;width:100%}
+    .filters .f i{opacity:.7}
+
+    @media (min-width:560px){ .filters{grid-template-columns:1fr 1fr} }
+    @media (min-width:900px){ .filters{grid-template-columns:repeat(4,1fr)} }
+
+    /* ====== Lista ====== */
+    .list{display:grid;gap:10px}
+    .card{
+      background:#0c1017;border:1px solid #20242c;border-radius:16px;padding:12px;
+      display:grid;gap:10px
+    }
+    .row1{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .user-id{display:flex;align-items:center;gap:10px;min-width:0}
+    .avatar{width:40px;height:40px;border-radius:50%;background:#111827;display:grid;place-items:center;
+      color:#9ec5ff;font-weight:700;flex:0 0 auto}
+    .name-mail{min-width:0}
+    .name{font-weight:700;color:#fff}
+    .mail{color:#a6adbb;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    .badges{display:flex;gap:6px;flex-wrap:wrap}
+    .badge{font-size:.72rem;padding:4px 8px;border-radius:999px;border:1px solid #263042;color:#c9d4e3;background:#111827}
+    .badge.green{border-color:#275b3a;color:#b7f5c9;background:#0e1e15}
+
+    /* ====== Chips de rol vistosos ====== */
+    .roles{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;border:1px solid #2b3446;background:#0f1623;color:#d1d7e3;
+      cursor:pointer;user-select:none;font-size:.85rem
+    }
+    .chip i{font-size:.95rem;opacity:.9}
+    .chip[data-role="admin"]{border-color:#5e2f2f}
+    .chip[data-role="professor"]{border-color:#2f5e44}
+    .chip[data-role="student"]{border-color:#2f4f5e}
+    .chip.active[data-role="admin"]{background:#3a1f24;color:#ffd6d6}
+    .chip.active[data-role="professor"]{background:#1f3a2b;color:#c8f5da}
+    .chip.active[data-role="student"]{background:#1f2d3a;color:#cfe7ff}
+    .chip.lock{opacity:.45;cursor:not-allowed}
+
+    .actions{display:flex;gap:8px}
+    .btn{padding:8px 12px;border-radius:10px;border:1px solid #2b2f38;background:#0f131a;color:#e6e8eb;cursor:pointer}
+    .btn.save{background:#0f2e18;border-color:#1e5b31;color:#b7f5c9}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+
+    .empty{text-align:center;color:#98a2b2;padding:20px 0}
+    .muted{opacity:.8}
+
+    /* Navbar: oculta por defecto los items solo-admin, se muestran por JS */
+    .sidebar .admin-only{display:none}
+  </style>
+</head>
+<body>
+  <!-- Botón hamburguesa -->
+  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar / Navbar -->
+  <nav id="sidebar" class="sidebar">
+    <ul>
+      <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+      <li><a href="./control-mensualidades.html"><i class="bi bi-cash-coin"></i> Mensualidades</a></li>
+      <li class="admin-only"><a href="./admin-users.html"><i class="bi bi-person-rolodex"></i> Roles</a></li>
+      <li><a href="./marcar-asistencia.html"><i class="bi bi-person-bounding-box"></i> Asistencias</a></li>
+      <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="./admin-events.html"><i class="bi bi-calendar-week"></i> Crear Evento</a></li>
+      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+    </ul>
+  </nav>
+
+  <header class="header">
+    <div class="logo">
+      <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
+    </div>
+    <h1 class="page-title">Panel de Usuarios</h1>
+  </header>
+
+  <main class="container">
+    <!-- Filtros compactos -->
+    <section class="filters">
+      <label class="f"><i class="bi bi-person"></i><input id="fNombre" type="text" placeholder="Nombre o apellidos" autocomplete="off"></label>
+      <label class="f"><i class="bi bi-upc-scan"></i><input id="fCedula" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Cédula" autocomplete="off"></label>
+      <label class="f"><i class="bi bi-envelope"></i><input id="fCorreo" type="email" placeholder="Correo" autocomplete="off"></label>
+      <label class="f"><i class="bi bi-calendar-event"></i><input id="fFecha" type="date" aria-label="Desde fecha de creación"></label>
+      <label class="f"><i class="bi bi-funnel"></i><select id="fRol">
+    <option value="">Rol (todos)</option>
+    <option value="admin">admin</option>
+    <option value="professor">professor</option>
+    <option value="student">student</option>
+    </select></label>
+    </section>
+
+    <div id="total" class="badge muted" style="margin-bottom:8px">0 usuarios</div>
+
+    <section id="list" class="list"></section>
+    <div id="empty" class="empty" style="display:none">Sin resultados con los filtros aplicados.</div>
+  </main>
+
+  <script type="module" src="./js/admin-users.js"></script>
+</body>
+</html>

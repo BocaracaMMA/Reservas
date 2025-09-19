@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sin conexión</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <style>
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+    .card{max-width:420px}
+    .hint{color:#8b949e;margin-top:.5rem}
+  </style>
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#0d1117">
+
+  <!-- iOS “Add to Home Screen” soporte -->
+  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+</head>
+<body>
+  <main class="card">
+    <img src="./assets/android-chrome-512x512.png" class="logo-img" alt="Logo">
+    <h2>Estás sin conexión</h2>
+    <p>Algunas funciones requieren Internet. Intenta nuevamente cuando vuelvas a estar en línea.</p>
+    <p class="hint">Las páginas visitadas recientemente pueden seguir cargando gracias al modo offline.</p>
+    <button onclick="location.reload()">Reintentar</button>
+  </main>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .catch(console.error);
+      });
+    }
+  </script>
+
+</body>
+</html>

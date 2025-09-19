@@ -123,28 +123,40 @@ document.addEventListener('DOMContentLoaded', () => {
         right: ''
       },
       events(info, success, failure) {
-        const q = query(
+        // 1) Leer SOLO mis reservas en Firestore (cumple reglas)
+        const myQ = query(
           collection(db, 'reservations'),
-          where('date', '>=', info.startStr),
-          where('date', '<=', info.endStr)
+          where('user', '==', auth.currentUser.email)
         );
-        onSnapshot(q, snap => {
-          const evs = snap.docs
-            .filter(d => !d.data().user || d.data().user === auth.currentUser.email)
-            .map(d => {
-              const r = d.data();
-              return {
+
+        // 2) Suscribirse y filtrar por rango en memoria
+        const unsub = onSnapshot(myQ, snap => {
+          try {
+            const start = info.startStr;
+            const end   = info.endStr;
+
+            const evs = snap.docs
+              .map(d => ({ id: d.id, ...d.data() }))
+              .filter(r => r.date >= start && r.date <= end) // rango en memoria
+              .map(r => ({
                 title: `Clase MMA - ${r.time}`,
                 start: `${r.date}T${r.time}:00`,
                 allDay: false,
-                id: d.id
-              };
-            });
-          success(evs);
+                id: r.id
+              }));
+
+            success(evs);
+          } catch (e) {
+            console.error(e);
+            failure(e);
+          }
         }, err => {
           console.error(err);
           failure(err);
         });
+
+        // FullCalendar puede limpiar la vista → devolvemos el unsubscribe
+        return () => unsub && unsub();
       },
       eventContent() {
         return { html: '<div style="font-size:20px;color:green;text-align:center;">✅</div>' };
@@ -194,9 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkExistingReservation(date, time) {
   const q = query(
     collection(db, 'reservations'),
+    where('user', '==', auth.currentUser.email),
     where('date','==',date),
     where('time','==',time),
-    where('user','==',auth.currentUser.email)
   );
   const snap = await getDocs(q);
   return snap.docs.length > 0;
@@ -204,7 +216,6 @@ async function checkExistingReservation(date, time) {
 
 async function addReservation(date, time) {
   try {
-    // ¡Directo por UID!
     const userRef = doc(db, 'users', auth.currentUser.uid);
     const userDoc = await getDoc(userRef);
     if (!userDoc.exists()) {
@@ -216,7 +227,8 @@ async function addReservation(date, time) {
     await addDoc(collection(db,'reservations'), {
       date,
       time,
-      user: auth.currentUser.email,   // mantiene tu lógica para reglas de update/delete
+      userId: auth.currentUser.uid,          // 🆕 importante para reglas
+      user: auth.currentUser.email,          // tu campo previo (lo mantenemos)
       nombre: u.nombre
     });
 
@@ -235,18 +247,23 @@ async function addReservation(date, time) {
 
 async function deleteReservation(resId) {
   try {
-    const ref    = doc(db,'reservations',resId);
-    const snap   = await getDoc(ref);
+    const ref  = doc(db,'reservations',resId);
+    const snap = await getDoc(ref);
+
     if (snap.exists()) {
       const { date } = snap.data();
+      // primero borra asistencia (reglas ya lo permiten)
       await deleteDoc(doc(db,'asistencias',date,'usuarios',auth.currentUser.uid));
     }
+    // luego borra la reserva (con nuevas reglas ya debe permitir)
     await deleteDoc(ref);
   } catch (err) {
     console.error(err);
-    showAlert('Error eliminando reserva.', 'error');
+    // no mostramos toast aquí; dejamos que el caller lo haga
+    throw err; // 🆕 relanzamos para que el caller sepa que falló
   }
 }
+
 
 // ─── Modales ─────────────────────────────────────────────────────────────
 function openConfirmReservationModal(date, time) {
