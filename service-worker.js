@@ -13,6 +13,8 @@ const APP_SHELL = [
   './marcar-asistencia.html',
   './reportes.html',
   './admin-events.html',
+  './admin-users.html',
+  './admin-metrics.html',
   './events.html',
   './profile.html',
 

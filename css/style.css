@@ -1519,7 +1519,7 @@ main.container {
 
 /* Form edición */
 .edit-form{ margin: 8px 0 10px; background:#0f141a; border:1px solid #30363d; border-radius:10px; padding:10px; }
-.ef-grid{ display:grid; grid-template-columns: 120px 1fr; gap:10px 12px; align-items:center; }
+.ef-grid{ display:grid; grid-template-columns: 110px 1fr; gap:10px 10px; align-items:center; }
 .ef-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
 
 .btn.small{ padding:6px 10px; font-size:.85rem; border-radius:8px; }
@@ -1665,61 +1665,76 @@ main.container {
   font-weight:700;
 }
 
-/* ---------- Profile: mejoras visuales y mobile-first ---------- */
+/* ===== PERFIL: centrado real y dropdown contenido ===== */
 
-/* sutil separador */
-.soft-divider{
-  border: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #2b313a, transparent);
-  margin: 6px 0 10px;
-}
-
-/* métricas rápidas (3 columnas fluidas) */
-.quick-metrics{
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.qm-item{
-  background:#0f141a;
-  border:1px solid #262b33;
-  border-radius: 10px;
-  padding: 10px;
-  text-align:center;
-}
-.qm-label{ color:#8b949e; font-size:.78rem; margin-bottom:4px; }
-.qm-value{ color:#e6edf3; font-weight:700; font-size:.95rem; }
-
-/* en móviles muy angostos, que las métricas salten a 2 columnas */
-@media (max-width: 420px){
-  .quick-metrics{ grid-template-columns: repeat(2, 1fr); }
+/* 1) Evita cualquier desbordamiento horizontal global */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
-/* Ajustes de la card del perfil para pantallas pequeñas */
-.profile-card{
-  border-radius: 16px;
-  padding: 14px;
+/* 2) El contenedor principal no debe fijar un ancho raro.
+      Forzamos que el <main class="container profile-container"> se centre. */
+.container.profile-container {
+  width: 100% !important;           /* ignora el width inline que tenía */
+  max-width: 960px;                  /* mismo límite que métricas */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 12px;
+  padding-right: 12px;
+  box-sizing: border-box;
 }
-.profile-header{
-  grid-template-columns: 64px 1fr;
-}
-.ph-top h2{
-  font-size: clamp(1.05rem, 5vw, 1.35rem);
-}
-.ph-badges .tag{ transform: translateY(-1px); }
 
-/* Inputs del formulario con look consistente */
-.edit-form input{
-  background:#21262d;
-  border:1px solid #30363d;
-  color:#c9d1d9;
-  border-radius:8px;
-  padding:10px 12px;
+/* 3) La card ocupa todo el ancho disponible del contenedor,
+      y luego limitamos su máximo para móviles. */
+.profile-card {
+  width: 100%;
+  max-width: 600px;                  /* ancho cómodo en móviles */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding-left: 16px;                /* respirito interno */
+  padding-right: 16px;
 }
-.edit-form input:focus{
-  outline:none;
-  border-color:#58a6ff;
-  box-shadow:0 0 0 .16rem rgba(88,166,255,.15);
+
+/* 4) Asegura que nada “corte” el menú del <select> ni provoque scroll lateral */
+.profile-card,
+.profile-grid,
+.edit-form {
+  overflow: visible;
 }
+
+/* 5) Campos del formulario: que nunca excedan el ancho y el dropdown
+      se alinee con el input (sin salirse visualmente) */
+.edit-form .ef-grid select,
+.edit-form .ef-grid input[type="text"],
+.edit-form .ef-grid input[type="tel"],
+.edit-form .ef-grid input[type="date"] {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 6) Ajuste del <select> para que la flecha y el padding no lo “ensanche” */
+.edit-form .ef-grid select {
+  padding-right: 2.5rem;  /* espacio para la flecha */
+  -webkit-appearance: none;
+  appearance: none;
+  background-clip: padding-box;
+}
+
+/* 7) Títulos, correo y chips centrados y con buen ritmo vertical */
+.profile-header {
+  text-align: center;
+}
+.profile-header .ph-top,
+.profile-header .ph-badges,
+.profile-header .ph-email {
+  justify-content: center;
+}
+.profile-header .ph-top h2 {
+  max-width: 100%;
+}
+.profile-header .ph-badges { gap: 8px; margin-top: 6px; }
+.profile-header #pfEdit { margin-top: 8px; }

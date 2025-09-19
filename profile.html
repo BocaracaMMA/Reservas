@@ -7,6 +7,119 @@
 
   <link rel="icon" href="./assets/favicon-32x32.png">
   <link rel="stylesheet" href="./css/style.css" />
+
+  <!-- Estilos específicos de perfil -->
+  <style>
+    /* ===== Layout centrado y sin scroll horizontal ===== */
+    html, body { overflow-x: hidden; }
+    .profile-shell {
+      max-width: 640px;
+      width: 100%;
+      margin: 86px auto 28px;
+      padding-inline: 14px;
+    }
+
+    /* ===== Card principal ===== */
+    .profile-card {
+      background: #0c131a;
+      border: 1px solid #22303d;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+    }
+
+    /* ===== Header centrado (nombre, correo, tags, botón) ===== */
+    .profile-head { display: grid; gap: 10px; place-items: center; text-align: center; }
+    #pfDisplay {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #e8edf3;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+    #pfEmail.ph-email {
+      margin: 0;
+      color: #9aa4ad;
+      font-size: .95rem;
+      overflow-wrap: anywhere;
+    }
+    .ph-tags {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    }
+    .ph-actions { display: flex; justify-content: center; width: 100%; }
+    #pfEdit.btn.small { padding: 7px 11px; font-size: .9rem; line-height: 1; }
+
+    /* Separador */
+    .soft-divider {
+      border: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #2a3543, transparent);
+      margin: 10px 0 14px;
+    }
+
+    /* ===== Quick metrics ===== */
+    .quick-metrics { display: grid; gap: 10px; grid-template-columns: 1fr; }
+    @media (min-width:520px){ .quick-metrics{ grid-template-columns: repeat(3,1fr);} }
+    .qm-item{ background:#0e171f;border:1px solid #263342;border-radius:12px;padding:12px 14px }
+    .qm-label{font-size:.8rem;color:#8fa0b3;margin-bottom:4px}
+    .qm-value{font-weight:700;color:#e6ecf2}
+
+    /* ===== Información tipo filas ===== */
+    .profile-info { margin-top: 12px; display: grid; gap: 10px; }
+    .info-row {
+      display: grid; grid-template-columns: 120px 1fr; gap: 10px;
+      padding: 10px 12px; border:1px solid #24313f; background:#0e161e; border-radius: 12px;
+    }
+    .info-row .label { color:#8fa0b3; font-size:.9rem; align-self:center; }
+    .info-row .value { color:#e8edf3; overflow-wrap:anywhere; }
+
+    /* ===== Form edición ===== */
+    .edit-form { margin-top: 14px; border-top:1px dashed #24313f; padding-top: 14px; }
+    .ef-grid { display: grid; gap: 10px; }
+    .ef-grid label { color:#9fb0c2; font-size:.9rem; }
+    .ef-grid input[type="text"],
+    .ef-grid input[type="tel"],
+    .ef-grid input[type="date"],
+    .ef-grid select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid #2a3441;
+      background: #0f1720;
+      color: #e6edf3;
+      outline: none;
+      appearance: none;
+    }
+    .ef-grid input:focus, .ef-grid select:focus {
+      border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+    }
+    .ef-grid select{
+      background-image:
+        linear-gradient(45deg, transparent 50%, #9fb0c2 50%),
+        linear-gradient(135deg, #9fb0c2 50%, transparent 50%);
+      background-position: calc(100% - 22px) 52%, calc(100% - 16px) 52%;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 36px;
+    }
+    .ef-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
+
+    /* ===== Chips ===== */
+    .tag { border:1px solid transparent; border-radius:999px; padding:4px 10px; font-size:.85rem; }
+    .tag.info    { background:#0b2540; color:#b4d7ff; border-color:#1e3a5f; }
+    .tag.success { background:#0f2d1b; color:#a7f3d0; border-color:#1f513a; }
+    .tag.warn    { background:#382a05; color:#fde68a; border-color:#5a4a18; }
+    .tag.error   { background:#341316; color:#fecaca; border-color:#55363a; }
+
+    /* ===== Navbar: botón siempre por encima del sidebar ===== */
+    .hamburger-btn{
+      position: fixed; top:16px; right:16px; z-index: 1101;
+      width:40px; height:40px; display:grid; place-items:center;
+      border-radius:10px;
+    }
+    .sidebar{ z-index: 1100; }
+  </style>
 </head>
 <body>
 
@@ -23,34 +136,27 @@
     </ul>
   </aside>
 
-  <main class="container" style="width:min(96vw, 760px); margin:80px auto 24px;">
-    <!-- Card del perfil -->
+  <main class="profile-shell">
     <section class="card profile-card">
 
-      <!-- Encabezado -->
-      <header class="profile-header">
-        <div class="avatar" id="pfAvatar">U</div>
+      <!-- ===== Encabezado centrado ===== -->
+      <div class="profile-head">
+        <h2 id="pfDisplay">—</h2>
+        <p id="pfEmail" class="ph-email">—</p>
 
-        <div class="ph-info" style="min-width:0;">
-          <div class="ph-top">
-            <h2 id="pfDisplay" style="margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              —
-            </h2>
-            <button id="pfEdit" class="btn small outline" type="button">✏️ Editar</button>
-          </div>
-
-          <div class="ph-badges">
-            <span id="pfPlan"   class="tag info">General</span>
-            <span id="pfStatus" class="tag success">Activa</span>
-          </div>
-
-          <div id="pfEmail" class="ph-email" style="word-break:break-word;">—</div>
+        <div class="ph-tags">
+          <span id="pfPlan"   class="tag info">General</span>
+          <span id="pfStatus" class="tag success">Activa</span>
         </div>
-      </header>
+
+        <div class="ph-actions">
+          <button id="pfEdit" class="btn small outline" type="button">✏️ Editar</button>
+        </div>
+      </div>
 
       <hr class="soft-divider"/>
 
-      <!-- Métricas rápidas (opcionalmente se llenan con el mismo JS actual) -->
+      <!-- ===== Métricas rápidas ===== -->
       <div class="quick-metrics">
         <div class="qm-item">
           <div class="qm-label">Membresía</div>
@@ -66,15 +172,17 @@
         </div>
       </div>
 
-      <!-- Datos -->
-      <div class="profile-grid">
-        <div class="label">Nombre</div>    <div class="value" id="pfNombre">—</div>
-        <div class="label">Apellidos</div> <div class="value" id="pfApellidos">—</div>
-        <div class="label">Correo</div>    <div class="value" id="pfCorreo">—</div>
-        <div class="label">Cédula</div>    <div class="value" id="pfCedula">—</div>
+      <!-- ===== Información ===== -->
+      <div class="profile-info">
+        <div class="info-row"><div class="label">Nombre</div>     <div class="value" id="pfNombre">—</div></div>
+        <div class="info-row"><div class="label">Apellidos</div>  <div class="value" id="pfApellidos">—</div></div>
+        <div class="info-row"><div class="label">Correo</div>     <div class="value" id="pfCorreo">—</div></div>
+        <div class="info-row"><div class="label">Cédula</div>     <div class="value" id="pfCedula">—</div></div>
+        <div class="info-row"><div class="label">Género</div>     <div class="value" id="pfGenero">—</div></div>
+        <div class="info-row"><div class="label">Nacimiento</div> <div class="value" id="pfNacimiento">—</div></div>
       </div>
 
-      <!-- Form edición (mismo IDs que ya usa tu profile.js) -->
+      <!-- ===== Form edición ===== -->
       <form id="editForm" class="edit-form" hidden>
         <div class="ef-grid">
           <label for="efNombre">Nombre</label>
@@ -85,7 +193,20 @@
 
           <label for="efCedula">Cédula</label>
           <input id="efCedula" type="tel" inputmode="numeric" placeholder="Solo números"/>
+
+          <label for="efGenero">Género</label>
+          <select id="efGenero">
+            <option value="">— Selecciona —</option>
+            <option value="masculino">Masculino</option>
+            <option value="femenino">Femenino</option>
+            <option value="no_binario">No binario</option>
+            <option value="prefiero_no_decir">Prefiero no decir</option>
+          </select>
+
+          <label for="efNacimiento">Fecha de nacimiento</label>
+          <input id="efNacimiento" type="date" />
         </div>
+
         <div class="ef-actions">
           <button id="efCancel" type="button" class="btn outline">Cancelar</button>
           <button type="submit" class="btn">Guardar</button>
@@ -94,9 +215,9 @@
 
     </section>
 
-  <footer style="text-align:center;color:#8b949e;margin-top:16px;">
-    <p class="footer">© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
-  </footer>
+    <footer style="text-align:center;color:#8b949e;margin-top:16px;">
+      <p class="footer">© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+    </footer>
   </main>
 
   <!-- Firebase + app -->

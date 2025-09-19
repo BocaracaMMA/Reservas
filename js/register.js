@@ -95,7 +95,10 @@ form?.addEventListener('submit', async (e) => {
       correo,
       autorizado: false,
       reservas: 0,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      roles: ["student"],
+      genero: "no_especificado",
+      birthDate: null
     });
 
     await withTimeout(batch.commit());
