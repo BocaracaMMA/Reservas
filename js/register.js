@@ -97,8 +97,8 @@ form?.addEventListener('submit', async (e) => {
       reservas: 0,
       createdAt: new Date().toISOString(),
       roles: ["student"],
-      genero: "no_especificado",
-      birthDate: null
+      gender: "no_especificado"
+      // NO mandamos birthDate si no existe aún
     });
 
     await withTimeout(batch.commit());
@@ -142,3 +142,4 @@ form?.addEventListener('submit', async (e) => {
     btn?.removeAttribute('disabled');
   }
 });
+
