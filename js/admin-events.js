@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3) Seguridad: solo administradores
   onAuthStateChanged(auth, user => {
     const ADMINS = [
-      "TWAkND9zF0UKdMzswAPkgas9zfL2", // Iván
+      "vVUIH4IYqOOJdQJknGCjYjmKwUI3", // Iván
       "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"  // Luis
     ];
     if (!user || !ADMINS.includes(user.uid)) {

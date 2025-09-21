@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Reservar Clase - Cliente</title>
 
   <!-- Bootstrap Icons -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-  />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
 
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
@@ -25,15 +23,58 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.js"></script>
 
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
-
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#0d1117">
 
-  <!-- iOS “Add to Home Screen” soporte -->
+  <!-- iOS “Add to Home Screen” -->
   <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <!-- Estilos del switch y la tarjeta flip -->
+  <style>
+    /* Switch Estudiante/Profesor */
+    .role-switch{
+      margin:14px auto 10px; display:flex; gap:10px; align-items:center; justify-content:center;
+      font-size:.95rem; color:#cbd5e1;
+    }
+    .role-switch.hidden{ display:none; }
+    .role-switch .role-label{ opacity:.85 }
+    .role-switch .toggle{ position:relative; width:58px; height:30px; }
+    .role-switch .toggle input{ opacity:0; width:0; height:0; }
+    .role-switch .slider{
+      position:absolute; inset:0; background:#1f2937; border:1px solid #334155; border-radius:999px;
+      transition:all .25s ease; box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .role-switch .slider:before{
+      content:""; position:absolute; height:24px; width:24px; left:3px; top:50%; transform:translateY(-50%);
+      background:#e5e7eb; border-radius:50%; transition:all .25s ease;
+    }
+    .role-switch input:checked + .slider{ background:#14532d; border-color:#166534; }
+    .role-switch input:checked + .slider:before{ transform:translate(28px,-50%); background:#bbf7d0; }
+
+    /* Tarjeta “flip” con dos caras (student/prof) */
+    .cal-deck{
+      position:relative; perspective:1000px;
+      margin:6px auto 18px; max-width:680px; width:100%;
+      min-height:520px; /* asegura espacio al calendario */
+    }
+    .cal-deck .face{
+      position:absolute; inset:0; backface-visibility:hidden; transform-style:preserve-3d;
+      transition: transform .48s ease;
+    }
+    .cal-deck .face-student{ transform: rotateY(0deg); }
+    .cal-deck .face-prof   { transform: rotateY(180deg); }
+    .cal-deck[data-mode="prof"] .face-student{ transform: rotateY(180deg); }
+    .cal-deck[data-mode="prof"] .face-prof   { transform: rotateY(360deg); }
+
+    /* Calendarios internos */
+    #calendarStudent, #calendarProf{
+      background:#0f141a; border:1px solid #22303d; border-radius:16px; padding:10px;
+      box-shadow:0 8px 24px rgba(0,0,0,.28);
+      height:100%; min-height:520px;
+    }
+  </style>
 </head>
 <body>
 
@@ -50,7 +91,6 @@
     </ul>
   </aside>
 
-
   <main class="container">
     <div class="logo-container">
       <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
@@ -59,12 +99,12 @@
       <div id="local-time" class="mt-1 text-muted"></div>
     </div>
 
-    <!-- Aviso de membresía (in-app) -->
+    <!-- Aviso de membresía -->
     <div id="mshipBanner" class="mship-banner" style="display:none;">
       <span id="mshipText"></span>
     </div>
 
-    <!-- Botón para abrir el popup de escaneo -->
+    <!-- Botón de escaneo QR -->
     <div style="text-align:center; margin:1.5rem 0;">
       <button id="openScannerBtn" class="btn">Escanear Código QR</button>
     </div>
@@ -80,12 +120,34 @@
       </div>
     </div>
 
+    <!-- SWITCH + TARJETA CON 2 CALENDARIOS -->
     <div class="calendar-wrapper">
       <div class="card">
-        <div id='calendar'></div>
+
+        <!-- Switch (se oculta si el user no es prof/admin; el JS lo muestra si corresponde) -->
+        <div id="roleSwitchWrap" class="role-switch hidden">
+          <span class="role-label">Estudiante</span>
+          <label class="toggle">
+            <input type="checkbox" id="modeToggle" aria-label="Cambiar a vista de profesor">
+            <span class="slider"></span>
+          </label>
+          <span class="role-label">Profesor</span>
+        </div>
+
+        <!-- Tarjeta que rota entre Student y Profesor -->
+        <section id="calendarDeck" class="cal-deck" data-mode="student">
+          <div class="face face-student">
+            <div id="calendarStudent"></div>
+          </div>
+          <div class="face face-prof">
+            <div id="calendarProf"></div>
+          </div>
+        </section>
+
       </div>
     </div>
 
+    <!-- (Tu modal antiguo puede quedarse, no interfiere) -->
     <div id="reservationModal" style="display:none;">
       <div>
         <p>¿Confirmas tu reserva para la clase?</p>
@@ -98,28 +160,22 @@
   <div id="toast-container"></div>
 
   <script type="module" src="./js/notifications.js"></script>
-  <!-- Toasts -->
   <script type="module" src="./js/toast.js"></script>
-  <!-- Lógica del cliente (reservas, mostrar código, reloj...) -->
+  <!-- Lógica del cliente (reservas, código, reloj, switch/calendarios) -->
   <script type="module" src="./js/client.js"></script>
-  <!-- Lector QR dentro de popup -->
   <script type="module" src="./js/scan-asistencia.js"></script>
+
   <!-- Sidebar toggle + logout común -->
   <script>
-    // Toggle del sidebar
     document.getElementById("toggleNav").addEventListener("click", () => {
       document.getElementById("sidebar").classList.toggle("active");
     });
-
-    // Logout desde el sidebar
     document.getElementById("logoutSidebar").addEventListener("click", async (e) => {
       e.preventDefault();
-      // Hacemos signOut importando Firebase Auth dinámicamente
       try {
         const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
         const auth = getAuth();
         await signOut(auth);
-        // Mensaje y redirección
         const { showAlert } = await import("./js/toast.js");
         showAlert("Has cerrado sesión", "success");
         setTimeout(() => window.location.href = "index.html", 1000);
@@ -138,11 +194,9 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .catch(console.error);
+        navigator.serviceWorker.register('./service-worker.js').catch(console.error);
       });
     }
   </script>
-
 </body>
 </html>

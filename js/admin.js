@@ -15,7 +15,7 @@ import { showAlert } from './showAlert.js';
 document.addEventListener('DOMContentLoaded', () => {
   // ─── Seguridad: solo administradores ────────────────────────
   const ADMIN_UIDS = [
-    "TWAkND9zF0UKdMzswAPkgas9zfL2",  // Iván
+    "vVUIH4IYqOOJdQJknGCjYjmKwUI3",  // Iván
     "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"   // Luis
   ];
 

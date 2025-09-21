@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   onAuthStateChanged(auth, user => {
     const ADMIN_UIDS = [
-      "TWAkND9zF0UKdMzswAPkgas9zfL2",
+      "vVUIH4IYqOOJdQJknGCjYjmKwUI3",
       "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"
     ];
     if (!user || !ADMIN_UIDS.includes(user.uid)) {

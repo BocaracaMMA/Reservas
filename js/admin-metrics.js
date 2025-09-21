@@ -8,7 +8,7 @@ import { showAlert } from './showAlert.js';
 
 /* ====== Config / helpers ====== */
 const ADMIN_WHITELIST = new Set([
-  "TWAkND9zF0UKdMzswAPkgas9zfL2",
+  "vVUIH4IYqOOJdQJknGCjYjmKwUI3",
   "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"
 ]);
 

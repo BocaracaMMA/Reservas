@@ -8,7 +8,7 @@ import { showAlert } from './showAlert.js';
 
 // Admins fijos (blindados)
 const FIXED_ADMIN_UIDS = [
-  "TWAkND9zF0UKdMzswAPkgas9zfL2",
+  "vVUIH4IYqOOJdQJknGCjYjmKwUI3",
   "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"
 ];
 

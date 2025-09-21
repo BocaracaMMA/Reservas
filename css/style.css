@@ -1890,3 +1890,45 @@ main, .container, .page, .page-content, .app-container {
 .auth-wrap { width: min(92vw, 400px); margin: 64px auto 20px; }
 .hidden { display: none !important; }
 
+/* --- Switch Estudiante / Profesor --- */
+.role-switch{
+  margin:14px auto 10px; display:flex; gap:10px; align-items:center; justify-content:center;
+  font-size:.95rem; color:#cbd5e1;
+}
+.role-switch.hidden{ display:none; }
+.role-switch .role-label{ opacity:.85 }
+.role-switch .toggle{ position:relative; width:58px; height:30px; }
+.role-switch .toggle input{ opacity:0; width:0; height:0; }
+.role-switch .slider{
+  position:absolute; inset:0; background:#1f2937; border:1px solid #334155; border-radius:999px;
+  transition:all .25s ease; box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.role-switch .slider:before{
+  content:""; position:absolute; height:24px; width:24px; left:3px; top:50%; transform:translateY(-50%);
+  background:#e5e7eb; border-radius:50%; transition:all .25s ease;
+}
+.role-switch input:checked + .slider{ background:#14532d; border-color:#166534; }
+.role-switch input:checked + .slider:before{ transform:translate(28px,-50%); background:#bbf7d0; }
+
+/* --- Tarjeta "flip" con dos caras --- */
+.cal-deck{
+  position:relative; perspective:1000px;
+  margin:6px auto 18px; max-width:680px; width:100%;
+  min-height:520px; /* asegura espacio para el calendario */
+}
+.cal-deck .face{
+  position:absolute; inset:0; backface-visibility:hidden; transform-style:preserve-3d;
+  transition: transform .48s ease;
+}
+.cal-deck .face-student{ transform: rotateY(0deg); }
+.cal-deck .face-prof   { transform: rotateY(180deg); }
+
+.cal-deck[data-mode="prof"] .face-student{ transform: rotateY(180deg); }
+.cal-deck[data-mode="prof"] .face-prof   { transform: rotateY(360deg); }
+
+/* FullCalendar dentro de la tarjeta */
+#calendarStudent, #calendarProf{
+  background:#0f141a; border:1px solid #22303d; border-radius:16px; padding:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+  height:100%; min-height:520px;
+}

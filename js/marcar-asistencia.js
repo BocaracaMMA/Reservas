@@ -8,7 +8,7 @@ import {
 import { showAlert } from './showAlert.js';
 
 const ADMIN_UIDS = [
-  "TWAkND9zF0UKdMzswAPkgas9zfL2", // ivan
+  "vVUIH4IYqOOJdQJknGCjYjmKwUI3", // ivan
   "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"  // luis
 ];
 
