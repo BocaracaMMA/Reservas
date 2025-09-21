@@ -42,7 +42,6 @@ input[type="tel"] {
   border: 1px solid #30363d; /* Borde gris oscuro */
   border-radius: 5px;
   color: #c9d1d9; /* Texto claro en los campos */
-  padding: 10px;
   font-size: 14px;
 }
 
@@ -51,7 +50,6 @@ button {
   background-color: #238636; /* Botón verde GitHub */
   border: none;
   color: white;
-  padding: 10px;
   font-size: 15px;
   cursor: pointer;
   border-radius: 5px;
@@ -1447,7 +1445,7 @@ main.container {
   display: block;
   width: 100%;
   max-width: 360px;                  /* reduce el ancho del botón en desktop */
-  margin: 14px auto 8px;             /* centrado */
+  margin: 10px auto 8px;             /* centrado */
   padding: 10px 16px;                /* altura justa */
   background-color: #238636;
   border: none;
@@ -1839,4 +1837,56 @@ select,
   max-width: 100%;
   background-clip: padding-box;
 }
+
+/* ===== FIX GLOBAL: el body solo se centra en páginas de autenticación ===== */
+body {                      /* neutraliza el body-flex global */
+  display: block !important;
+  min-height: auto !important;
+}
+
+body.auth-center {          /* úsalo SOLO en login y registro */
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Contenedores centrados y sin “empujes” laterales */
+main, .container, .page, .page-content, .app-container {
+  max-width: 960px;
+  width: 100%;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 12px;
+  padding-right: 12px;
+  box-sizing: border-box;
+}
+
+/* El sidebar no debe empujar el layout */
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 280px;
+  max-width: 85vw;
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+  z-index: 1000;
+}
+.sidebar.active { transform: translateX(0); }
+
+/* El botón hamburguesa siempre por encima */
+.hamburger-btn, #toggleNav {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1100;
+}
+
+/* Evita que los <select> y menús se recorten dentro de tarjetas */
+.card, .panel, .section { overflow: visible; }
+
+/* Extra para formularios de auth: un poco más angosto en móvil */
+.auth-wrap { width: min(92vw, 400px); margin: 64px auto 20px; }
+.hidden { display: none !important; }
 

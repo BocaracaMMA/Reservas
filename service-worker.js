@@ -1,5 +1,5 @@
 /* service-worker.js */
-const SW_VERSION = 'v2.0.2';
+const SW_VERSION = 'v3.0.0';
 const APP_SHELL = [
   './',
   './index.html',

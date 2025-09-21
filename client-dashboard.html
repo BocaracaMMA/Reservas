@@ -84,7 +84,6 @@
       <div class="card">
         <div id='calendar'></div>
       </div>
-      <button id="logoutBtn" class="btn error">Cerrar sesión</button>
     </div>
 
     <div id="reservationModal" style="display:none;">
@@ -126,21 +125,6 @@
         setTimeout(() => window.location.href = "index.html", 1000);
       } catch (err) {
         console.error(err);
-        const { showAlert } = await import("./js/toast.js");
-        showAlert("Error al cerrar sesión", "error");
-      }
-    });
-
-    // Logout desde el botón rojo
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      try {
-        const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-        const auth = getAuth();
-        await signOut(auth);
-        const { showAlert } = await import("./js/toast.js");
-        showAlert("Has cerrado sesión", "success");
-        setTimeout(() => window.location.href = "index.html", 1000);
-      } catch {
         const { showAlert } = await import("./js/toast.js");
         showAlert("Error al cerrar sesión", "error");
       }

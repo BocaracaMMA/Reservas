@@ -6,6 +6,33 @@
   <title>Iniciar Sesión - Bocaraca MMA</title>
 
   <link rel="stylesheet" href="./css/style.css" />
+  <style>
+  /* Sin empujes globales SOLO aquí */
+  html, body { margin:0 !important; padding:0 !important; overflow-x:hidden; }
+  body.login-page { display:flex !important; min-height:100vh; }
+
+  /* El main o container no debe meter padding lateral raro */
+  .login-page main,
+  .login-page .container { width:100%; margin:0 auto; padding:0 !important; box-sizing:border-box; }
+
+  /* Card del login mucho más angosta para móvil */
+  .login-page .auth-card{
+    width:min(90vw, 420px) !important;   /* <— de 520px a 420px */
+    margin:72px auto 24px !important;
+  }
+
+  /* Form interior centrado y compacto */
+  .login-page #loginForm{
+    width:100%;
+    max-width:360px;                     /* botón y campos no se “estiran” */
+    margin:0 auto;
+  }
+  .login-page #loginForm button[type="submit"]{
+    width:100%; max-width:360px; margin:10px auto 8px;
+    padding:10px 16px;
+  }
+</style>
+
   <link rel="icon" type="image/png" href="./assets/favicon.ico" />
   
   <link rel="manifest" href="./manifest.webmanifest">
@@ -17,7 +44,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 </head>
-<body>
+<body class="auth-center login-page">
 
   <main class="container">
     <!-- Logo + nombre como ya lo tenías -->

@@ -131,14 +131,13 @@ if (logoutSidebarLink) {
   });
 }
 
-// ─── Notificacion de nuevo parche ────
+// ─── Notificación/forzado de nuevo parche de Service Worker ───────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     const reg = await navigator.serviceWorker.register('./service-worker.js');
 
     function promptUpdate(sw) {
-      // Muestra un toast y, al aceptar, manda SKIP_WAITING
-      // Si tu showAlert no soporta botones, puedes crear un botón flotante.
+      // Muestra un prompt simple; si tu UI tiene un toast con botón, puedes cambiarlo
       if (confirm('Nueva versión disponible. Toca aceptar para actualizar.')) {
         sw.postMessage({ type: 'SKIP_WAITING' });
       }
@@ -161,6 +160,27 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.location.reload();
     });
+
+    // ── NUEVO: chequeos proactivos de actualización ────────────────────────────
+    // 1) Apenas esté listo, fuerza un update
+    navigator.serviceWorker.ready.then((readyReg) => {
+      readyReg.update().catch(() => {});
+    });
+
+    // 2) Chequeo periódico cada 30 minutos
+    setInterval(async () => {
+      const currentReg = await navigator.serviceWorker.getRegistration();
+      await currentReg?.update();
+    }, 30 * 60 * 1000);
+
+    // 3) Al volver a la pestaña visible, vuelve a chequear
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible') {
+        const currentReg = await navigator.serviceWorker.getRegistration();
+        await currentReg?.update();
+      }
+    });
+    // ───────────────────────────────────────────────────────────────────────────
   });
 
   // opcional: escuchar mensajes desde el SW

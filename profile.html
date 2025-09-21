@@ -44,10 +44,8 @@
       font-size: .95rem;
       overflow-wrap: anywhere;
     }
-    .ph-tags {
-      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-    }
-    .ph-actions { display: flex; justify-content: center; width: 100%; }
+    .ph-tags { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+    .ph-actions { display:flex; justify-content:center; width:100%; }
     #pfEdit.btn.small { padding: 7px 11px; font-size: .9rem; line-height: 1; }
 
     /* Separador */
@@ -59,7 +57,7 @@
     }
 
     /* ===== Quick metrics ===== */
-    .quick-metrics { display: grid; gap: 10px; grid-template-columns: 1fr; }
+    .quick-metrics { display:grid; gap:10px; grid-template-columns:1fr; }
     @media (min-width:520px){ .quick-metrics{ grid-template-columns: repeat(3,1fr);} }
     .qm-item{ background:#0e171f;border:1px solid #263342;border-radius:12px;padding:12px 14px }
     .qm-label{font-size:.8rem;color:#8fa0b3;margin-bottom:4px}
@@ -182,17 +180,14 @@
         <div class="info-row"><div class="label">Nacimiento</div> <div class="value" id="pfNacimiento">—</div></div>
       </div>
 
-      <!-- ===== Form edición ===== -->
+      <!-- ===== Form edición (SIN cédula) ===== -->
       <form id="editForm" class="edit-form" hidden>
         <div class="ef-grid">
           <label for="efNombre">Nombre</label>
-          <input id="efNombre" type="text" autocomplete="name" placeholder="Tu nombre"/>
+          <input id="efNombre" type="text" autocomplete="given-name" placeholder="Tu nombre"/>
 
           <label for="efApellidos">Apellidos</label>
           <input id="efApellidos" type="text" autocomplete="family-name" placeholder="Tus apellidos"/>
-
-          <label for="efCedula">Cédula</label>
-          <input id="efCedula" type="tel" inputmode="numeric" placeholder="Solo números"/>
 
           <label for="efGenero">Género</label>
           <select id="efGenero">
@@ -201,6 +196,7 @@
             <option value="femenino">Femenino</option>
             <option value="no_binario">No binario</option>
             <option value="prefiero_no_decir">Prefiero no decir</option>
+            <option value="otro">Otro</option>
           </select>
 
           <label for="efNacimiento">Fecha de nacimiento</label>
