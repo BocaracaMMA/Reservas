@@ -1,15 +1,21 @@
 {
-  "name": "Bocaraca MMA",
+  "id": "./",
+  "name": "Artes Marciales Bocaraca",
   "short_name": "Bocaraca",
-  "description": "Nuestra app de reservas",
-  "start_url": "index.html",
+  "description": "Reservas y asistencia de clases.",
+  "start_url": "./index.html?source=pwa",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
-  "orientation": "portrait",
   "icons": [
-    { "src": "./assets/app-android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
-    { "src": "./assets/app-favicon-32x32.png", "sizes": "32x32", "type": "image/png" }
-  ]
+    { "src": "./assets/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./assets/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Calendario", "short_name": "Calendario", "url": "./client-dashboard.html?source=shortcut-cal" },
+    { "name": "Perfil", "short_name": "Perfil", "url": "./profile.html?source=shortcut-profile" }
+  ],
+  "prefer_related_applications": false
 }

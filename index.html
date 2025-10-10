@@ -38,10 +38,12 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#0d1117">
 
-  <!-- iOS “Add to Home Screen” soporte -->
-  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- iOS -->
+<link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bocaraca">
+
 
 </head>
 <body class="auth-center login-page">
@@ -167,14 +169,27 @@
     <p class="footer">© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
   </footer>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .catch(console.error);
-      });
-    }
-  </script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+        .then((reg) => {
+          if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
+          reg.addEventListener("updatefound", () => {
+            const nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener("statechange", () => {
+              if (nw.state === "installed" && navigator.serviceWorker.controller) {
+                reg.waiting?.postMessage("SKIP_WAITING");
+              }
+            });
+          });
+        })
+        .catch(console.error);
+    });
+  }
+</script>
+<script type="module" src="./js/pwa-install.js"></script>
 
 </body>
 </html>
