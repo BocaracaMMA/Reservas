@@ -14,6 +14,7 @@ const PRECACHE = [
   "./assets/android-chrome-192x192.png",
   "./assets/android-chrome-512x512.png",
   "./assets/logo.png",
+  "./assets/PWA_icon_512.png",
   "./assets/favicon-32x32.png",
   "./manifest.webmanifest",
   "./js/pwa-install.js"
@@ -95,3 +96,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
