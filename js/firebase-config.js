@@ -6,6 +6,9 @@ import { getAuth }        from "https://www.gstatic.com/firebasejs/11.6.1/fireba
 import { getFirestore }   from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage }     from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 import { getDatabase }    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+setLogLevel('debug');
 
 // 2) La configuración
 const firebaseConfig = {

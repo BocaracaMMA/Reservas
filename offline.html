@@ -11,7 +11,7 @@
     .hint{color:#8b949e;margin-top:.5rem}
   </style>
 
-  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v1">
   <meta name="theme-color" content="#0d1117">
 
   <!-- iOS “Add to Home Screen” soporte -->
@@ -28,14 +28,8 @@
     <p class="hint">Las páginas visitadas recientemente pueden seguir cargando gracias al modo offline.</p>
     <button onclick="location.reload()">Reintentar</button>
   </main>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .catch(console.error);
-      });
-    }
-  </script>
+  
+  <script type="module" src="./js/sw-register.js"></script>
 
 </body>
 </html>

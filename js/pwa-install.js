@@ -1,7 +1,7 @@
 // ./js/pwa-install.js
 let deferredPrompt = null;
 
-(function css(){
+(function injectCSS(){
   if (document.getElementById("pwa-install-css")) return;
   const s = document.createElement("style");
   s.id = "pwa-install-css";
@@ -17,11 +17,12 @@ let deferredPrompt = null;
   document.head.appendChild(s);
 })();
 
-function isStandalone(){
-  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-}
-function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
-function isSafari(){ return /^((?!chrome|android).)*safari/i.test(navigator.userAgent); }
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true;
+
+const isIOS    = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isSafari = () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 function ensureUI(){
   if (document.getElementById("installBanner")) return;
@@ -48,33 +49,71 @@ function ensureUI(){
     </div>
   `;
   document.body.appendChild(tip);
-  document.getElementById("btnIosTip").onclick = () => tip.classList.add("active");
+  document.getElementById("btnIosTip").onclick   = () => tip.classList.add("active");
   document.getElementById("closeIosTip").onclick = () => tip.classList.remove("active");
 
   document.getElementById("btnInstall").onclick = async () => {
-    if (!deferredPrompt) return;
-    document.getElementById("btnInstall").disabled = true;
-    deferredPrompt.prompt();
-    try { await deferredPrompt.userChoice; } catch {}
-    deferredPrompt = null;
-    wrap.classList.remove("show");
+    // sólo funciona si tenemos el evento capturado y estamos en browser (no standalone)
+    if (!deferredPrompt) {
+      console.info('[PWA] Install no disponible todavía (sin beforeinstallprompt o ya consumido).');
+      // opcional: mostrar un toast propio
+      try { window.showAlert?.('La instalación no está disponible ahora', 'error'); } catch {}
+      return;
+    }
+    try {
+      document.getElementById("btnInstall").disabled = true;
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      console.info('[PWA] userChoice:', choice);
+    } finally {
+      deferredPrompt = null; // no se puede reutilizar
+      wrap.classList.remove("show");
+      setTimeout(()=> { document.getElementById("btnInstall").disabled = false; }, 1200);
+    }
   };
 }
 
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  ensureUI();
-  if (!isStandalone()) document.getElementById("installBanner")?.classList.add("show");
-});
+function showBannerIfEligible(){
+  const banner = document.getElementById("installBanner");
+  if (!banner) return;
+  // iOS Safari no tiene beforeinstallprompt → mostramos CTA manual
+  if (isIOS() && isSafari() && !isStandalone()) {
+    banner.classList.add("show");
+    return;
+  }
+  // En Chrome/Android sólo mostramos si tenemos deferredPrompt listo y no estamos instalados
+  if (deferredPrompt && !isStandalone()) {
+    banner.classList.add("show");
+  } else {
+    banner.classList.remove("show");
+  }
+}
 
+// REGISTRA EL LISTENER LO ANTES POSIBLE y sólo 1 vez
+window.addEventListener("beforeinstallprompt", (e) => {
+  console.info('[PWA] beforeinstallprompt disparado');
+  e.preventDefault();
+  deferredPrompt = e;        // almacenamos para click futuro
+  ensureUI();
+  showBannerIfEligible();    // ahora sí podemos mostrar el botón Install
+}, { once:true });
+
+// Cuando se instala, ocultamos
 window.addEventListener("appinstalled", () => {
+  console.info('[PWA] appinstalled');
   document.getElementById("installBanner")?.classList.remove("show");
 });
 
+// Montaje inicial de la UI + lógicas complementarias
 document.addEventListener("DOMContentLoaded", () => {
   ensureUI();
-  if (isIOS() && isSafari() && !isStandalone()) {
-    document.getElementById("installBanner")?.classList.add("show");
-  }
+  showBannerIfEligible(); // iOS/Safari cae por aquí
+
+  // Al recuperar foco/visibilidad, re-evalúa (por si el BIP llegó estando en bg)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') showBannerIfEligible();
+  });
+
+  // Cuando el SW ya está listo, vuelve a evaluar
+  navigator.serviceWorker?.ready?.then(()=> showBannerIfEligible());
 });

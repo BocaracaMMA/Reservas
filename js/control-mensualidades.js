@@ -1,207 +1,207 @@
-// ./js/control-mensualidades.js
-
+//control-mensualidades.js
 import { auth, db } from './firebase-config.js';
-import { signOut, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import {
-  collection,
-  getDocs,
-  updateDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
+import { gateAdminPage } from './role-guard.js';
 
-// ─── Estado de UI ───────────────────────────────────────────────────
-let usersCache = []; // [{id, nombre, correo, autorizado, expiryDate, ...}]
+// ===== helpers de init/DOM seguros =====
+const ready = (fn) =>
+  (document.readyState === 'loading')
+    ? document.addEventListener('DOMContentLoaded', fn, { once:true })
+    : fn();
 
-// Helpers DOM para filtros (mismo naming que en usuarios)
-const $tbody  = () => document.querySelector('#mensualidades-table tbody');
-const $filter = () => document.getElementById('filterState'); // all|activo|proxima|vencida
-const $sort   = () => document.getElementById('sortBy');      // az|za
-
-// Normaliza strings para ordenar (sin acentos / case-insensitive)
-const norm = s => (s ?? '')
-  .toString()
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g,'')
-  .toLowerCase();
-
-// ─── Inicialización ────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  setupSidebarToggle();
-  setupAuth();
-  // Carga inicial + enganchar filtros
-  loadMensualidades().then(() => {
-    if ($filter()) $filter().addEventListener('change', renderMensualidades);
-    if ($sort())   $sort().addEventListener('change', renderMensualidades);
-  });
-});
-
-// ─── Sidebar toggle ────────────────────────────────────────────────
-function setupSidebarToggle() {
-  const btn = document.getElementById("toggleNav");
-  const sb  = document.getElementById("sidebar");
-  if (btn && sb) {
-    btn.addEventListener("click", () => sb.classList.toggle("active"));
-  }
+function ensureNavCSS(){
+  if (document.getElementById('nav-fallback-css')) return;
+  const style = document.createElement('style');
+  style.id = 'nav-fallback-css';
+  style.textContent = `
+    .hamburger-btn{position:fixed;right:16px;top:16px;z-index:10001}
+    .sidebar{position:fixed;inset:0 auto 0 0;width:260px;height:100vh;
+             transform:translateX(-100%);transition:transform .25s ease;z-index:10000}
+    .sidebar.active{transform:translateX(0)}
+  `;
+  document.head.appendChild(style);
 }
-
-// ─── Auth + logout ─────────────────────────────────────────────────
-function setupAuth() {
-  onAuthStateChanged(auth, user => {
-    const ADMINS = [
-      "vVUIH4IYqOOJdQJknGCjYjmKwUI3",
-      "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"
-    ];
-    if (!user || !ADMINS.includes(user.uid)) {
-      window.location.href = './index.html';
+function bindSidebarOnce(){
+  const btn = document.getElementById('toggleNav');
+  const sb  = document.getElementById('sidebar');
+  if (!btn || !sb || btn.dataset.bound) return;
+  btn.addEventListener('click', ()=> sb.classList.toggle('active'));
+  btn.dataset.bound = '1';
+}
+function bindLogoutOnce(){
+  const a = document.getElementById('logoutSidebar');
+  if (!a || a.dataset.bound) return;
+  a.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    try {
+      await signOut(auth);
+      showAlert('Sesión cerrada','success');
+      setTimeout(()=>location.href='index.html', 900);
+    } catch {
+      showAlert('Error al cerrar sesión','error');
     }
   });
-  const logoutBtn = document.getElementById('logoutSidebar');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', async e => {
-      e.preventDefault();
-      await signOut(auth);
-      showAlert('Sesión cerrada', 'success');
-      setTimeout(() => window.location.href = 'index.html', 1000);
-    });
-  }
+  a.dataset.bound = '1';
 }
 
-// ─── Helpers de fecha CR ───────────────────────────────────────────
-function todayCRDate() {
-  return new Date(new Date().toLocaleString('en-US', {
-    timeZone: 'America/Costa_Rica'
-  }));
-}
+// ===== estado UI =====
+let usersCache = [];
+const $tbody   = () => document.querySelector('#mensualidades-table tbody');
+const $filter  = () => document.getElementById('filterState');
+const $sort    = () => document.getElementById('sortBy');
+const $search  = () => document.getElementById('searchText');
+const $clear   = () => document.getElementById('clearSearch');
 
-function daysUntil(expiryDateStr) {
+const norm = s => (s ?? '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const debounce = (fn, ms=180) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+
+// ===== fechas/estados =====
+function todayCRDate(){ return new Date(new Date().toLocaleString('en-US', { timeZone:'America/Costa_Rica' })); }
+function daysUntil(expiryDateStr){
   if (!expiryDateStr) return -9999;
-  const today = todayCRDate();
-  const [y, m, d] = expiryDateStr.split('-').map(Number);
-  const expiry = new Date(y, m - 1, d);
-  const diffMs = expiry - today;
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const [y,m,d] = expiryDateStr.split('-').map(Number);
+  const expiry = new Date(y, m-1, d, 23,59,59);
+  return Math.floor((expiry - todayCRDate())/86400000);
 }
-
-// ─── Estado de membresía según reglas ──────────────────────────────
-function getMembershipState(user) {
-  if (!user.autorizado) return 'Vencida';
-  const exp = user.expiryDate;
+function getMembershipState(u){
+  if (!u.autorizado) return 'Vencida';
+  const exp = u.expiryDate;
   if (!exp) return 'Vencida';
-  const daysLeft = daysUntil(exp);
-  if (daysLeft < 0)  return 'Vencida';
-  if (daysLeft <= 5) return 'Próxima a vencer';
+  const left = daysUntil(exp);
+  if (left < 0) return 'Vencida';
+  if (left <= 5) return 'Próxima a vencer';
   return 'Activo';
 }
+function stateToClass(s){
+  if (s==='Vencida') return 'state-vencida';
+  if (s==='Próxima a vencer') return 'state-proxima';
+  if (s==='Activo') return 'state-activo';
+  return '';
+}
 
-// ─── Mapeo estado → clase CSS ─────────────────────────────────────
-function stateToClass(state) {
-  switch (state) {
-    case 'Vencida':           return 'state-vencida';
-    case 'Próxima a vencer':  return 'state-proxima';
-    case 'Activo':            return 'state-activo';
-    default:                  return '';
+// ===== datos + render =====
+async function loadMensualidades(){
+  try {
+    const snap = await getDocs(collection(db,'users'));
+    usersCache = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderMensualidades();
+  } catch (e) {
+    console.error('Error cargando mensualidades:', e);
+    showAlert('No se pudieron cargar los datos','error');
   }
 }
 
-// ─── Carga inicial (solo DB -> cache) ─────────────────────────────
-async function loadMensualidades() {
-  const snap = await getDocs(collection(db, 'users'));
-  usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  renderMensualidades();
-}
-
-// ─── Render con filtros/orden ─────────────────────────────────────
-function renderMensualidades() {
-  const tbody = $tbody();
-  if (!tbody) return;
+function renderMensualidades(){
+  const tbody = $tbody(); if (!tbody) return;
   tbody.innerHTML = '';
 
-  const stateFilter = $filter() ? $filter().value : 'all'; // all|activo|proxima|vencida
-  const order       = $sort() ? $sort().value     : 'az';  // az|za
+  const stateFilter = $filter()?.value || 'all';
+  const order       = $sort()?.value   || 'az';
+  const queryText   = norm($search()?.value || '');
+  const tokens      = queryText.split(/\s+/).filter(Boolean);
 
-  // 1) derivar estado y filtrar
   let list = usersCache
-    .map(u => ({ ...u, __state: getMembershipState(u) })) // "Activo/Próxima a vencer/Vencida"
+    .map(u => ({ ...u, __state: getMembershipState(u) }))
     .filter(u => {
-      if (stateFilter === 'activo')  return u.__state === 'Activo';
-      if (stateFilter === 'proxima') return u.__state === 'Próxima a vencer';
-      if (stateFilter === 'vencida') return u.__state === 'Vencida';
-      return true; // all
+      // 1) filtro de estado
+      if (stateFilter==='activo'  && u.__state!=='Activo') return false;
+      if (stateFilter==='proxima' && u.__state!=='Próxima a vencer') return false;
+      if (stateFilter==='vencida' && u.__state!=='Vencida') return false;
+      // 2) búsqueda (todas las palabras deben hacer match parcial)
+      if (!tokens.length) return true;
+      const hay = norm(`${u.nombre||''} ${u.correo||''} ${u.cedula||''}`);
+      return tokens.every(t => hay.includes(t));
     });
 
-  // 2) ordenar por nombre
-  list.sort((a, b) => {
-    const an = norm(a.nombre);
-    const bn = norm(b.nombre);
+  // ordenar
+  list.sort((a,b)=>{
+    const an = norm(a.nombre), bn = norm(b.nombre);
     const cmp = an.localeCompare(bn);
-    return order === 'za' ? -cmp : cmp;
+    return order==='za' ? -cmp : cmp;
   });
 
-  // 3) pintar filas
-  list.forEach(u => {
-    const uid  = u.id;
-    const exp  = u.expiryDate || '—';
-    const st   = u.__state;
-    const cls  = stateToClass(st);
-
+  const frag = document.createDocumentFragment();
+  list.forEach(u=>{
+    const uid=u.id, exp=u.expiryDate||'—', st=u.__state, cls=stateToClass(st);
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${u.nombre || ''}</td>
-      <td>${u.correo || ''}</td>
+      <td>${u.nombre||''}</td>
+      <td>${u.correo||''}</td>
       <td>
         <label class="switch">
-          <input type="checkbox" ${u.autorizado ? 'checked' : ''} data-uid="${uid}">
+          <input type="checkbox" ${u.autorizado?'checked':''} data-uid="${uid}">
           <span class="slider round"></span>
         </label>
       </td>
       <td>${exp}</td>
-      <td class="${cls}">${st}</td>
-      <td>
-        <input type="month" id="month-${uid}" value="${exp==='—' ? '' : exp.slice(0,7)}">
-      </td>
-      <td>
-        <button class="btnPay btn" data-uid="${uid}">Guardar</button>
-      </td>
+      <td><span class="${cls}">${st}</span></td>
+      <td><input type="month" id="month-${uid}" value="${exp==='—'?'':exp.slice(0,7)}"></td>
+      <td><button class="btnPay btn" data-uid="${uid}">Guardar</button></td>
     `;
-    tbody.appendChild(tr);
+    frag.appendChild(tr);
+  });
+  tbody.appendChild(frag);
 
-    // toggle autorizado
-    tr.querySelector('input[type=checkbox]')
-      .addEventListener('change', async e => {
-        const checked = e.target.checked;
-        try {
-          await updateDoc(doc(db, 'users', uid), { autorizado: checked });
-          showAlert('Autorización actualizada', 'success');
-          // refrescamos cache y re-render para que re-calculen estados
-          await loadMensualidades();
-        } catch {
-          showAlert('Error al actualizar', 'error');
-          e.target.checked = !checked;
-        }
-      });
+  // delegación de eventos (toggle + guardar pago)
+  tbody.onclick = async (e)=>{
+    const t = e.target;
+    if (t.matches('input[type="checkbox"][data-uid]')){
+      const uid = t.getAttribute('data-uid');
+      const checked = t.checked;
+      try {
+        await updateDoc(doc(db,'users',uid), { autorizado: checked });
+        showAlert('Autorización actualizada','success');
+        await loadMensualidades();
+      } catch {
+        showAlert('Error al actualizar','error');
+        t.checked = !checked;
+      }
+    }
+    if (t.matches('.btnPay[data-uid]')){
+      const uid = t.getAttribute('data-uid');
+      const monthVal = document.getElementById(`month-${uid}`)?.value || '';
+      if (!monthVal){ showAlert('Selecciona un mes','error'); return; }
+      const [y,m] = monthVal.split('-').map(Number);
+      const lastDay = new Date(y, m, 0).toISOString().split('T')[0];
+      try {
+        await updateDoc(doc(db,'users',uid), { expiryDate:lastDay, autorizado:true });
+        showAlert('Pago registrado','success');
+        await loadMensualidades();
+      } catch { showAlert('Error al guardar pago','error'); }
+    }
+  };
+}
 
-    // guardar pago
-    tr.querySelector('.btnPay')
-      .addEventListener('click', async () => {
-        const monthVal = document.getElementById(`month-${uid}`).value;
-        if (!monthVal) {
-          showAlert('Selecciona un mes', 'error');
-          return;
-        }
-        const [y, m] = monthVal.split('-').map(Number);
-        const lastDay = new Date(y, m, 0).toISOString().split('T')[0];
-        try {
-          await updateDoc(doc(db, 'users', uid), {
-            expiryDate: lastDay,
-            autorizado: true
-          });
-          showAlert('Pago registrado', 'success');
-          await loadMensualidades();
-        } catch {
-          showAlert('Error al guardar pago', 'error');
-        }
-      });
+// ===== init protegido por roles (no bloquea el shell) =====
+async function initProtected(){
+  if (window.lucide) { try { window.lucide.createIcons(); } catch {} }
+  await loadMensualidades();
+
+  // filtros
+  $filter()?.addEventListener('change', renderMensualidades);
+  $sort()?.addEventListener('change', renderMensualidades);
+
+  // búsqueda en vivo con debounce + botón limpiar
+  const debounced = debounce(renderMensualidades, 150);
+  $search()?.addEventListener('input', () => {
+    if ($clear()) $clear().style.display = ($search().value ? 'inline-flex' : 'none');
+    debounced();
+  });
+  $clear()?.addEventListener('click', () => {
+    if ($search()){ $search().value = ''; }
+    if ($clear()) $clear().style.display = 'none';
+    renderMensualidades();
   });
 }
+
+// Monta el shell siempre, valida roles en paralelo
+ready(() => {
+  ensureNavCSS();
+  bindSidebarOnce();
+  bindLogoutOnce();
+  gateAdminPage()
+    .then(initProtected)
+    .catch(() => {/* role-guard redirige si no es admin */});
+});

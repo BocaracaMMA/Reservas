@@ -23,7 +23,7 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.js"></script>
 
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
-  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v1">
   <meta name="theme-color" content="#0d1117">
 
 <!-- iOS -->
@@ -87,7 +87,6 @@
     <ul>
       <li><a href="client-dashboard.html"><span>🏠</span>Inicio</a></li>
       <li><a href="profile.html"><span>👤</span>Mi perfil</a></li>
-      <li><a href="events.html"><span>🎫</span>Eventos</a></li>
       <li><a id="logoutSidebar" href="#"><span>🚪</span>Cerrar sesión</a></li>
     </ul>
   </aside>
@@ -160,7 +159,6 @@
 
   <div id="toast-container"></div>
 
-  <script type="module" src="./js/notifications.js"></script>
   <script type="module" src="./js/toast.js"></script>
   <!-- Lógica del cliente (reservas, código, reloj, switch/calendarios) -->
   <script type="module" src="./js/client.js"></script>
@@ -213,6 +211,8 @@
   }
 </script>
 <script type="module" src="./js/pwa-install.js"></script>
+
+<script type="module" src="./js/sw-register.js"></script>
 
 </body>
 </html>

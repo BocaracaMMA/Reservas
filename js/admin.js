@@ -1,133 +1,123 @@
-// ./js/admin.js
-
+// ./js/admin.js (parches mínimos)
 import { auth, db } from './firebase-config.js';
-import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import {
-  collection,
-  query,
-  onSnapshot,
-  getDocs,
-  doc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { collection, query, onSnapshot, getDocs, doc, updateDoc }
+  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
+import { gateAdminPage } from './role-guard.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  // ─── Seguridad: solo administradores ────────────────────────
-  const ADMIN_UIDS = [
-    "vVUIH4IYqOOJdQJknGCjYjmKwUI3",  // Iván
-    "ScODWX8zq1ZXpzbbKk5vuHwSo7N2"   // Luis
-  ];
+const onReady = (fn) => {
+  if (document.readyState !== 'loading') fn();
+  else document.addEventListener('DOMContentLoaded', fn);
+};
 
-  onAuthStateChanged(auth, user => {
-    if (!user || !ADMIN_UIDS.includes(user.uid)) {
-      window.location.href = './index.html';
-      return;
-    }
-    iniciarPanelAdmin();
-  });
-
-  // ─── El Toggle sidebar ─────────────────────────────────────────
+// Aca se registran los handlers y gateamos dentro
+onReady(() => {
+  // Sidebar toggle
   const toggleBtn = document.getElementById('toggleNav');
   const sidebar   = document.getElementById('sidebar');
   if (toggleBtn && sidebar) {
-    toggleBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+      try { window.dispatchEvent(new Event('resize')); } catch {}
+    });
   }
 
-  // ─── Lo de Lucide Icons ────────────────────────────────────────────
-  if (window.lucide) lucide.createIcons();
-});
+  if (window.lucide) window.lucide.createIcons();
 
-// ─── Fallback global para toggle si hiciera falta ───────────────
-const _toggle = document.getElementById('toggleNav');
-const _side   = document.getElementById('sidebar');
-if (_toggle && _side) {
-  _toggle.addEventListener('click', () => _side.classList.toggle('active'));
-}
-
-// ─── Logout desde sidebar ────────────────────────────────────────
-const logoutSidebar = document.getElementById('logoutSidebar');
-if (logoutSidebar) {
-  logoutSidebar.addEventListener('click', async e => {
+  document.getElementById('logoutSidebar')?.addEventListener('click', async (e) => {
     e.preventDefault();
     try {
       await signOut(auth);
-      showAlert("Has cerrado sesión", 'success');
-      setTimeout(() => window.location.href = './index.html', 1500);
-    } catch (err) {
-      console.error('Error al cerrar sesión:', err);
+      showAlert('Has cerrado sesión', 'success');
+      setTimeout(() => location.href = './index.html', 900);
+    } catch {
       showAlert('Hubo un problema al cerrar sesión.', 'error');
     }
   });
-}
 
-// ─── Cerrar popup asistencia ────────────────────────────────────
-const cerrarBtn = document.getElementById('cerrarPopupBtn');
-if (cerrarBtn) {
-  cerrarBtn.addEventListener('click', cerrarPopup);
-}
+  document.getElementById('cerrarPopupBtn')?.addEventListener('click', () => {
+    document.getElementById('asistenciaPopup')?.classList.remove('active');
+  });
 
-// ─── Inicializa FullCalendar con reservas ───────────────────────
+  // Gate por roles y luego calendario
+  (async () => {
+    await gateAdminPage();
+    iniciarPanelAdmin();
+  })();
+});
+
+/* ===== FullCalendar admin ===== */
 function iniciarPanelAdmin() {
   const calendarEl = document.getElementById('calendar-admin');
-  if (!calendarEl) return;
+  if (!calendarEl || !window.FullCalendar) return;
 
-  const calendar = new FullCalendar.Calendar(calendarEl, {
+  if (!calendarEl.style.minHeight) calendarEl.style.minHeight = '560px';
+
+  const calendar = new window.FullCalendar.Calendar(calendarEl, {
     locale: 'es',
-    initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'dayGridMonth',
-    headerToolbar: {
-      left: '',
-      center: 'title',
-      right: ''
-    },
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    expandRows: true,
+    contentHeight: 'auto',
+    headerToolbar: { left: '', center: 'title', right: '' },
+
     events(info, success, failure) {
       const q = query(collection(db, 'reservations'));
-      onSnapshot(q, snap => {
-        const byDate = {};
-        snap.forEach(d => {
-          const data = d.data();
-          if (!data.date) return;
-          byDate[data.date] ??= [];
-          byDate[data.date].push(data.nombre || 'Desconocido');
-        });
-        success(Object.entries(byDate).map(([date, names]) => ({
-          title: `${names.length}`,
-          start: date,
-          allDay: true,
-          extendedProps: { names }
-        })));
-      }, err => {
-        console.error(err);
-        failure(err);
-      });
+      const unsub = onSnapshot(q, snap => {
+        try {
+          const byDate = {};
+          snap.forEach(d => {
+            const data = d.data();
+            if (!data?.date) return;
+            (byDate[data.date] ??= []).push(data.nombre || 'Desconocido');
+          });
+          const evs = Object.entries(byDate)
+            .map(([date, names]) => ({
+              title: String(names.length),
+              start: date,
+              allDay: true,
+              extendedProps: { names }
+            }));
+          // ❗ NO filtres por rango aquí (ver punto 2)
+          success(evs);
+        } catch (err) { console.error(err); failure(err); }
+      }, err => { console.error(err); failure(err); });
+
+      return () => { try { unsub(); } catch {} };
     },
+
     eventClick: async info => {
-      const day = info.event.startStr;
+      document.querySelectorAll('.custom-tooltip').forEach(t => t.remove());
+      const day  = info.event.startStr;
       const list = await getReservasPorDia(day);
       abrirPopupAsistencia(list, day);
     },
+
     eventMouseEnter: info => {
       const tip = document.createElement('div');
       tip.className = 'custom-tooltip';
-      tip.innerHTML = `<strong>Usuarios:</strong><br>${info.event.extendedProps.names.join('<br>')}`;
+      tip.style.cssText =
+        'position:fixed; z-index:10001; background:#0b2540; color:#b4d7ff; border:1px solid #1e3a5f; padding:6px 8px; border-radius:8px; pointer-events:none;';
+      tip.innerHTML = `<strong>Usuarios:</strong><br>${(info.event.extendedProps.names||[]).join('<br>')}`;
       document.body.appendChild(tip);
-      const move = e => {
-        tip.style.left = `${e.pageX+10}px`;
-        tip.style.top  = `${e.pageY+10}px`;
-      };
+      const move = e => { tip.style.left = `${e.pageX+10}px`; tip.style.top = `${e.pageY+10}px`; };
+      const cleanup = () => tip.remove();
       info.el.addEventListener('mousemove', move);
-      info.el.addEventListener('mouseleave', () => tip.remove());
+      info.el.addEventListener('mouseleave', cleanup);
+      info.el.addEventListener('click', cleanup);
     },
-    dayCellClassNames: arg => {
-      const d = arg.date.getDay();
-      if (d !== 5 && d !== 6) return ['disabled-day'];
-    }
+
+    dayCellClassNames: arg =>
+      (arg.date.getDay() !== 5 && arg.date.getDay() !== 6) ? ['disabled-day'] : []
   });
 
   calendar.render();
+  setTimeout(() => { try { calendar.updateSize(); } catch {} }, 0);
+  window.addEventListener('resize', () => { try { calendar.updateSize(); } catch {} });
 }
 
-// ─── Lee reservas del día ───────────────────────────────────────
+/* ===== Asistencia ===== */
 async function getReservasPorDia(day) {
   const snap = await getDocs(collection(db, 'asistencias', day, 'usuarios'));
   return snap.docs.map(d => ({
@@ -137,7 +127,6 @@ async function getReservasPorDia(day) {
   }));
 }
 
-// ─── Muestra el popup de asistencia ──────────────────────────────
 function abrirPopupAsistencia(list, day) {
   const popup = document.getElementById('asistenciaPopup');
   const ul    = document.getElementById('listaUsuarios');
@@ -146,23 +135,27 @@ function abrirPopupAsistencia(list, day) {
 
   ul.innerHTML = '';
   fd.textContent = day;
+
   list.forEach(u => {
     const li = document.createElement('li');
     li.className = 'asistencia-item';
+
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = u.presente;
     cb.id = u.uid;
     cb.addEventListener('change', () => guardarAsistencia(day, u.uid, cb.checked));
+
     const span = document.createElement('span');
     span.textContent = u.nombre;
+
     li.append(cb, span);
     ul.append(li);
   });
+
   popup.classList.add('active');
 }
 
-// ─── Guarda la asistencia ────────────────────────────────────────
 async function guardarAsistencia(day, uid, presente) {
   try {
     await updateDoc(doc(db, 'asistencias', day, 'usuarios', uid), { presente });
@@ -171,10 +164,4 @@ async function guardarAsistencia(day, uid, presente) {
     console.error(err);
     showAlert('Error al guardar asistencia', 'error');
   }
-}
-
-// ─── Cierra el popup ─────────────────────────────────────────────
-function cerrarPopup() {
-  const popup = document.getElementById('asistenciaPopup');
-  if (popup) popup.classList.remove('active');
 }

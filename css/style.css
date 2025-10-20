@@ -910,62 +910,6 @@ main.container {
 .qty-ctrl button{ background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; padding:.25rem .5rem; }
 .remove-btn{ background:#dc3545; color:#fff; border:none; border-radius:8px; padding:.35rem .6rem; }
 
-/* ===================================================================== */
-/* =====================  OVERRIDES ESPECÍFICOS  ======================= */
-/* ===================================================================== */
-
-/* 1) Tienda: miniaturas con altura real (evita “cuadro blanco”) */
-.product-thumb{
-  width: 100%;
-  aspect-ratio: 1 / 1;     /* cuadrado estable en la grilla */
-  overflow: hidden;
-  background:#0d1117;
-}
-.product-thumb img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* 2) Modal de producto (solo tienda): ensancha y muestra imagen completa */
-#productModal .modal-content{
-  max-width: 520px;
-  width: min(92vw, 520px);
-}
-#productModal .product-modal-imgwrap{
-  width: 100%;
-  aspect-ratio: 4 / 3;     /* 4:3 luce más natural; cambia a 1 / 1 si prefieres */
-  background:#0d1117;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-#productModal .product-modal-imgwrap img{
-  width: 100%;
-  height: 100%;
-  max-height: none !important; /* anula el 20vh global */
-  object-fit: contain;         /* muestra la foto completa */
-  object-position: center;
-  display: block;
-}
-#productModal h2{ margin: .75rem 0 .25rem; text-align:center; }
-#productModal #pmPrice{ text-align:center; }
-#productModal #pmStock{ text-align:center; color:#8b949e; }
-#productModal #pmDesc{ text-align:center; }
-
-/* 3) Botón “Ver” verde dentro de tarjetas de producto */
-.product-card .info .btn{
-  background-color:#238636;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:.5rem 1rem;
-  font-weight:600;
-}
-.product-card .info .btn:hover{
-  background-color:#2ea043;
-}
 
 /* ───────── Mensualidades: ajuste mobile first (SOLO para esta página) ───────── */
 .calendar-wrapper main.card{
