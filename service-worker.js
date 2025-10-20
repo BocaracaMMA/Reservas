@@ -1,5 +1,5 @@
 // ./service-worker.js
-const APP_VERSION = '2025.10.20.v4';          // súbelo en cada release
+const APP_VERSION = '2025.10.20.v5';  // súbelo en cada release
 const CACHE_NAME  = `app-${APP_VERSION}`;
 
 // Detecta el scope real (en GH Pages será /Reservas/)
@@ -7,7 +7,7 @@ const ROOT_URL = new URL(self.registration.scope);
 const ROOT = ROOT_URL.pathname.endsWith('/') ? ROOT_URL.pathname : ROOT_URL.pathname + '/';
 const p = (path) => (path.startsWith('/') ? path : ROOT + path);
 
-// Archivos mínimos a precachear (asegúrate de que EXISTEN)
+// Precarga mínima (añade aquí lo crítico de tu landing)
 const PRECACHE_URLS = [
   p('index.html'),
   p('offline.html'),
@@ -17,52 +17,38 @@ const PRECACHE_URLS = [
   p('js/firebase-config.js'),
   p('js/role-guard.js'),
   p('js/showAlert.js'),
-  p('assets/PWA_icon_512.png'),
   p('assets/PWA_icon_192.png'),
+  p('assets/PWA_icon_512.png'),
 ];
-
-// Precarga tolerante a errores (si algo falta, no rompe la instalación)
-async function safePrecache(urls) {
-  const cache = await caches.open(CACHE_NAME);
-  await Promise.all(
-    urls.map(async (url) => {
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (res.ok) await cache.put(url, res.clone());
-      } catch (e) {
-        // opcional: console.warn('SW precache skip:', url, e);
-      }
-    })
-  );
-}
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
-    await safePrecache(PRECACHE_URLS);
-    await self.skipWaiting();
+    const c = await caches.open(CACHE_NAME);
+    await c.addAll(PRECACHE_URLS);
+    // MODO MANUAL: NO skipWaiting aquí
   })());
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    // limpia caches viejos
     const keys = await caches.keys();
     await Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve())));
+    // Queremos control inmediato SOLO cuando el admin aplique la actualización
     await self.clients.claim();
-    const clients = await self.clients.matchAll({ type: 'window' });
-    clients.forEach(c => c.postMessage({ type:'ACTIVE_VERSION', version: APP_VERSION }));
+    // MODO MANUAL: no postMessage, no otras acciones
   })());
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
-  const accept = req.headers.get('accept') || '';
 
-  // Solo mismas-orígenes; deja terceros (CDN) al navegador
+  // Solo mismo origen (CDNs/terceros al navegador)
   if (url.origin !== location.origin) return;
 
-  // Navegación/HTML -> network-first con fallback a offline.html
-  if (req.mode === 'navigate' || accept.includes('text/html')) {
+  // Navegación / HTML -> network-first con fallback
+  if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith((async () => {
       try {
         return await fetch(req, { cache: 'no-store' });
@@ -103,10 +89,11 @@ self.addEventListener('fetch', (event) => {
   })());
 });
 
-// Mensajes desde la página
+// Mensajes desde la página (solo manual)
 self.addEventListener('message', async (event) => {
   const msg = event.data || {};
   if (msg.type === 'SKIP_WAITING') {
+    // El admin decidió aplicar la nueva versión
     await self.skipWaiting();
   }
   if (msg.type === 'CLEAR_ALL_CACHES') {

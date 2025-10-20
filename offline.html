@@ -11,7 +11,7 @@
     .card{max-width:580px;margin:auto;background:#0f141a;border:1px solid #22303d;border-radius:12px;padding:16px}
     h1{margin:.25rem 0 0;font-size:1.35rem}
     p{opacity:.9;margin:.5rem 0 1rem}
-    .btn{display:inline-block;padding:.5rem .9rem;border-radius:10px;border:1px solid #334155;background:#14532d;color:#e5e7eb;text-decoration:none}
+    .btn{display:inline-block;padding:.5rem .9rem;border-radius:10px;border:1px solid #334155;background:#14532d;color:#e5e7eb;text-decoration:none;cursor:pointer}
     .btn.secondary{background:#1f2937}
   </style>
 </head>
@@ -21,6 +21,7 @@
     <p>No se pudo cargar la página. Intenta de nuevo cuando tengas internet.</p>
     <button class="btn" onclick="location.reload()">Reintentar</button>
     <a class="btn secondary" href="./index.html">Ir al inicio</a>
+    <button class="btn" onclick="window.swUpdate?.check()">Revisar actualización</button>
   </div>
 </body>
 </html>

@@ -129,63 +129,74 @@ if (logoutSidebarLink) {
 
 
 
-// ─── REGISTRO DEL SERVICE WORKER (con cleanup y recarga 1 sola vez) ──────────
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      // 0) Limpieza de registros con scope equivocado (p.ej. uno en "/")
-      const expectedScope = new URL('./', location.href).pathname; // en GH Pages será "/Reservas/"
-      const regs = await navigator.serviceWorker.getRegistrations();
-      regs.forEach(r => {
-        const scopePath = new URL(r.scope).pathname;
-        if (scopePath !== expectedScope) {
-          // Unregister SW fuera de nuestro scope real para evitar “pelea de controladores”
-          r.unregister().catch(() => {});
-        }
-      });
+// ─── REGISTRO SW (modo 100% manual, sin auto-update ni auto-reload) ───────────
+(function(){
+  if (!('serviceWorker' in navigator)) return;
 
-      // 1) Registrar con versión fija (NO cambies el query hasta el próximo release)
-      const reg = await navigator.serviceWorker.register('./service-worker.js?v=2025.10.20.v4', { scope: './' });
+  // Debe coincidir con APP_VERSION del SW
+  const SW_URL = './service-worker.js?v=2025.10.20.v5';
+  let reg = null;
 
-      // 2) Recarga 1 sola vez si cambia el controlador
-      let didReload = sessionStorage.getItem('sw-reloaded') === '1';
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (didReload) return;
-        didReload = true;
-        sessionStorage.setItem('sw-reloaded', '1');
-        // pequeña espera evita loops en iOS al cambiar controlador
-        setTimeout(() => location.reload(), 120);
-      });
-
-      // Limpia la marca al navegar/abrir de nuevo
-      window.addEventListener('pageshow', () => {
-        // si la página volvió desde bfcache, mantenla; en navegación nueva se limpia
-        if (!performance.getEntriesByType('navigation')[0]?.type.includes('back_forward')) {
-          sessionStorage.removeItem('sw-reloaded');
-        }
-      });
-
-      // 3) Si ya hay un SW nuevo esperando, actívalo una vez y listo
-      if (reg.waiting) {
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-
-      // 4) Evita “recarga en caliente” en cada updatefound (iOS puede duplicarlo).
-      //    Dejamos que el SW nuevo quede en waiting y tomará control en la próxima navegación.
-      reg.addEventListener('updatefound', () => {
-        const sw = reg.installing;
-        sw?.addEventListener('statechange', () => {
-          // NO forzamos skipWaiting aquí para evitar loops en algunos móviles.
-          // if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-          //   sw.postMessage({ type: 'SKIP_WAITING' });
-          // }
-        });
-      });
-
-      // 5) Chequeo pasivo al estar listo (no fuerza recargas en bucle)
-      navigator.serviceWorker.ready.then(r => r.update().catch(() => {}));
-    } catch (e) {
-      // opcional: console.error('SW register error', e);
+  async function ensureReg() {
+    if (reg) return reg;
+    reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) {
+      try { reg = await navigator.serviceWorker.register(SW_URL, { scope: './' }); }
+      catch { /* no-op */ }
     }
-  });
-}
+    return reg;
+  }
+
+  // No hacemos updates automáticos ni recargas aquí
+  ensureReg();
+
+  // Exponemos API manual para tus botones de admin
+  window.swUpdate = {
+    // Descarga un SW nuevo si lo hay y te dice si quedó en 'waiting'
+    async check() {
+      const r = await ensureReg();
+      try { await r?.update(); } catch {}
+      return !!r?.waiting;
+    },
+    // Aplica el SW esperando y recarga SOLO UNA VEZ
+    async apply() {
+      const r = await ensureReg();
+      if (r?.waiting) {
+        const once = () => location.reload();
+        navigator.serviceWorker.addEventListener('controllerchange', once, { once:true });
+        r.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    },
+    // Reset nuclear (opcional)
+    async reset() {
+      const r = await ensureReg();
+      r?.active?.postMessage({ type: 'CLEAR_ALL_CACHES' });
+    },
+    // Estado útil para debug
+    async status() {
+      const r = await ensureReg();
+      return { scope: r?.scope, active: !!r?.active, waiting: !!r?.waiting };
+    }
+  };
+})();
+
+// Forzar actualización manual reutilizable en todas las páginas
+window.forceHardReset = async () => {
+  try {
+    // 1) Buscar si hay un SW nuevo esperando
+    const waiting = await window.swUpdate?.check();
+    if (waiting) {
+      // Hay versión nueva -> aplicarla y recargar UNA sola vez
+      window.showAlert?.('Actualizando a la última versión…', 'success');
+      await window.swUpdate.apply();
+      return; // la recarga ocurre tras controllerchange
+    }
+
+    // 2) Si no hay versión nueva, hacemos "hard reset" de cachés y recargamos
+    window.showAlert?.('No hay versión nueva. Limpiando caché…', 'success');
+    await window.swUpdate?.reset();
+  } catch (err) {
+    console.error('forceHardReset()', err);
+    alert('No pude completar la actualización. Intenta recargar la página.');
+  }
+};

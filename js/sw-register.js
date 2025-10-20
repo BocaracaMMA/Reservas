@@ -1,5 +1,5 @@
 // ./js/sw-register.js
-const APP_VERSION = '2025.10.20.v4'; // Subir esto con cada release
+const APP_VERSION = '2025.10.20.v5'; // Subir esto con cada release
 
 (async () => {
   if (!('serviceWorker' in navigator)) return;

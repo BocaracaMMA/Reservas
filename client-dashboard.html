@@ -106,6 +106,7 @@
 
     <!-- Botón de escaneo QR -->
     <div style="text-align:center; margin:1.5rem 0;">
+      <button id="btnInstall" class="btn" onclick="window.forceHardReset()">Forzar actualización</button>
       <button id="openScannerBtn" class="btn">Escanear Código QR</button>
     </div>
 
@@ -210,6 +211,9 @@
     });
   }
 </script>
+
+<script src="./js/script.js"></script>
+
 <script type="module" src="./js/pwa-install.js"></script>
 
 <script type="module" src="./js/sw-register.js"></script>
