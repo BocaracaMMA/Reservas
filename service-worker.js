@@ -1,5 +1,5 @@
 // ./service-worker.js
-const APP_VERSION = '2025.10.20.v3';          // súbelo en cada release
+const APP_VERSION = '2025.10.20.v4';          // súbelo en cada release
 const CACHE_NAME  = `app-${APP_VERSION}`;
 
 // Detecta el scope real (en GH Pages será /Reservas/)

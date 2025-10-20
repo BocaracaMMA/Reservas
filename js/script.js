@@ -129,42 +129,63 @@ if (logoutSidebarLink) {
 
 
 
-// ─── REGISTRO DEL SERVICE WORKER (silencioso y con recarga controlada) ────────
+// ─── REGISTRO DEL SERVICE WORKER (con cleanup y recarga 1 sola vez) ──────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      // Importante en GH Pages: versión en query + scope relativo
-      const reg = await navigator.serviceWorker.register('./service-worker.js?v=2025.10.20.v3', { scope: './' });
+      // 0) Limpieza de registros con scope equivocado (p.ej. uno en "/")
+      const expectedScope = new URL('./', location.href).pathname; // en GH Pages será "/Reservas/"
+      const regs = await navigator.serviceWorker.getRegistrations();
+      regs.forEach(r => {
+        const scopePath = new URL(r.scope).pathname;
+        if (scopePath !== expectedScope) {
+          // Unregister SW fuera de nuestro scope real para evitar “pelea de controladores”
+          r.unregister().catch(() => {});
+        }
+      });
 
-      // Recarga solo UNA vez cuando cambia el controlador
-      let didReload = false;
+      // 1) Registrar con versión fija (NO cambies el query hasta el próximo release)
+      const reg = await navigator.serviceWorker.register('./service-worker.js?v=2025.10.20.v4', { scope: './' });
+
+      // 2) Recarga 1 sola vez si cambia el controlador
+      let didReload = sessionStorage.getItem('sw-reloaded') === '1';
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (didReload) return;
         didReload = true;
-        window.location.reload();
+        sessionStorage.setItem('sw-reloaded', '1');
+        // pequeña espera evita loops en iOS al cambiar controlador
+        setTimeout(() => location.reload(), 120);
       });
 
-      // Si ya hay un SW nuevo en "waiting", actualiza de una
+      // Limpia la marca al navegar/abrir de nuevo
+      window.addEventListener('pageshow', () => {
+        // si la página volvió desde bfcache, mantenla; en navegación nueva se limpia
+        if (!performance.getEntriesByType('navigation')[0]?.type.includes('back_forward')) {
+          sessionStorage.removeItem('sw-reloaded');
+        }
+      });
+
+      // 3) Si ya hay un SW nuevo esperando, actívalo una vez y listo
       if (reg.waiting) {
         reg.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
 
-      // Cuando llega un SW nuevo a "installed", actualiza
+      // 4) Evita “recarga en caliente” en cada updatefound (iOS puede duplicarlo).
+      //    Dejamos que el SW nuevo quede en waiting y tomará control en la próxima navegación.
       reg.addEventListener('updatefound', () => {
         const sw = reg.installing;
         sw?.addEventListener('statechange', () => {
-          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-            sw.postMessage({ type: 'SKIP_WAITING' });
-          }
+          // NO forzamos skipWaiting aquí para evitar loops en algunos móviles.
+          // if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+          //   sw.postMessage({ type: 'SKIP_WAITING' });
+          // }
         });
       });
 
-      // (Opcional) chequeo al estar listo
+      // 5) Chequeo pasivo al estar listo (no fuerza recargas en bucle)
       navigator.serviceWorker.ready.then(r => r.update().catch(() => {}));
-      // Si ves algo raro, puedes comentar el setInterval siguiente.
-      // setInterval(async () => (await navigator.serviceWorker.getRegistration())?.update(), 30 * 60 * 1000);
     } catch (e) {
-        console.error('SW register error', e);
+      // opcional: console.error('SW register error', e);
     }
   });
 }
