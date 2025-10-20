@@ -103,7 +103,6 @@ if (logoutButton) {
 
 
 // ─── TOGGLE DEL SIDEBAR EN REPORTES.HTML ───────────────────────────────────────
-// Si existe el botón hamburguesa con id="toggleNav"
 const toggleNavBtn = document.getElementById('toggleNav');
 if (toggleNavBtn) {
   toggleNavBtn.addEventListener('click', () => {
@@ -117,13 +116,10 @@ if (toggleNavBtn) {
 
 
 // ─── CERRAR SESIÓN DESDE EL SIDEBAR EN REPORTES.HTML ───────────────────────────
-// Si existe el enlace con id="logoutSidebar", cerramos sesión redirigiendo
 const logoutSidebarLink = document.getElementById('logoutSidebar');
 if (logoutSidebarLink) {
   logoutSidebarLink.addEventListener('click', async (e) => {
     e.preventDefault();
-    // Aquí podrás integrar signOut(auth) si estás usando Firebase Auth,
-    // pero en tu script original solo rediriges a index.html:
     showAlert('Sesión cerrada.', 'success');
     setTimeout(() => {
       window.location.href = './index.html';
@@ -131,3 +127,44 @@ if (logoutSidebarLink) {
   });
 }
 
+
+
+// ─── REGISTRO DEL SERVICE WORKER (silencioso y con recarga controlada) ────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      // Importante en GH Pages: versión en query + scope relativo
+      const reg = await navigator.serviceWorker.register('./service-worker.js?v=2025.10.20.v3', { scope: './' });
+
+      // Recarga solo UNA vez cuando cambia el controlador
+      let didReload = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (didReload) return;
+        didReload = true;
+        window.location.reload();
+      });
+
+      // Si ya hay un SW nuevo en "waiting", actualiza de una
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      // Cuando llega un SW nuevo a "installed", actualiza
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        sw?.addEventListener('statechange', () => {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+            sw.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+
+      // (Opcional) chequeo al estar listo
+      navigator.serviceWorker.ready.then(r => r.update().catch(() => {}));
+      // Si ves algo raro, puedes comentar el setInterval siguiente.
+      // setInterval(async () => (await navigator.serviceWorker.getRegistration())?.update(), 30 * 60 * 1000);
+    } catch (e) {
+        console.error('SW register error', e);
+    }
+  });
+}
