@@ -20,7 +20,7 @@
   <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v1">
   <meta name="theme-color" content="#0d1117">
   <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Bocaraca">
 
@@ -68,8 +68,10 @@
     <div class="logo-container">
       <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
       <h1 class="logo-text">Reservas confirmadas</h1>
-    </div>
+      <!-- En admin-dashboard.html (o donde quieras) -->
+  <button id="btnInstall" class="btn" onclick="window.forceHardReset()">Forzar actualización</button>
 
+    </div>
     <div class="calendar-wrapper">
       <div class="card">
         <div id="calendar-admin"></div>

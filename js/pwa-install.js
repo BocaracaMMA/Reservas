@@ -47,6 +47,7 @@ function ensureUI(){
         <button id="closeIosTip" class="btn secondary">Cerrar</button>
       </div>
     </div>
+    
   `;
   document.body.appendChild(tip);
   document.getElementById("btnIosTip").onclick   = () => tip.classList.add("active");

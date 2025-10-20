@@ -2,34 +2,26 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Sin conexión</title>
-  <link rel="stylesheet" href="./css/style.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Opcional: también puedes dejar esta meta aquí -->
+  <meta name="mobile-web-app-capable" content="yes">
   <style>
-    body{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
-    .card{max-width:420px}
-    .hint{color:#8b949e;margin-top:.5rem}
+    :root{color-scheme:dark light}
+    body{background:#0d1117;color:#e5e7eb;font-family:system-ui,Segoe UI,Roboto,Arial;margin:2rem}
+    .card{max-width:580px;margin:auto;background:#0f141a;border:1px solid #22303d;border-radius:12px;padding:16px}
+    h1{margin:.25rem 0 0;font-size:1.35rem}
+    p{opacity:.9;margin:.5rem 0 1rem}
+    .btn{display:inline-block;padding:.5rem .9rem;border-radius:10px;border:1px solid #334155;background:#14532d;color:#e5e7eb;text-decoration:none}
+    .btn.secondary{background:#1f2937}
   </style>
-
-  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v1">
-  <meta name="theme-color" content="#0d1117">
-
-  <!-- iOS “Add to Home Screen” soporte -->
-  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 </head>
 <body>
-  <main class="card">
-    <img src="./assets/android-chrome-512x512.png" class="logo-img" alt="Logo">
-    <h2>Estás sin conexión</h2>
-    <p>Algunas funciones requieren Internet. Intenta nuevamente cuando vuelvas a estar en línea.</p>
-    <p class="hint">Las páginas visitadas recientemente pueden seguir cargando gracias al modo offline.</p>
-    <button onclick="location.reload()">Reintentar</button>
-  </main>
-  
-  <script type="module" src="./js/sw-register.js"></script>
-
+  <div class="card">
+    <h1>Estás sin conexión</h1>
+    <p>No se pudo cargar la página. Intenta de nuevo cuando tengas internet.</p>
+    <button class="btn" onclick="location.reload()">Reintentar</button>
+    <a class="btn secondary" href="./index.html">Ir al inicio</a>
+  </div>
 </body>
 </html>
