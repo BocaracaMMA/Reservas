@@ -1,28 +1,54 @@
-// ./js/client.js — Student/Professor dual render + flip + admin-like staff view + RT + loader (+tooltip fix)
+// ./js/client.js — Cliente (estudiante / profesor)
 import { auth, db } from './firebase-config.js';
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-  collection,
-  getDocs,
-  getDoc,
-  addDoc,
-  doc,
-  query,
-  where,
-  deleteDoc,
-  onSnapshot,
-  setDoc,
-  updateDoc
+  collection, getDocs, getDoc, addDoc, doc, query, where, deleteDoc,
+  onSnapshot, setDoc, updateDoc
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
 
-/* ───────── Estado ───────── */
+/* ───────────────── Estado global ───────────────── */
 let calStudent = null;
 let calStaff   = null;
 let unsubStudent = null;
 let unsubStaff   = null;
 
-/* ───────── Loader ───────── */
+/* ───────── Navbar: CSS fallback + “bind once” para evitar duplicados ───────── */
+function ensureNavCSS(){
+  if (document.getElementById('nav-fallback-css')) return;
+  const style = document.createElement('style');
+  style.id = 'nav-fallback-css';
+  style.textContent = `
+    .hamburger-btn{position:fixed;right:16px;top:16px;z-index:10001}
+    .sidebar{position:fixed;inset:0 auto 0 0;width:260px;height:100vh;background:#0c131a;
+             border-right:1px solid #22303d;transform:translateX(-100%);transition:transform .25s ease;z-index:10000}
+    .sidebar.active{transform:translateX(0)}
+    .sidebar ul{list-style:none;margin:0;padding:14px}
+    .sidebar a{display:flex;gap:.5rem;align-items:center;padding:10px;border-radius:10px;
+               color:#e5e7eb;text-decoration:none}
+    .sidebar a:hover{background:#111827}
+  `;
+  document.head.appendChild(style);
+}
+function bindSidebarOnce(){
+  const btn = document.getElementById('toggleNav');
+  const sb  = document.getElementById('sidebar');
+  if (!btn || !sb || btn.dataset.bound) return;
+  btn.addEventListener('click', ()=> sb.classList.toggle('active'));
+  btn.dataset.bound = '1';
+}
+function bindLogoutOnce(){
+  const a = document.getElementById('logoutSidebar');
+  if (!a || a.dataset.bound) return;
+  a.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    try { await signOut(auth); showAlert('Has cerrado sesión','success'); setTimeout(()=>location.href='index.html',900); }
+    catch { showAlert('Error al cerrar sesión','error'); }
+  });
+  a.dataset.bound = '1';
+}
+
+/* ───────── Loader simple ───────── */
 function ensureLoader(){
   if (document.getElementById('global-loader')) return;
   const el = document.createElement('div');
@@ -32,10 +58,8 @@ function ensureLoader(){
     background:rgba(0,0,0,.35); z-index:9999; backdrop-filter:blur(1.5px)
   `;
   el.innerHTML = `
-    <div style="
-      width:64px;height:64px;border-radius:50%;
-      border:6px solid rgba(255,255,255,.25);
-      border-top-color:#58a6ff; animation:spin 1s linear infinite">
+    <div style="width:64px;height:64px;border-radius:50%;
+      border:6px solid rgba(255,255,255,.25);border-top-color:#58a6ff;animation:spin 1s linear infinite">
     </div>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   `;
@@ -43,35 +67,17 @@ function ensureLoader(){
 }
 function showLoader(){ ensureLoader(); document.getElementById('global-loader').style.display='grid'; }
 function hideLoader(){ const el=document.getElementById('global-loader'); if(el) el.style.display='none'; }
-window.showLoader = showLoader;
-window.hideLoader = hideLoader;
 
-/* ───── CSS inyectado (crisp + switch + popup admin) ───── */
+/* ───────── CSS afinado calendario y modal ───────── */
 (function injectCSS(){
   if (document.getElementById('client-extras-css')) return;
   const s = document.createElement('style');
   s.id = 'client-extras-css';
   s.textContent = `
-    .calendar-wrapper, #calendar, .calendar-pane { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; transform: translateZ(0); backface-visibility: hidden; }
+    .fc, #calendarStudent, #calendarProf{ -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .fc-daygrid-event .fc-event-title{ font-weight:800; }
 
-    .calendar-panes{ position:relative; }
-    .calendar-pane{ position:relative; }
-    .calendar-pane.hidden{ display:none; }
-    .calendar-pane.visible{ display:block; }
-
-    .flip-enter{ transform:rotateY(90deg); opacity:.2; transition:.25s ease; }
-    .flip-enter-active{ transform:rotateY(0); opacity:1; }
-    .flip-leave{ transform:rotateY(0); opacity:1; transition:.22s ease; }
-    .flip-leave-active{ transform:rotateY(90deg); opacity:0; }
-
-    .mode-switch{ display:flex; align-items:center; justify-content:center; gap:12px; margin:14px 0 6px; }
-    .mode-label{ font-weight:700; opacity:.8 }
-    .toggle{ position:relative; width:54px; height:28px; background:#1f2937; border:1px solid #334155; border-radius:999px; cursor:pointer; }
-    .toggle::after{ content:""; position:absolute; top:2px; left:2px; width:24px; height:24px; border-radius:50%; background:#9aa4ad; transition:.18s ease; }
-    .toggle.on{ background:#14532d; border-color:#166534; }
-    .toggle.on::after{ left:28px; background:#22c55e; }
-
-    /* popup estilo admin (overlay) */
+    /* Modal de asistencia (profesor) */
     #attModal{ position:fixed; inset:0; display:none; place-items:center; z-index:10000; background:rgba(0,0,0,.45); }
     #attModal.active{ display:grid; }
     #attModal .att-card{ width:min(92vw,520px); background:#0c131a; border:1px solid #22303d; border-radius:14px; padding:14px; box-shadow:0 12px 28px rgba(0,0,0,.35); }
@@ -80,27 +86,33 @@ window.hideLoader = hideLoader;
     #attModal .att-item{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid #233140; border-radius:10px; background:#0f1720; }
     #attModal .close-btn{ padding:8px 12px; border-radius:10px; background:#1f2937; border:1px solid #334155; color:#e5e7eb; cursor:pointer; }
 
-    /* que los números del conteo se vean fuertes, como en admin */
-    .fc-daygrid-event .fc-event-title{ font-weight:800; }
+    .custom-tooltip{position:fixed; z-index:10001; background:#0b2540; color:#b4d7ff; border:1px solid #1e3a5f; padding:6px 8px; border-radius:8px; pointer-events:none;}
+    .disabled-day{ filter:grayscale(.45) opacity(.7); }
   `;
   document.head.appendChild(s);
 })();
 
-/* Afinar el modal (un poco más delgado) */
-(function(){
-  if (document.getElementById('att-modal-tighter')) return;
-  const s = document.createElement('style');
-  s.id = 'att-modal-tighter';
-  s.textContent = `
-    #attModal .att-card{ width: min(92vw, 460px); }
-    #attModal .att-item{ padding: 6px 10px; }
-  `;
-  document.head.appendChild(s);
-})();
+/* ───────── Modal asistencia (inyectado) ───────── */
+function ensureAttendancePopup(){
+  if (document.getElementById('attModal')) return;
+  const m = document.createElement('div');
+  m.id = 'attModal';
+  m.innerHTML = `
+    <div class="att-card">
+      <div class="att-head">
+        <h3 id="attDate" style="margin:0;font-weight:800;">—</h3>
+        <button id="attClose" class="close-btn">Cerrar</button>
+      </div>
+      <div id="attList" class="att-list"></div>
+    </div>`;
+  document.body.appendChild(m);
+  m.querySelector('#attClose').onclick = () => { m.classList.remove('active'); killTooltips(); };
+}
+function killTooltips(){ document.querySelectorAll('.custom-tooltip').forEach(el => el.remove()); }
 
-/* ───── Helpers fecha/tiempo (CR) ───── */
+/* ───────── Helpers horarios CR + reglas de reserva/cancelación ───────── */
 const CR_TZ = 'America/Costa_Rica';
-const CR_OFFSET = '-06:00'; // CR sin DST
+const CR_OFFSET = '-06:00';
 
 function getTodayCRParts(){
   const s = new Date().toLocaleDateString('en-CA',{ timeZone: CR_TZ });
@@ -112,34 +124,21 @@ function isDateInCurrentMonthCR(dateStr){
   const [y,m]=dateStr.split('-').map(Number);
   return y===cy && m===cm;
 }
-function isDateNotPastCR(dateStr){
-  const {year:cy,month:cm,day:cd}=getTodayCRParts();
-  const [y,m,d]=dateStr.split('-').map(Number);
-  if(y<cy) return false; if(y>cy) return true;
-  if(m<cm) return false; if(m>cm) return true;
-  return d>=cd;
-}
 function nowCRString(){
   const d = new Intl.DateTimeFormat('en-CA',{ timeZone: CR_TZ, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
   const t = new Intl.DateTimeFormat('en-GB',{ timeZone: CR_TZ, hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date());
   return { date:d, time:t };
 }
-function crDateTime(dateStr, timeStr){
-  return new Date(`${dateStr}T${timeStr}:00${CR_OFFSET}`);
-}
-/* Reserva: permitida si es futuro y, si es hoy, con ≥ 60 minutos de anticipación */
+function crDateTime(dateStr, timeStr){ return new Date(`${dateStr}T${timeStr}:00${CR_OFFSET}`); }
 function canBook(dateStr, timeStr){
   const {date:today, time:nowT} = nowCRString();
   const now  = crDateTime(today, nowT);
   const slot = crDateTime(dateStr, timeStr);
   const diffMs = slot - now;
   if (diffMs <= 0) return { ok:false, reason:'during_or_after' };
-  if (dateStr === today && diffMs < 60*60*1000) {
-    return { ok:false, reason:'lt1h', minutesLeft: Math.max(0, Math.floor(diffMs/60000)) };
-  }
+  if (dateStr === today && diffMs < 60*60*1000) return { ok:false, reason:'lt1h' };
   return { ok:true };
 }
-/* Cancelar: solo si aún no empieza (estrictamente antes del inicio) */
 function canCancel(dateStr, timeStr){
   const {date:today, time:nowT} = nowCRString();
   const now  = crDateTime(today, nowT);
@@ -147,181 +146,14 @@ function canCancel(dateStr, timeStr){
   return (slot - now) > 0;
 }
 
-/* ───── Contenedores de ambos calendarios ───── */
-function ensureCalendarHolders(){
-  const card = document.querySelector('.calendar-wrapper .card');
-  if (!card) return null;
-
-  let shell = card.querySelector('#calendar');
-  if (!shell){
-    shell = document.createElement('div');
-    shell.id = 'calendar';
-    shell.className = 'calendar-panes';
-    card.innerHTML = '';
-    card.appendChild(shell);
-  }
-
-  let sHold = shell.querySelector('#calStudentHolder');
-  let aHold = shell.querySelector('#calStaffHolder');
-  if (!sHold){
-    sHold = document.createElement('div');
-    sHold.id = 'calStudentHolder';
-    sHold.className = 'calendar-pane visible';
-    shell.appendChild(sHold);
-  }
-  if (!aHold){
-    aHold = document.createElement('div');
-    aHold.id = 'calStaffHolder';
-    aHold.className = 'calendar-pane hidden';
-    shell.appendChild(aHold);
-  }
-  return { shell, sHold, aHold };
-}
-
-/* ───── Popup asistencia (inyectado) ───── */
-function ensureAttendancePopup(){
-  if (document.getElementById('attModal')) return;
-  const m = document.createElement('div');
-  m.className = 'att-modal';
-  m.id = 'attModal';
-  m.innerHTML = `
-    <div class="att-card">
-      <div class="att-head">
-        <h3 id="attDate" style="margin:0;font-weight:800;">—</h3>
-        <button id="attClose" class="close-btn">Cerrar</button>
-      </div>
-      <div id="attList" class="att-list"></div>
-    </div>`;
-  document.body.appendChild(m);
-  m.querySelector('#attClose').onclick = () => {
-    m.classList.remove('active');
-    killTooltips(); // limpiar tooltips al cerrar
-  };
-}
-
-/* ─── Mata-tooltips (para evitar que queden detrás del modal) ─── */
-function killTooltips() {
-  document.querySelectorAll('.custom-tooltip').forEach(el => el.remove());
-}
-
-/* ───── Boot ───── */
-document.addEventListener('DOMContentLoaded', () => {
-  // Sidebar + logout
-  const toggleBtn = document.getElementById("toggleNav");
-  const sidebar   = document.getElementById("sidebar");
-  if (toggleBtn && sidebar) toggleBtn.addEventListener("click", () => sidebar.classList.toggle("active"));
-
-  const logoutSidebar = document.getElementById("logoutSidebar");
-  if (logoutSidebar) {
-    logoutSidebar.addEventListener("click", async (e) => {
-      e.preventDefault();
-      try { await signOut(auth); showAlert("Has cerrado sesión","success"); setTimeout(()=>location.href="index.html",900);
-      } catch { showAlert("Error al cerrar sesión","error"); }
-    });
-  }
-
-  onAuthStateChanged(auth, async user => {
-    if (!user) { location.href='./index.html'; return; }
-
-    // código de asistencia
-    const codeEl = document.getElementById('attendanceCodeDisplay');
-    if (codeEl) {
-      try {
-        const snap = await getDoc(doc(db,'users',user.uid));
-        codeEl.textContent = `Tu código de asistencia: ${snap.exists() ? (snap.data().attendanceCode || '—') : '—'}`;
-      } catch { codeEl.textContent='Error al cargar el código.'; }
-    }
-
-    // reloj CR
-    const localTimeEl = document.getElementById('local-time');
-    if (localTimeEl) {
-      const fmt = new Intl.DateTimeFormat('es-CR',{hour:'numeric',minute:'numeric',second:'numeric',hour12:true,timeZone: CR_TZ});
-      const tick=()=>localTimeEl.textContent=`Hora en Costa Rica: ${fmt.format(new Date())}`;
-      tick(); setInterval(tick,1000);
-    }
-
-    // roles
-    let roles = [];
-    try {
-      const u = await getDoc(doc(db,'users',user.uid));
-      roles = u.exists() ? (u.data().roles || []) : [];
-    } catch {}
-
-    const holders = ensureCalendarHolders();
-    if (!holders) return;
-
-    // switch solo si tiene ambos
-    const hasBoth = roles.includes('student') && roles.includes('professor');
-    if (hasBoth) buildModeSwitch(holders.shell);
-
-    // popup estilo admin
-    ensureAttendancePopup();
-
-    // levantar ambos calendarios (siempre)
-    buildStudentCalendar(holders.sHold);
-    buildStaffCalendar(holders.aHold);
-
-    if (!hasBoth){
-      holders.sHold.classList.add('visible');
-      holders.aHold.classList.add('hidden');
-    }
-  });
-});
-
-/* ───── Switch con flip ───── */
-function buildModeSwitch(shell){
-  if (document.getElementById('modeSwitch')) return;
-  const hostCard = document.querySelector('.calendar-wrapper .card');
-  if (!hostCard) return;
-
-  const wrap = document.createElement('div');
-  wrap.className = 'mode-switch';
-  wrap.id = 'modeSwitch';
-  wrap.innerHTML = `
-    <span class="mode-label">Estudiante</span>
-    <div id="modeToggle" class="toggle" role="switch" aria-checked="false" tabindex="0"></div>
-    <span class="mode-label">Profesor</span>
-  `;
-  hostCard.parentElement.insertBefore(wrap, hostCard.nextSibling);
-
-  const t = wrap.querySelector('#modeToggle');
-  const change = () => {
-    const toStaff = t.classList.toggle('on');
-    t.setAttribute('aria-checked', String(toStaff));
-    doFlip(shell, toStaff ? 'staff' : 'student');
-  };
-  t.addEventListener('click', change);
-  t.addEventListener('keydown', e => { if (e.key===' '||e.key==='Enter'){ e.preventDefault(); change(); }});
-}
-
-function doFlip(shell, mode){
-  const sHold = shell.querySelector('#calStudentHolder');
-  const aHold = shell.querySelector('#calStaffHolder');
-  shell.classList.add('flip-leave');
-  setTimeout(() => {
-    shell.classList.remove('flip-leave');
-    if (mode==='staff'){
-      sHold.classList.add('hidden');  sHold.classList.remove('visible');
-      aHold.classList.remove('hidden'); aHold.classList.add('visible');
-      calStaff?.updateSize();
-    } else {
-      aHold.classList.add('hidden');  aHold.classList.remove('visible');
-      sHold.classList.remove('hidden'); sHold.classList.add('visible');
-      calStudent?.updateSize();
-    }
-    shell.classList.add('flip-enter');
-    requestAnimationFrame(()=> shell.classList.add('flip-enter-active'));
-    setTimeout(()=> shell.classList.remove('flip-enter','flip-enter-active'), 260);
-  }, 160);
-}
-
-/* ───── Calendario: Estudiante ───── */
-function buildStudentCalendar(holder){
+/* ───────── Calendario Estudiante ───────── */
+function buildStudentCalendar(holderEl){
+  if (!holderEl) return;
   if (unsubStudent){ try{unsubStudent();}catch{} unsubStudent=null; }
   if (calStudent){ try{calStudent.destroy();}catch{} calStudent=null; }
-  holder.innerHTML='';
+  holderEl.innerHTML='';
 
-  calStudent = new FullCalendar.Calendar(holder, {
+  calStudent = new FullCalendar.Calendar(holderEl, {
     locale:'es',
     initialView:'dayGridMonth',
     timeZone: CR_TZ,
@@ -339,7 +171,6 @@ function buildStudentCalendar(holder){
           success(evs);
         }catch(err){ console.error(err); failure(err); }
       }, err=>{ console.error(err); failure(err); });
-
       return () => unsubStudent && unsubStudent();
     },
 
@@ -347,18 +178,14 @@ function buildStudentCalendar(holder){
 
     dateClick(info){
       const dateStr = info.dateStr;
-      const dow = info.date.getUTCDay();
+      const dow = info.date.getUTCDay(); // 5=viernes, 6=sábado
       if(!isDateInCurrentMonthCR(dateStr)){ showAlert('Solo puedes reservar en el mes actual.','error'); return; }
       if(dow!==5 && dow!==6){ showAlert('Solo viernes y sábados.','error'); return; }
 
       const classTime = (dow===5) ? '20:30' : '09:00';
       const check = canBook(dateStr, classTime);
       if (!check.ok){
-        if (check.reason === 'lt1h'){
-          showAlert(`Para hoy solo puedes reservar hasta 1 hora antes.`, 'error');
-        } else {
-          showAlert('No puedes reservar durante o después de la clase.', 'error');
-        }
+        showAlert(check.reason==='lt1h' ? 'Para hoy solo puedes reservar hasta 1 hora antes.' : 'No puedes reservar durante o después de la clase.', 'error');
         return;
       }
       openConfirmReservationModal(dateStr, classTime);
@@ -367,10 +194,7 @@ function buildStudentCalendar(holder){
     eventClick(info){
       const [d,t] = info.event.startStr.split('T');
       const time  = (t||'').slice(0,5);
-      if (!canCancel(d, time)){
-        showAlert('No puedes cancelar durante o después de la clase.', 'error');
-        return;
-      }
+      if (!canCancel(d, time)){ showAlert('No puedes cancelar durante o después de la clase.','error'); return; }
       openDeleteReservationModal(info.event.id, d, time);
     },
 
@@ -380,15 +204,16 @@ function buildStudentCalendar(holder){
   requestAnimationFrame(()=>{ calStudent.render(); setTimeout(()=>calStudent.updateSize(), 40); });
 }
 
-/* ───── Calendario: Profesor (apariencia/UX de admin.js) ───── */
-function buildStaffCalendar(holder){
+/* ───────── Calendario Profesor (conteo + popup) ───────── */
+function buildStaffCalendar(holderEl){
+  if (!holderEl) return;
   ensureAttendancePopup();
 
   if (unsubStaff){ try{unsubStaff();}catch{} unsubStaff=null; }
   if (calStaff){ try{calStaff.destroy();}catch{} calStaff=null; }
-  holder.innerHTML='';
+  holderEl.innerHTML='';
 
-  calStaff = new FullCalendar.Calendar(holder, {
+  calStaff = new FullCalendar.Calendar(holderEl, {
     locale:'es',
     initialView:'dayGridMonth',
     timeZone: CR_TZ,
@@ -396,7 +221,7 @@ function buildStaffCalendar(holder){
     height:'auto', contentHeight:'auto', expandRows:true, handleWindowResize:true,
 
     events(info, success, failure){
-      const qAll = query(collection(db,'reservations')); // sin filtros ⇒ sin índice
+      const qAll = query(collection(db,'reservations')); // requiere rol 'professor' o 'admin' por reglas
       unsubStaff = onSnapshot(qAll, snap=>{
         try{
           const byDate = {};
@@ -412,22 +237,17 @@ function buildStaffCalendar(holder){
             allDay: true,
             extendedProps: { names, count:names.length }
           })).filter(e => e.start >= info.startStr && e.start <= info.endStr);
-
           success(list);
         }catch(err){ console.error(err); failure(err); }
       }, err=>{ console.error(err); failure(err); });
-
       return () => unsubStaff && unsubStaff();
     },
 
-    // Evita tooltips cuando el modal esté visible y límpialos al hacer click
     eventMouseEnter: info => {
       const modalActive = document.getElementById('attModal')?.classList.contains('active');
       if (modalActive) return;
-
       const tip = document.createElement('div');
       tip.className = 'custom-tooltip';
-      tip.style.cssText = 'position:fixed; z-index:10001; background:#0b2540; color:#b4d7ff; border:1px solid #1e3a5f; padding:6px 8px; border-radius:8px; pointer-events:none;';
       tip.innerHTML = `<strong>Usuarios:</strong><br>${(info.event.extendedProps.names||[]).join('<br>')}`;
       document.body.appendChild(tip);
       const move = e => { tip.style.left = `${e.pageX+10}px`; tip.style.top = `${e.pageY+10}px`; };
@@ -438,7 +258,7 @@ function buildStaffCalendar(holder){
     },
 
     eventClick: async info => {
-      killTooltips(); // limpiar por si quedó alguno
+      killTooltips();
       const day = info.event.startStr;
       const list = await getReservasPorDia(day);
       openAttendancePopup(list, day);
@@ -450,7 +270,7 @@ function buildStaffCalendar(holder){
   requestAnimationFrame(()=>{ calStaff.render(); setTimeout(()=>calStaff.updateSize(), 40); });
 }
 
-/* ───── CRUD reservas (estudiante) ───── */
+/* ───────── CRUD de reservas (estudiante) ───────── */
 async function addReservation(date, time){
   try{
     const userRef = doc(db,'users', auth.currentUser.uid);
@@ -477,7 +297,6 @@ async function addReservation(date, time){
     throw err;
   }
 }
-
 async function deleteReservation(resId){
   try{
     showLoader();
@@ -498,7 +317,7 @@ async function deleteReservation(resId){
   }finally{ hideLoader(); }
 }
 
-/* ───── Modales (estudiante) ───── */
+/* ───────── Modales (estudiante) ───────── */
 function openConfirmReservationModal(date, time){
   closeModal();
   const m = document.createElement('div'); m.className='custom-modal';
@@ -512,17 +331,11 @@ function openConfirmReservationModal(date, time){
 
   document.getElementById('confirmBtn').onclick = async () => {
     try{
-      // Doble verificación por si pasa tiempo entre abrir y confirmar
       const check = canBook(date, time);
       if (!check.ok){
-        if (check.reason === 'lt1h'){
-          showAlert(`Para hoy solo puedes reservar hasta 1 hora antes.`, 'error');
-        } else {
-          showAlert('No puedes reservar durante o después de la clase.', 'error');
-        }
+        showAlert(check.reason==='lt1h' ? 'Para hoy solo puedes reservar hasta 1 hora antes.' : 'No puedes reservar durante o después de la clase.', 'error');
         return;
       }
-
       showLoader();
       const udoc = await getDoc(doc(db,'users',auth.currentUser.uid));
       if(!udoc.exists()){ showAlert('Usuario no encontrado.','error'); return; }
@@ -553,24 +366,20 @@ function openDeleteReservationModal(resId, date, time){
   document.body.appendChild(m);
 
   document.getElementById('deleteBtn').onclick = async () => {
-    if (!canCancel(date, time)){
-      showAlert('No puedes cancelar durante o después de la clase.', 'error');
-      closeModal();
-      return;
-    }
+    if (!canCancel(date, time)){ showAlert('No puedes cancelar durante o después de la clase.','error'); closeModal(); return; }
     try{ await deleteReservation(resId);}catch{} finally{ closeModal(); }
   };
   document.getElementById('cancelDeleteBtn').onclick = closeModal;
 }
 function closeModal(){ const m=document.querySelector('.custom-modal'); if (m) m.remove(); }
 
-/* ───── Profesor/Admin: asistencia (idéntico a admin.js) ───── */
+/* ───────── Profesor/Admin: asistencia (popup) ───────── */
 async function getReservasPorDia(day){
   const snap = await getDocs(collection(db,'asistencias',day,'usuarios'));
   return snap.docs.map(d=>({ uid:d.id, nombre:d.data().nombre, presente:d.data().presente || false }));
 }
 function openAttendancePopup(list, day){
-  killTooltips(); // ← quita cualquier tooltip vivo
+  killTooltips();
   const m = document.getElementById('attModal');
   const l = document.getElementById('attList');
   const d = document.getElementById('attDate');
@@ -594,13 +403,82 @@ function openAttendancePopup(list, day){
   });
   m.classList.add('active');
 }
-function cerrarPopup(){ const p=document.getElementById('attModal'); if(p) p.classList.remove('active'); }
 
-/* ───── Logout rojo (si existe) ───── */
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async () => {
-    try { await signOut(auth); showAlert('Has cerrado sesión','success'); setTimeout(()=>location.href='index.html',900);
-    } catch { showAlert('Error al cerrar sesión','error'); }
+/* ───────── Boot ───────── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Navbar estable
+  ensureNavCSS();
+  bindSidebarOnce();
+  bindLogoutOnce();
+
+  // Botón de logout rojo (si existe en UI)
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn && !logoutBtn.dataset.bound) {
+    logoutBtn.addEventListener('click', async () => {
+      try { await signOut(auth); showAlert('Has cerrado sesión','success'); setTimeout(()=>location.href='index.html',900); }
+      catch { showAlert('Error al cerrar sesión','error'); }
+    });
+    logoutBtn.dataset.bound = '1';
+  }
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) { location.href='./index.html'; return; }
+
+    // Código de asistencia
+    const codeEl = document.getElementById('attendanceCodeDisplay');
+    if (codeEl) {
+      try {
+        const snap = await getDoc(doc(db,'users',user.uid));
+        codeEl.textContent = `Tu código de asistencia: ${snap.exists() ? (snap.data().attendanceCode || '—') : '—'}`;
+      } catch {
+        codeEl.textContent='Error al cargar el código.';
+      }
+    }
+
+    // Reloj CR
+    const localTimeEl = document.getElementById('local-time');
+    if (localTimeEl) {
+      const fmt = new Intl.DateTimeFormat('es-CR',{hour:'numeric',minute:'numeric',second:'numeric',hour12:true,timeZone: CR_TZ});
+      const tick=()=>localTimeEl.textContent=`Hora en Costa Rica: ${fmt.format(new Date())}`;
+      tick(); setInterval(tick,1000);
+    }
+
+    // Roles
+    let roles = [];
+    try {
+      const u = await getDoc(doc(db,'users',user.uid));
+      roles = u.exists() ? (u.data().roles || []) : [];
+    } catch {}
+
+    const isStaff = roles.includes('professor') || roles.includes('admin');
+    const switchWrap = document.getElementById('roleSwitchWrap');
+    const deck       = document.getElementById('calendarDeck');
+    const elStudent  = document.getElementById('calendarStudent');
+    const elProf     = document.getElementById('calendarProf');
+
+    // Mostrar switch sólo si tiene rol de staff
+    if (switchWrap) switchWrap.classList.toggle('hidden', !isStaff);
+
+    // Render estudiante siempre
+    buildStudentCalendar(elStudent);
+
+    // Render staff solo si tiene permiso
+    if (isStaff) {
+      buildStaffCalendar(elProf);
+
+      // wiring del switch
+      const toggle = document.getElementById('modeToggle');
+      if (toggle && !toggle.dataset.bound){
+        toggle.addEventListener('change', ()=>{
+          deck?.setAttribute('data-mode', toggle.checked ? 'prof' : 'student');
+          // ajustar tamaño al cambiar
+          if (toggle.checked) { calStaff?.updateSize(); } else { calStudent?.updateSize(); }
+        });
+        toggle.dataset.bound = '1';
+      }
+    } else {
+      // fuerza vista estudiante
+      deck?.setAttribute('data-mode', 'student');
+    }
   });
-}
+});

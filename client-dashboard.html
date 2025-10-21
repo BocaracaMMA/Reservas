@@ -165,28 +165,6 @@
   <script type="module" src="./js/client.js"></script>
   <script type="module" src="./js/scan-asistencia.js"></script>
 
-  <!-- Sidebar toggle + logout común -->
-  <script>
-    document.getElementById("toggleNav").addEventListener("click", () => {
-      document.getElementById("sidebar").classList.toggle("active");
-    });
-    document.getElementById("logoutSidebar").addEventListener("click", async (e) => {
-      e.preventDefault();
-      try {
-        const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-        const auth = getAuth();
-        await signOut(auth);
-        const { showAlert } = await import("./js/toast.js");
-        showAlert("Has cerrado sesión", "success");
-        setTimeout(() => window.location.href = "index.html", 1000);
-      } catch (err) {
-        console.error(err);
-        const { showAlert } = await import("./js/toast.js");
-        showAlert("Error al cerrar sesión", "error");
-      }
-    });
-  </script>
-
   <footer>
     <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
   </footer>
@@ -211,8 +189,6 @@
     });
   }
 </script>
-
-<script src="./js/script.js"></script>
 
 <script type="module" src="./js/pwa-install.js"></script>
 
