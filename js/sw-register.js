@@ -1,55 +1,69 @@
 // ./js/sw-register.js
-const APP_VERSION = '2025.10.20.v5'; // Subir esto con cada release
-
-(async () => {
+(function(){
   if (!('serviceWorker' in navigator)) return;
 
-  // Asegura ?v= en el manifest también (Safari/iOS agradece)
-  const link = document.querySelector('link[rel="manifest"]');
-  if (link && !link.href.includes('v=')) {
-    const u = new URL(link.href, location.href);
-    u.searchParams.set('v', APP_VERSION);
-    link.href = u.toString();
+  const swUrl = './service-worker.js?v=2025.10.20.v6';
+
+  // Pequeño guard para no recargar más de 1 vez en 2 segundos
+  const RELOAD_GUARD_KEY = 'sw-reload-guard';
+  function reloadOnce(){
+    const now = Date.now();
+    const last = Number(sessionStorage.getItem(RELOAD_GUARD_KEY) || 0);
+    if (now - last < 2000) return;
+    sessionStorage.setItem(RELOAD_GUARD_KEY, String(now));
+    location.reload();
   }
 
-  try {
-    const reg = await navigator.serviceWorker.register(
-      `./service-worker.js?v=${APP_VERSION}`,
-      { updateViaCache: 'none' } // evita SW cacheado en Safari
-    );
+  navigator.serviceWorker.register(swUrl).then(reg => {
+    // Sin controllerchange → reload automáticas
+    navigator.serviceWorker.addEventListener('message', (evt) => {
+      const msg = evt.data || {};
+      if (msg.type === 'CACHES_CLEARED') reloadOnce();
+    });
 
-    // Buscar updates periódicamente
-    setInterval(() => reg.update(), 30 * 60 * 1000);
+    // API global para el botón
+    window.swUpdate = {
+      async check() {
+        try { await reg.update(); } catch {}
+        if (reg.waiting) return reg.waiting;
 
-    // Si hay nueva versión esperando, activarla
-    reg.addEventListener('updatefound', () => {
-      const sw = reg.installing;
-      if (!sw) return;
-      sw.addEventListener('statechange', () => {
-        if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-          reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
+        // Espera corto por un "waiting" nuevo
+        return new Promise(resolve => {
+          const onInstalling = () => {
+            if (!reg.installing) return resolve(null);
+            reg.installing.addEventListener('statechange', () => {
+              if (reg.waiting) resolve(reg.waiting);
+            });
+          };
+          reg.addEventListener('updatefound', onInstalling, { once: true });
+          setTimeout(() => resolve(null), 2500);
+        });
+      },
+      async apply() {
+        const w = reg.waiting || await this.check();
+        if (w) w.postMessage({ type: 'SKIP_WAITING' });
+      },
+      async reset() {
+        const sw = navigator.serviceWorker.controller || reg.active || reg.waiting || reg.installing;
+        sw?.postMessage?.({ type: 'CLEAR_ALL_CACHES' });
+      }
+    };
+
+    // Botón global reutilizable
+    window.forceHardReset = async () => {
+      try {
+        const waiting = await window.swUpdate.check();
+        if (waiting) {
+          window.showAlert?.('Actualizando a la última versión…', 'success');
+          await window.swUpdate.apply(); // recarga una sola vez cuando cambie el controlador
+          return;
         }
-      });
-    });
-
-    // Cuando entra el SW nuevo, recargar
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      location.reload();
-    });
-  } catch (err) {
-    console.error('SW register failed', err);
-  }
+        window.showAlert?.('Limpiando caché…', 'success');
+        await window.swUpdate.reset(); // recarga cuando reciba CACHES_CLEARED
+      } catch (err) {
+        console.error('forceHardReset()', err);
+        alert('No pude completar la actualización. Intenta recargar la página.');
+      }
+    };
+  }).catch(console.error);
 })();
-
-// Botón “hard reset” (punto 4)
-window.forceHardReset = async function() {
-  try {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_ALL_CACHES' });
-    }
-    await reg?.update();
-  } catch (e) {
-    console.error('forceHardReset error', e);
-  }
-};
