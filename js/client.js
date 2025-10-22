@@ -13,28 +13,66 @@ let calStaff   = null;
 let unsubStudent = null;
 let unsubStaff   = null;
 
-/* ───────── Navbar: CSS fallback + “bind once” para evitar duplicados ───────── */
-function ensureNavCSS(){
-  if (document.getElementById('nav-fallback-css')) return;
-  const style = document.createElement('style');
-  style.id = 'nav-fallback-css';
-  style.textContent = `
-    .hamburger-btn{position:fixed;right:16px;top:16px;z-index:10001}
-    .sidebar{position:fixed;inset:0 auto 0 0;width:260px;height:100vh;background:#0c131a;
-             border-right:1px solid #22303d;transform:translateX(-100%);transition:transform .25s ease;z-index:10000}
-    .sidebar.active{transform:translateX(0)}
-    .sidebar ul{list-style:none;margin:0;padding:14px}
-    .sidebar a{display:flex;gap:.5rem;align-items:center;padding:10px;border-radius:10px;
-               color:#e5e7eb;text-decoration:none}
-    .sidebar a:hover{background:#111827}
-  `;
-  document.head.appendChild(style);
+/* ───────── Sidebar (mismo comportamiento que admin) ───────── */
+function ensureSidebarRuntimeDefaults(){
+  // Backdrop si no existe
+  if (!document.getElementById('sidebarBackdrop')){
+    const bd = document.createElement('div');
+    bd.id = 'sidebarBackdrop';
+    bd.className = 'sidebar-backdrop';
+    document.body.appendChild(bd);
+  }
+  const sb  = document.getElementById('sidebar');
+  const btn = document.getElementById('toggleNav');
+  if (btn){
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'sidebar');
+  }
+  // Asegura visibilidad (evita flashes raros)
+  if (sb){ sb.style.visibility = 'visible'; }
+}
+function toggleSidebar(forceOpen){
+  const sb   = document.getElementById('sidebar');
+  const btn  = document.getElementById('toggleNav');
+  const back = document.getElementById('sidebarBackdrop');
+  if (!sb || !btn) return;
+
+  const willOpen = (typeof forceOpen === 'boolean')
+    ? forceOpen
+    : !sb.classList.contains('active');
+
+  if (willOpen){
+    sb.classList.add('active');
+    btn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    back?.classList.add('active');
+  } else {
+    sb.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    back?.classList.remove('active');
+  }
 }
 function bindSidebarOnce(){
   const btn = document.getElementById('toggleNav');
   const sb  = document.getElementById('sidebar');
+  const back= document.getElementById('sidebarBackdrop');
   if (!btn || !sb || btn.dataset.bound) return;
-  btn.addEventListener('click', ()=> sb.classList.toggle('active'));
+
+  const handler = (e)=>{ e.preventDefault(); toggleSidebar(); };
+  btn.addEventListener('click', handler);
+  btn.addEventListener('touchstart', handler, { passive:false });
+
+  window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') toggleSidebar(false); });
+  back?.addEventListener('click', ()=> toggleSidebar(false));
+  back?.addEventListener('touchstart', ()=> toggleSidebar(false), { passive:true });
+
+  // Cerrar al navegar dentro del sidebar
+  sb.addEventListener('click', (e)=>{
+    const a = e.target.closest('a[href]');
+    if (a) toggleSidebar(false);
+  });
+
   btn.dataset.bound = '1';
 }
 function bindLogoutOnce(){
@@ -46,6 +84,27 @@ function bindLogoutOnce(){
     catch { showAlert('Error al cerrar sesión','error'); }
   });
   a.dataset.bound = '1';
+}
+function bindNavbarActions(){
+  const hard    = document.getElementById('navHardReset');
+  const install = document.getElementById('navInstall');
+  const ios     = document.getElementById('navInstallIOS');
+
+  hard?.addEventListener('click', (e)=>{ e.preventDefault(); window.forceHardReset?.(); toggleSidebar(false); });
+
+  install?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if (window.tryPWAInstall) { window.tryPWAInstall(); }
+    else if (window.deferredPrompt) { window.deferredPrompt.prompt(); }
+    else { showAlert('Ejecutando proceso de instalacion!.', 'success'); }
+    toggleSidebar(false);
+  });
+
+  ios?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    showAlert('En iPhone: botón Compartir ▸ “Añadir a pantalla de inicio”.', 'success');
+    toggleSidebar(false);
+  });
 }
 
 /* ───────── Loader simple ───────── */
@@ -68,31 +127,7 @@ function ensureLoader(){
 function showLoader(){ ensureLoader(); document.getElementById('global-loader').style.display='grid'; }
 function hideLoader(){ const el=document.getElementById('global-loader'); if(el) el.style.display='none'; }
 
-/* ───────── CSS afinado calendario y modal ───────── */
-(function injectCSS(){
-  if (document.getElementById('client-extras-css')) return;
-  const s = document.createElement('style');
-  s.id = 'client-extras-css';
-  s.textContent = `
-    .fc, #calendarStudent, #calendarProf{ -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-    .fc-daygrid-event .fc-event-title{ font-weight:800; }
-
-    /* Modal de asistencia (profesor) */
-    #attModal{ position:fixed; inset:0; display:none; place-items:center; z-index:10000; background:rgba(0,0,0,.45); }
-    #attModal.active{ display:grid; }
-    #attModal .att-card{ width:min(92vw,520px); background:#0c131a; border:1px solid #22303d; border-radius:14px; padding:14px; box-shadow:0 12px 28px rgba(0,0,0,.35); }
-    #attModal .att-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
-    #attModal .att-list{ display:grid; gap:8px; max-height:50vh; overflow:auto; padding-right:4px; }
-    #attModal .att-item{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid #233140; border-radius:10px; background:#0f1720; }
-    #attModal .close-btn{ padding:8px 12px; border-radius:10px; background:#1f2937; border:1px solid #334155; color:#e5e7eb; cursor:pointer; }
-
-    .custom-tooltip{position:fixed; z-index:10001; background:#0b2540; color:#b4d7ff; border:1px solid #1e3a5f; padding:6px 8px; border-radius:8px; pointer-events:none;}
-    .disabled-day{ filter:grayscale(.45) opacity(.7); }
-  `;
-  document.head.appendChild(s);
-})();
-
-/* ───────── Modal asistencia (inyectado) ───────── */
+/* ───────── Modal asistencia (profesor) ───────── */
 function ensureAttendancePopup(){
   if (document.getElementById('attModal')) return;
   const m = document.createElement('div');
@@ -146,6 +181,56 @@ function canCancel(dateStr, timeStr){
   return (slot - now) > 0;
 }
 
+/* ───────── Sizing del deck (altura exacta del calendario visible) ───────── */
+let _sizeDeckTimer = null;
+function sizeDeckNow(){
+  const deck = document.getElementById('calendarDeck');
+  if (!deck) return;
+  const isProf = deck.dataset.mode === 'prof';
+  const face   = deck.querySelector(isProf ? '.face-prof' : '.face-student');
+  if (!face) return;
+
+  // Intenta medir el contenedor real del FC
+  const inner = face.querySelector('.fc') || face.querySelector('.fc-shell') || face.firstElementChild;
+  const h = (inner?.offsetHeight || face.offsetHeight || 0);
+  deck.style.height = h ? `${h}px` : '';
+}
+function sizeDeckSoon(){ clearTimeout(_sizeDeckTimer); _sizeDeckTimer = setTimeout(sizeDeckNow, 50); }
+function queueSizeDeck(){ sizeDeckSoon(); }
+
+/* ───────── Flip 3D sin blur (transform solo durante animación) ───────── */
+function restDeckTransforms() {
+  const deck = document.getElementById('calendarDeck');
+  if (!deck) return;
+  const isProf = deck.dataset.mode === 'prof';
+  const s = deck.querySelector('.face-student');
+  const p = deck.querySelector('.face-prof');
+
+  // En reposo: la cara visible queda con transform:none (nítido)
+  if (s) {
+    s.style.transform = isProf ? 'rotateY(180deg)' : 'none';
+    s.style.pointerEvents = isProf ? 'none' : 'auto';
+  }
+  if (p) {
+    p.style.transform = isProf ? 'none' : 'rotateY(180deg)';
+    p.style.pointerEvents = isProf ? 'auto' : 'none';
+  }
+
+  deck.classList.remove('animating');
+  queueSizeDeck();
+}
+function flipDeckAnimate() {
+  const deck = document.getElementById('calendarDeck');
+  if (!deck) return;
+  deck.classList.add('animating');
+
+  const end = () => {
+    deck.removeEventListener('transitionend', end, true);
+    restDeckTransforms(); // vuelve a estado nítido
+  };
+  deck.addEventListener('transitionend', end, true);
+}
+
 /* ───────── Calendario Estudiante ───────── */
 function buildStudentCalendar(holderEl){
   if (!holderEl) return;
@@ -169,6 +254,7 @@ function buildStudentCalendar(holderEl){
             return { id:d.id, title:`Clase MMA - ${r.time}`, start:`${r.date}T${r.time}:00`, allDay:false };
           }).filter(e => e.start >= `${info.startStr}T00:00:00` && e.start <= `${info.endStr}T23:59:59`);
           success(evs);
+          queueSizeDeck();
         }catch(err){ console.error(err); failure(err); }
       }, err=>{ console.error(err); failure(err); });
       return () => unsubStudent && unsubStudent();
@@ -201,7 +287,10 @@ function buildStudentCalendar(holderEl){
     dayCellClassNames(arg){ const d=arg.date.getUTCDay(); return (d!==5 && d!==6) ? ['disabled-day'] : []; }
   });
 
-  requestAnimationFrame(()=>{ calStudent.render(); setTimeout(()=>calStudent.updateSize(), 40); });
+  requestAnimationFrame(()=>{
+    calStudent.render();
+    setTimeout(()=>{ calStudent.updateSize(); queueSizeDeck(); }, 40);
+  });
 }
 
 /* ───────── Calendario Profesor (conteo + popup) ───────── */
@@ -221,7 +310,7 @@ function buildStaffCalendar(holderEl){
     height:'auto', contentHeight:'auto', expandRows:true, handleWindowResize:true,
 
     events(info, success, failure){
-      const qAll = query(collection(db,'reservations')); // requiere rol 'professor' o 'admin' por reglas
+      const qAll = query(collection(db,'reservations')); // requiere reglas para staff
       unsubStaff = onSnapshot(qAll, snap=>{
         try{
           const byDate = {};
@@ -238,6 +327,7 @@ function buildStaffCalendar(holderEl){
             extendedProps: { names, count:names.length }
           })).filter(e => e.start >= info.startStr && e.start <= info.endStr);
           success(list);
+          queueSizeDeck();
         }catch(err){ console.error(err); failure(err); }
       }, err=>{ console.error(err); failure(err); });
       return () => unsubStaff && unsubStaff();
@@ -267,7 +357,10 @@ function buildStaffCalendar(holderEl){
     dayCellClassNames(arg){ const d=arg.date.getUTCDay(); return (d!==5 && d!==6) ? ['disabled-day'] : []; }
   });
 
-  requestAnimationFrame(()=>{ calStaff.render(); setTimeout(()=>calStaff.updateSize(), 40); });
+  requestAnimationFrame(()=>{
+    calStaff.render();
+    setTimeout(()=>{ calStaff.updateSize(); queueSizeDeck(); }, 40);
+  });
 }
 
 /* ───────── CRUD de reservas (estudiante) ───────── */
@@ -406,20 +499,14 @@ function openAttendancePopup(list, day){
 
 /* ───────── Boot ───────── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Navbar estable
-  ensureNavCSS();
+  ensureSidebarRuntimeDefaults();
   bindSidebarOnce();
   bindLogoutOnce();
+  bindNavbarActions();
 
-  // Botón de logout rojo (si existe en UI)
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn && !logoutBtn.dataset.bound) {
-    logoutBtn.addEventListener('click', async () => {
-      try { await signOut(auth); showAlert('Has cerrado sesión','success'); setTimeout(()=>location.href='index.html',900); }
-      catch { showAlert('Error al cerrar sesión','error'); }
-    });
-    logoutBtn.dataset.bound = '1';
-  }
+  // Recalcular alto del deck en cambios de viewport
+  window.addEventListener('resize', sizeDeckSoon);
+  window.addEventListener('orientationchange', sizeDeckSoon);
 
   onAuthStateChanged(auth, async user => {
     if (!user) { location.href='./index.html'; return; }
@@ -456,13 +543,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const elStudent  = document.getElementById('calendarStudent');
     const elProf     = document.getElementById('calendarProf');
 
-    // Mostrar switch sólo si tiene rol de staff
     if (switchWrap) switchWrap.classList.toggle('hidden', !isStaff);
 
     // Render estudiante siempre
     buildStudentCalendar(elStudent);
 
-    // Render staff solo si tiene permiso
+    // Render staff si procede
     if (isStaff) {
       buildStaffCalendar(elProf);
 
@@ -471,14 +557,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (toggle && !toggle.dataset.bound){
         toggle.addEventListener('change', ()=>{
           deck?.setAttribute('data-mode', toggle.checked ? 'prof' : 'student');
-          // ajustar tamaño al cambiar
+          flipDeckAnimate();                 // animación 3D sin blur
           if (toggle.checked) { calStaff?.updateSize(); } else { calStudent?.updateSize(); }
+          queueSizeDeck();
         });
         toggle.dataset.bound = '1';
       }
     } else {
-      // fuerza vista estudiante
       deck?.setAttribute('data-mode', 'student');
     }
+
+    // Estado inicial nítido + altura correcta del deck
+    restDeckTransforms();
+    queueSizeDeck();
   });
 });

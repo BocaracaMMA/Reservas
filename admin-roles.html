@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel de Usuarios</title>
+
+  <!-- PWA -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v7">
+  <meta name="theme-color" content="#0d1117">
+
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
+
+  <!-- iOS A2HS -->
+  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+</head>
+<body class="roles-page">
+  <!-- Botón hamburguesa -->
+  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar / Navbar -->
+  <nav id="sidebar" class="sidebar">
+    <ul>
+      <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./admin-usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+      <li><a href="./admin-mensualidades.html"><i class="bi bi-cash-coin"></i> Mensualidades</a></li>
+      <li class="admin-only"><a href="./admin-roles.html"><i class="bi bi-person-rolodex"></i> Roles</a></li>
+      <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="./admin-metrics.html"><i class="bi bi-pie-chart-fill"></i></i> Metricas</a></li>
+      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+    </ul>
+  </nav>
+
+  <header class="header">
+    <div class="logo">
+      <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
+    </div>
+    <h1 class="page-title">Roles de Usuarios</h1>
+  </header>
+  <main class="container">
+    <!-- Filtros compactos -->
+    <section class="filters">
+      <label class="f"><i class="bi bi-person"></i><input id="fNombre" type="text" placeholder="Nombre o apellidos" autocomplete="off"></label>
+      <label class="f"><i class="bi bi-upc-scan"></i><input id="fCedula" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Cédula" autocomplete="off"></label>
+      <label class="f"><i class="bi bi-envelope"></i><input id="fCorreo" type="email" placeholder="Correo" autocomplete="off"></label>
+      <label class="f"><i class="bi bi-funnel"></i><select id="fRol">
+    <option value="">Rol (todos)</option>
+    <option value="admin">admin</option>
+    <option value="professor">professor</option>
+    <option value="student">student</option>
+    </select></label>
+    </section>
+
+    <div id="total" class="badge muted" style="margin-bottom:8px">0 usuarios</div>
+
+    <section id="list" class="list"></section>
+    <div id="empty" class="empty" style="display:none">Sin resultados con los filtros aplicados.</div>
+  </main>
+
+  <script type="module" src="./js/admin-roles.js"></script>
+
+  <script type="module" src="./js/sw-register.js"></script>
+
+</body>
+</html>

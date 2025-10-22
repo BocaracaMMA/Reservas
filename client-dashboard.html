@@ -1,131 +1,59 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Reservar Clase - Cliente</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendario de Clases</title>
 
-  <!-- Bootstrap Icons -->
+  <!-- Libs CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
-
-  <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
-
-  <!-- Tu CSS global -->
+  <!-- Global CSS -->
   <link rel="stylesheet" href="./css/style.css" />
 
-  <!-- html5-qrcode (lector de QR) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.7/html5-qrcode.min.js"></script>
-
-  <!-- FullCalendar JS + locale -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.js"></script>
-
+  <!-- PWA -->
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
-  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v6">
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v7">
   <meta name="theme-color" content="#0d1117">
-
-<!-- iOS -->
-<link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Bocaraca">
-
-  <!-- Estilos del switch y la tarjeta flip -->
-  <style>
-    /* Switch Estudiante/Profesor */
-    .role-switch{
-      margin:14px auto 10px; display:flex; gap:10px; align-items:center; justify-content:center;
-      font-size:.95rem; color:#cbd5e1;
-    }
-    .role-switch.hidden{ display:none; }
-    .role-switch .role-label{ opacity:.85 }
-    .role-switch .toggle{ position:relative; width:58px; height:30px; }
-    .role-switch .toggle input{ opacity:0; width:0; height:0; }
-    .role-switch .slider{
-      position:absolute; inset:0; background:#1f2937; border:1px solid #334155; border-radius:999px;
-      transition:all .25s ease; box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-    }
-    .role-switch .slider:before{
-      content:""; position:absolute; height:24px; width:24px; left:3px; top:50%; transform:translateY(-50%);
-      background:#e5e7eb; border-radius:50%; transition:all .25s ease;
-    }
-    .role-switch input:checked + .slider{ background:#14532d; border-color:#166534; }
-    .role-switch input:checked + .slider:before{ transform:translate(28px,-50%); background:#bbf7d0; }
-
-    /* Tarjeta “flip” con dos caras (student/prof) */
-    .cal-deck{
-      position:relative; perspective:1000px;
-      margin:6px auto 18px; max-width:680px; width:100%;
-      min-height:520px; /* asegura espacio al calendario */
-    }
-    .cal-deck .face{
-      position:absolute; inset:0; backface-visibility:hidden; transform-style:preserve-3d;
-      transition: transform .48s ease;
-    }
-    .cal-deck .face-student{ transform: rotateY(0deg); }
-    .cal-deck .face-prof   { transform: rotateY(180deg); }
-    .cal-deck[data-mode="prof"] .face-student{ transform: rotateY(180deg); }
-    .cal-deck[data-mode="prof"] .face-prof   { transform: rotateY(360deg); }
-
-    /* Calendarios internos */
-    #calendarStudent, #calendarProf{
-      background:#0f141a; border:1px solid #22303d; border-radius:16px; padding:10px;
-      box-shadow:0 8px 24px rgba(0,0,0,.28);
-      height:100%; min-height:520px;
-    }
-  </style>
+  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body>
 
-  <!-- Botón hamburguesa -->
-  <button id="toggleNav" class="hamburger-btn" aria-label="Abrir menú">☰</button>
+<body class="client-page">
+  <!-- Hamburguesa como en admin -->
+  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+    <i class="bi bi-list"></i>
+  </button>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar">
+  <nav id="sidebar" class="sidebar">
     <ul>
-      <li><a href="client-dashboard.html"><span>🏠</span>Inicio</a></li>
-      <li><a href="profile.html"><span>👤</span>Mi perfil</a></li>
-      <li><a id="logoutSidebar" href="#"><span>🚪</span>Cerrar sesión</a></li>
+      <li><a href="./client-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./profile.html"><i class="bi bi-person-circle"></i> Mi perfil</a></li>
+      <li><a id="navInstall" href="#"><i class="bi bi-download"></i> Instalar app</a></li>
+      <li><a id="navInstallIOS" href="#"><i class="bi bi-apple"></i> ¿iPhone?</a></li>
+      <li><a id="navHardReset" href="#"><i class="bi bi-arrow-repeat"></i> Forzar actualización</a></li>
+      <li><a id="logoutSidebar" href="#"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
     </ul>
-  </aside>
+  </nav>
+
+  <!-- Header con look de admin -->
+  <header class="header">
+    <div class="logo">
+      <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
+    </div>
+    <h1 class="page-title">Calendario de Clases</h1>
+  </header>
 
   <main class="container">
-    <div class="logo-container">
-      <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
-      <h1 class="logo-text">Calendario de Clases</h1>
-      <h2 id="attendanceCodeDisplay" class="attendance-code">Cargando código de asistencia...</h2>
-      <div id="local-time" class="mt-1 text-muted"></div>
-    </div>
-
-    <!-- Aviso de membresía -->
-    <div id="mshipBanner" class="mship-banner" style="display:none;">
-      <span id="mshipText"></span>
-    </div>
-
-    <!-- Botón de escaneo QR -->
-    <div style="text-align:center; margin:1.5rem 0;">
-      <button id="btnInstall" class="btn" onclick="window.forceHardReset()">Forzar actualización</button>
+    <!-- Botón QR (los demás se movieron al navbar) -->
+    <div class="client-cta">
       <button id="openScannerBtn" class="btn">Escanear Código QR</button>
-    </div>
+  </div>
 
-    <!-- Modal de escaneo -->
-    <div id="scannerModal" class="asistencia-modal">
-      <div class="modal-content">
-        <h2>Escanear Código QR</h2>
-        <div id="reader" style="width:300px; margin:1rem auto;"></div>
-        <div style="text-align:center; margin-top:1rem;">
-          <button id="btnCloseScanner" class="btn error">Cerrar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SWITCH + TARJETA CON 2 CALENDARIOS -->
-    <div class="calendar-wrapper">
-      <div class="card">
-
-        <!-- Switch (se oculta si el user no es prof/admin; el JS lo muestra si corresponde) -->
+    <!-- Calendarios + switch -->
+    <section class="calendar-wrapper">
+      <div class="card calendar-card">
         <div id="roleSwitchWrap" class="role-switch hidden">
           <span class="role-label">Estudiante</span>
           <label class="toggle">
@@ -135,64 +63,46 @@
           <span class="role-label">Profesor</span>
         </div>
 
-        <!-- Tarjeta que rota entre Student y Profesor -->
+        <!-- Flip deck 3D -->
         <section id="calendarDeck" class="cal-deck" data-mode="student">
           <div class="face face-student">
-            <div id="calendarStudent"></div>
+            <div id="calendarStudent" class="fc-shell"></div>
           </div>
           <div class="face face-prof">
-            <div id="calendarProf"></div>
+            <div id="calendarProf" class="fc-shell"></div>
           </div>
         </section>
-
       </div>
-    </div>
+    </section>
 
-    <!-- (Tu modal antiguo puede quedarse, no interfiere) -->
-    <div id="reservationModal" style="display:none;">
-      <div>
-        <p>¿Confirmas tu reserva para la clase?</p>
-        <button id="confirmReservation" class="btn">Confirmar Reserva</button>
-        <button id="cancelReservation" class="btn error">Cancelar</button>
+    <!-- Modal escaneo -->
+    <div id="scannerModal" class="asistencia-modal">
+      <div class="modal-content">
+        <h2>Escanear Código QR</h2>
+        <div id="reader" class="qr-reader"></div>
+        <div class="modal-actions">
+          <button id="btnCloseScanner" class="btn error">Cerrar</button>
+        </div>
       </div>
     </div>
   </main>
 
   <div id="toast-container"></div>
 
+  <!-- Libs JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.7/html5-qrcode.min.js"></script>
+
+  <!-- App -->
   <script type="module" src="./js/toast.js"></script>
-  <!-- Lógica del cliente (reservas, código, reloj, switch/calendarios) -->
   <script type="module" src="./js/client.js"></script>
   <script type="module" src="./js/scan-asistencia.js"></script>
+  <script type="module" src="./js/pwa-install.js"></script>
+  <script type="module" src="./js/sw-register.js"></script>
 
   <footer>
     <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
   </footer>
-
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
-        .then((reg) => {
-          if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
-          reg.addEventListener("updatefound", () => {
-            const nw = reg.installing;
-            if (!nw) return;
-            nw.addEventListener("statechange", () => {
-              if (nw.state === "installed" && navigator.serviceWorker.controller) {
-                reg.waiting?.postMessage("SKIP_WAITING");
-              }
-            });
-          });
-        })
-        .catch(console.error);
-    });
-  }
-</script>
-
-<script type="module" src="./js/pwa-install.js"></script>
-
-<script type="module" src="./js/sw-register.js"></script>
-
 </body>
 </html>

@@ -1,908 +1,413 @@
-/* Estilo base para las páginas de Login y Registro */
-body {
-  background-color: #0d1117; /* Fondo oscuro */
-  color: #c9d1d9; /* Texto claro */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
+/* ─────────────────────────────────────────────────────────────
+   BOOTSTRAP DE IDENTIDAD
+   ───────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
+
+:root{
+  /* Paleta nueva */
+  --bg-900:#0D1117;
+  --surface-800:#161B22;
+  --surface-700:#0F141A;
+  --text-100:#F5F5F5;
+  --text-300:#B0B0B0;
+  --muted-500:#6F566F;
+
+  --brand-green:#2ECC71;   /* botones ok */
+  --brand-yellow:#FFD43B;  /* acento/tabs */
+  --brand-red:#E63946;     /* errores */
+  --brand-magenta:#B000B0; /* acento secundario */
+
+  --outline:#30363d;
+  --radius-lg:20px;
+  --shadow-lg:0 12px 28px rgba(0,0,0,.28);
 }
 
-.logo {
-  text-align: center;
-  color: #58a6ff; /* Logo color azul GitHub */
-  font-size: 24px;
-  margin-bottom: 20px;
+/* Base tipográfica + reset suave */
+html,body{
+  font-family:'Ubuntu',system-ui,'Segoe UI',Roboto,Arial,sans-serif;
+  background:var(--bg-900);
+  color:var(--text-100);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  margin:0;
+  padding:0;
+  overflow-x:hidden;
 }
 
-.card {
-  background-color: #161b22; /* Fondo oscuro de las tarjetas */
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 0 10px #010409; /* Sombra para las tarjetas */
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* El body NO centra todo por defecto (solo auth usa .auth-center) */
+body{ display:block; min-height:auto; }
+
+/* Contenedor genérico */
+.container{ width:100%; max-width:680px; margin:0 auto; padding:16px; box-sizing:border-box; }
+
+/* Tarjetas base */
+.card{
+  background:var(--surface-800);
+  border:1px solid #22303d;
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);
+  padding:20px;
+  display:flex; flex-direction:column; gap:12px;
 }
 
-/* Formulario de registro y login */
-label {
-  color: #8b949e; /* Texto más claro para las etiquetas */
-  font-size: 12px;
+/* Logo / cabecera simple */
+.logo-img{
+  width:120px; height:120px; object-fit:cover; border-radius:50%;
+  margin:0 auto 10px; display:block;
+}
+.logo-text{ font-size:32px; font-weight:700; color:var(--text-100); }
+
+/* Tipografía general */
+label{ color:#8b949e; font-size:12px; }
+p{ text-align:center; font-size:14px; color:#ffffff; }
+
+/* Inputs */
+input[type="text"], input[type="email"], input[type="password"], input[type="tel"]{
+  background:#21262d; border:1px solid var(--outline); border-radius:6px;
+  color:#c9d1d9; font-size:14px; padding:10px 12px; box-sizing:border-box;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"] {
-  background-color: #21262d; /* Fondo oscuro para los campos de entrada */
-  border: 1px solid #30363d; /* Borde gris oscuro */
-  border-radius: 5px;
-  color: #c9d1d9; /* Texto claro en los campos */
-  font-size: 14px;
+/* Botones por defecto */
+button, input[type="submit"], .btn{
+  background:var(--brand-green); border:none; color:#fff;
+  font-size:15px; cursor:pointer; border-radius:6px; display:inline-block;
+  padding:10px 16px;
 }
+button:hover, input[type="submit"]:hover, .btn:hover{ background:#249d5a; }
 
-input[type="submit"],
-button {
-  background-color: #238636; /* Botón verde GitHub */
-  border: none;
-  color: white;
-  font-size: 15px;
-  cursor: pointer;
-  border-radius: 5px;
-  display: inline-block;
-  margin-top: 10px;
-}
+/* Botón de error genérico */
+.btn.error{ background:#dc3545; }
+.btn.error:hover{ background:#c82333; }
 
-input[type="submit"]:hover,
-button:hover {
-  background-color: #2ea043; /* Cambio de color al pasar el ratón */
+/* Toasts */
+#toast-container{
+  position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px;
 }
-
-p {
-  text-align: center;
-  font-size: 14px;
-  color: #ffffff; /* Color gris claro para el texto */
+.toast{
+  background:var(--surface-800); color:#c9d1d9; padding:12px 20px; border-radius:8px;
+  box-shadow:0 0 10px #010409; font-size:14px; animation:fadeInOut 4s forwards;
 }
-
-/* Estilo para el botón de eliminar en el panel de administración */
-button.delete-btn {
-  background-color: crimson;
-}
-
-button.delete-btn:hover {
-  background-color: #e53e3e;
-}
-
-#toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#deleteModal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-#deleteModal .modal-content {
-  background: #161b22;
-  padding: 20px;
-  border-radius: 12px;
-  text-align: center;
-}
-#deleteModal button {
-  margin: 10px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-#confirmDelete {
-  background-color: #dc3545;
-  color: rgb(255, 255, 255);
-}
-#cancelDelete {
-  background-color: #6c757d;
-  color: white;
-}
-
-.custom-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-.modal-content {
-  background: #161b22;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-}
-.modal-content button {
-  margin: 10px;
-  padding: 10px 20px;
-}
-.calendar-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px; /* espacio entre calendario y botón */
-}
-
-#logoutBtn:hover {
-  background-color: #0056b3;
-}
-
-.logo-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.logo-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin: 0 auto 10px auto;
-  display: block;
-}
-
-.logo-text {
-  font-size: 32px;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-/*css del calendario */
-
-.fc-event-title {
-  font-size: 22px;
-  text-align: center;
-  color: rgb(255, 255, 255);
-}
-
-@media (max-width: 600px) {
-  .fc-event-title {
-      font-size: 18px;
-  }
-  body {
-    padding: 10px;
-  }
-
-  .container {
-    padding: 10px;
-  }
-
-  input, button {
-    font-size: 16px;
-    padding: 12px;
-  }
-
-  .card {
-    padding: 15px;
-  }
-}
-
-.disabled-day {
-  background-color: #555555;
-  pointer-events: none;
-  opacity: 0.6;
-}
-/* Estilo para la página de cambio de contraseña */
-#changePasswordForm {
-  background-color: #161b22; /* Fondo oscuro */
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px #010409; /* Sombra */
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-#changePasswordForm label {
-  color: #8b949e; /* Color gris claro */
-  font-size: 12px;
-}
-
-#changePasswordForm input[type="password"] {
-  background-color: #21262d; /* Fondo oscuro para los campos */
-  border: 1px solid #30363d; /* Borde gris oscuro */
-  border-radius: 5px;
-  color: #c9d1d9; /* Texto claro */
-  padding: 10px;
-  font-size: 14px;
-}
-
-#changePasswordForm button {
-  background-color: #238636; /* Color del botón (verde GitHub) */
-  border: none;
-  color: white;
-  padding: 10px;
-  font-size: 15px;
-  cursor: pointer;
-  border-radius: 5px;
-  display: inline-block;
-  margin-top: 10px;
-}
-
-#changePasswordForm button:hover {
-  background-color: #2ea043; /* Hover effect */
-}
-
-/* Estilos para los enlaces de la página de cambio de contraseña */
-a {
-  color: #58a6ff; /* Color azul GitHub */
-}
-
-a:hover {
-  text-decoration: underline; /* Subrayado al pasar el ratón */
-}
-
-/* Resaltar el mensaje de éxito o error */
-.toast {
-  background-color: #161b22;
-  color: #c9d1d9;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px #010409;
-  font-size: 14px;
-  animation: fadeInOut 4s forwards;
-}
-
-.toast.success {
-  border-left: 5px solid #2ea043;
-}
-
-.toast.error {
-  border-left: 5px solid crimson;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translateY(-20px); }
-  10% { opacity: 1; transform: translateY(0); }
-  90% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-20px); }
-}
-
-/* Para el tamaño y centrado del calendario */
-.container {
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.calendar-wrapper {
-  margin-top: 20px;
-  text-align: center;
-}
-
-/* Botón cerrar sesión */
-#logoutBtn {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 16px;
-  margin: 20px auto 0 auto;
-}
-
-#logoutBtn:hover {
-  background-color: #c82333;
-}
-
-footer {
-  text-align: center;
-  margin-top: 40px;
-  padding: 20px;
-  font-size: 14px;
-  color: #aaa;
-}
-
-footer a {
-  color: #58a6ff;
-  text-decoration: none;
-}
-
-footer a:hover {
-  text-decoration: underline;
-}
-
-main {
-  flex: 1; /* El contenido ocupa todo el espacio disponible */
-}
-
-.custom-tooltip {
-  position: absolute;
-  background-color: #161b22; /* Coincide con tu estilo oscuro */
-  color: #c9d1d9;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  pointer-events: none;
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  z-index: 9999;
-  white-space: pre-line;
-}
-
-/* Estilo para los elementos de usuario */
-.user-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.users-list h2 {
-  text-align: center;
-}
-
-/* Estilo para el switch */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 34px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  border-radius: 50%;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-}
-
-input:checked + .slider {
-  background-color: #4CAF50;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-/* Navbar lateral estilo GitHub */
-.sidebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 240px;
-  height: 100vh;
-  background-color: #161b22; /* tono oscuro tipo GitHub */
-  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.5);
-  padding-top: 60px;
-  transform: translateX(100%);
-  transition: transform 0.3s ease-in-out;
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-/* Mostrar la barra lateral */
-.sidebar.active {
-  transform: translateX(0);
-}
-
-/* Lista de enlaces */
-.sidebar ul {
-  list-style: none;
-  padding: 0 20px;
-  margin: 0;
-}
-
-.sidebar ul li {
-  margin-bottom: 1.5rem;
-}
-
-.sidebar ul li a {
-  display: flex;
-  align-items: center;
-  color: #c9d1d9;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1.1rem;
-  transition: color 0.2s;
-}
-
-.sidebar ul li a i {
-  margin-right: 12px;
-  font-size: 1.3rem;
-  color: #58a6ff; /* azul GitHub */
-}
-
-.sidebar ul li a:hover {
-  color: #238636; /* verde GitHub */
-}
-
-.sidebar ul li a span {
-  display: inline-block;
-  margin-right: 8px;
-  vertical-align: middle;
-}
+.toast.success{ border-left:5px solid var(--brand-green); }
+.toast.error{ border-left:5px solid var(--brand-red); }
+@keyframes fadeInOut{ 0%{opacity:0;transform:translateY(-20px)}10%{opacity:1;transform:none}90%{opacity:1}100%{opacity:0;transform:translateY(-20px)} }
 
 /* Enlaces */
-.sidebar a {
-  color: #c9d1d9;
-  text-decoration: none;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
-  width: 100%;
-  transition: background-color 0.2s;
-  border-radius: 8px;
-  text-align: left;
+a{ color:#58a6ff; }
+a:hover{ text-decoration:underline; }
+
+/* Footer */
+footer{ text-align:center; margin-top:40px; padding:20px; font-size:14px; color:#aaa; }
+footer a{ color:#F5F5F5; text-decoration:none; }
+footer a:hover{ text-decoration:underline; }
+
+/* ─────────────────────────────────────────────────────────────
+   LOGIN / REGISTRO (con tabs)
+   ───────────────────────────────────────────────────────────── */
+body.auth-center{
+  display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:100vh;
+}
+.auth-card{ max-width:520px; margin:0 auto; width:100%; }
+.auth-tabs{
+  display:flex; gap:.5rem; border-bottom:1px solid var(--outline);
+  margin:-4px -4px 12px -4px; padding:0 4px 8px 4px;
+}
+.auth-tab{
+  background:transparent; border:1px solid var(--outline); color:#c9d1d9;
+  padding:.45rem .9rem; border-radius:8px; cursor:pointer; font-weight:600;
+}
+.auth-tab.active{ background:#21262d; border-color:var(--brand-yellow); color:var(--brand-yellow); }
+.auth-panel{ display:none; }
+.auth-panel.active{ display:block; }
+.auth-panel form h2{ margin:0 0 .75rem 0; }
+#tab-login #loginForm{ width:100%; max-width:520px; margin:0 auto; }
+#tab-login #loginForm button[type="submit"]{
+  display:block; width:100%; max-width:360px; margin:10px auto 8px;
+}
+@media (max-width:480px){
+  #tab-login #loginForm{ max-width:100%; }
+  #tab-login #loginForm button[type="submit"]{ max-width:100%; }
 }
 
-.sidebar a:hover {
-  background-color: #1a54a7;
+/* Tarjetas de precios */
+.pricing-grid{ display:grid; grid-template-columns:1fr; gap:.75rem; }
+.price-card{ background:#0d1117; border:1px solid var(--outline); border-radius:12px; overflow:hidden; }
+.price-head{ padding:.75rem 1rem; text-align:center; color:#fff; }
+.head-blue{  background:linear-gradient(90deg,#2563eb,#3b82f6); }
+.head-green{ background:linear-gradient(90deg,#15803d,#2ECC71); }
+.price-title{ margin:0; font-weight:700; }
+.price-body{ padding:.9rem 1rem; }
+.price-amount{ text-align:center; font-size:1.6rem; font-weight:800; margin-bottom:.25rem; }
+.price-amount small{ font-size:.9rem; color:#8b949e; }
+.price-list{ list-style:none; padding:0; margin:.5rem 0 1rem; color:#c9d1d9; line-height:1.35; }
+.price-list .muted{ color:#8b949e; }
+.price-cta{ text-align:center; }
+.pill{ display:inline-block; padding:.25rem .6rem; border-radius:999px; font-size:.8rem; border:1px solid var(--outline); color:#8b949e; }
+.pill.success{ border-color:var(--brand-green); color:var(--brand-green); }
+@media (min-width:720px){ .pricing-grid{ grid-template-columns:1fr 1fr; } }
+
+/* Cambio de contraseña */
+#changePasswordForm{
+  background:var(--surface-800); padding:24px; border-radius:8px; box-shadow:0 0 10px #010409;
+  display:flex; flex-direction:column; gap:12px;
+}
+#changePasswordForm label{ color:#8b949e; font-size:12px; }
+#changePasswordForm input[type="password"]{
+  background:#21262d; border:1px solid var(--outline); border-radius:5px;
+  color:#c9d1d9; padding:10px; font-size:14px;
+}
+#changePasswordForm button{ background:var(--brand-green); }
+#changePasswordForm button:hover{ background:#2ea043; }
+
+/* ─────────────────────────────────────────────────────────────
+   SIDEBAR + HAMBURGUESA (alineado a la izquierda)
+   ───────────────────────────────────────────────────────────── */
+.sidebar{
+  position:fixed; inset:0 auto 0 0; width:260px; height:100vh;
+  background:#0c131a; border-right:1px solid #22303d;
+  transform:translateX(-100%); transition:transform .25s ease; z-index:1000;
+  overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 0;
+}
+.sidebar.active{ transform:translateX(0); }
+.sidebar ul{ list-style:none; margin:0; padding:0 10px; }
+.sidebar ul li{ margin-bottom:1rem; }
+.sidebar ul li a{
+  display:flex; align-items:center; gap:.5rem; padding:10px;
+  color:#e5e7eb; text-decoration:none; border-radius:10px;
+}
+.sidebar ul li a:hover{ background:#111827; }
+.sidebar a{ color:#c9d1d9; font-size:16px; text-decoration:none; border-radius:8px; }
+
+.hamburger-btn, #toggleNav{
+  position:fixed; top:16px; right:16px; z-index:1100;
+  width:42px; height:42px; border-radius:10px; border:1px solid #334155;
+  background:#0f172a; color:#e5e7eb; font-size:20px; line-height:1; padding:0;
+}
+.hamburger-btn:hover{ background:rgba(35,134,54,.2); color:#238636; }
+
+/* Si el botón vive dentro del header/logo */
+.logo-container{ position:relative; }
+.logo-container .hamburger-btn{
+  position:absolute; top:6px; right:6px; z-index:5;
 }
 
-/* Íconos (si se usan emojis o SVGs) */
-.sidebar a span {
-  font-size: 18px;
-}
+/* Scrollbar del sidebar */
+.sidebar::-webkit-scrollbar{ width:8px; }
+.sidebar::-webkit-scrollbar-thumb{ background:#238636; border-radius:4px; }
 
-/* Responsive opcional */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-  }
+/* ─────────────────────────────────────────────────────────────
+   CALENDARIOS + SWITCH PROF/EST
+   ───────────────────────────────────────────────────────────── */
+.role-switch{
+  margin:14px auto 10px; display:flex; gap:10px; align-items:center; justify-content:center;
+  font-size:.95rem; color:#cbd5e1;
+}
+.role-switch.hidden{ display:none; }
+.role-switch .role-label{ opacity:.85; }
+.role-switch .toggle{ position:relative; width:58px; height:30px; }
+.role-switch .toggle input{ opacity:0; width:0; height:0; }
+.role-switch .slider{
+  position:absolute; inset:0; background:#1f2937; border:1px solid #334155; border-radius:999px;
+  transition:all .25s ease; box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+.role-switch .slider:before{
+  content:""; position:absolute; height:24px; width:24px; left:3px; top:50%;
+  transform:translateY(-50%); background:#e5e7eb; border-radius:50%; transition:all .25s ease;
+}
+.role-switch input:checked + .slider{ background:#14532d; border-color:#166534; }
+.role-switch input:checked + .slider:before{ transform:translate(28px,-50%); background:#bbf7d0; }
 
-  .sidebar a {
-    font-size: 14px;
-    padding: 8px 16px;
-  }
+/* Tarjeta “flip” con dos caras */
+.cal-deck{
+  position:relative; perspective:1000px;
+  margin:6px auto 18px; max-width:680px; width:100%;
+  /* no fijamos min-height alto para evitar hueco extra */
 }
+.cal-deck .face{
+  position:absolute; inset:0; backface-visibility:hidden;
+  transform-style:preserve-3d; transition:transform .48s ease;
+  transform:translateZ(0); /* evita blur por GPU */
+}
+.cal-deck .face-student{ transform:rotateY(0deg); }
+.cal-deck .face-prof{ transform:rotateY(180deg); }
+.cal-deck[data-mode="prof"] .face-student{ transform:rotateY(180deg); }
+.cal-deck[data-mode="prof"] .face-prof{ transform:rotateY(360deg); }
 
-/* Botón hamburguesa */
-.hamburger-btn {
-  position: fixed;
-  top: 15px;
-  right: 15px;
-  background-color: transparent;
-  border: none;
-  color: #c9d1d9;
-  font-size: 1.8rem;
-  cursor: pointer;
-  z-index: 1100;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.hamburger-btn:hover {
-  background-color: rgba(35, 134, 54, 0.2);
-  color: #238636;
-}
-
-/* Para que el main no quede tapado cuando el sidebar esté activo, puedes desplazarlo un poco */
-.sidebar.active ~ main.container {
-  margin-right: 240px;
-  transition: margin-right 0.3s ease-in-out;
-}
-
-/* Ajusta el main para que ocupe el 100% ancho cuando sidebar está oculto */
-main.container {
-  transition: margin-right 0.3s ease-in-out;
-  margin-right: 0;
-  padding: 20px;
-  max-width: calc(100% - 20px);
-}
-
-/* Scroll del sidebar */
-.sidebar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background-color: #238636;
-  border-radius: 4px;
-}
-
-/* Responsivo: en pantallas pequeñas, el sidebar ocupa toda la pantalla */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    transform: translateX(100%);
-  }
-
-  .sidebar.active ~ main.container {
-    margin-right: 0;
-  }
-}
-
-/* Estilos para mejorar la apariencia de la lista de asistencia */
-#listaAsistencia {
-  list-style: none;
-  padding: 0;
-}
-
-.asistencia-item {
-  display: flex;
-  align-items: center;
-  margin: 10px 0;
-  font-size: 16px;
-}
-
-.asistencia-item input[type="checkbox"] {
-  margin-right: 10px;
-}
-
-.asistencia-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.asistencia-modal.active {
-  display: flex;
-}
-
-.asistencia-modal .modal-content {
-  background: #161b22;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-}
-
-.asistencia-modal .modal-content button {
-  margin: 10px;
-  padding: 10px 20px;
-}
-
-/* reportes */
-
-.reporte-container {
-  margin-top: 2rem;
-  padding: 1rem;
-  background-color: #161b22;
-  border: 1px solid #161b22;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(27,31,35,0.12);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  color: #f3f3f3;
-}
-
-.asistencia-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-.asistencia-table th,
-.asistencia-table td {
-  border: 1px solid #161b22;
-  padding: 8px 12px;
-  text-align: left;
-  font-size: 14px;
-}
-
-.asistencia-table th {
-  background-color: #161b22;
-  font-weight: 600;
-}
-
-.asistencia-table td {
-  background-color: #161b22;
-}
-
-.asistencia-table tr:hover {
-  background-color: #161b22;
-}
-
-.gif-panel {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 100px); /* Ajusta según navbar/footer */
-  padding: 2rem;
-  text-align: center;
-}
-
-.gif-central {
-  max-width: 400px;
-  width: 100%;
-  height: auto;
-  border-radius: 1rem;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
-}
-
-/* Boton que genera el codigo */
-.btn.code-btn {
-  background-color: #238636;  /* mismo verde GitHub */
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.btn.code-btn:hover {
-  background-color: #2ea043;
-}
-
-/* Código de asistencia en client-dashboard */
-.attendance-code {
-  margin-top: 8px;
-  font-size: 1rem;
-  color: #58a6ff;
-  text-align: center;
-}
-
-/* Colores distintivos para el estado de membresía */
-.state-vencida {
-  color: #e53e3e;      /* rojo GitHub/crimson */
-  font-weight: bold;
-}
-.state-proxima {
-  color: #dd6b20;      /* naranja / yellow-600 */
-  font-weight: bold;
-}
-.state-activo {
-  color: #2ea043;      /* verde GitHub */
-  font-weight: bold;
-}
-
-/* Eventos */
-/* GRID de tarjetas */
-/* ─── GRID 4x4 PARA EVENTOS ───────────────────────────────────────────────── */
-.events-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin: 2rem auto;
-  max-width: 1200px;
-}
-/* ─── TARJETA DE EVENTO ─────────────────────────────────────────────────────── */
-.event-card {
-  background: #161b22;
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform .2s, box-shadow .2s;
-  display: flex;
-  flex-direction: column;
-}
-.event-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-}
-.event-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
-.event-card .info {
-  padding: 1rem;
-  flex: 1;
-}
-.event-card .info h3 {
-  text-align: center;
-  margin-bottom: 0.5rem;
-  color: #58a6ff;
-}
-
-.event-card .info p {
-  margin: 0;
-  font-size: .9rem;
-  color: #c9d1d9;
-}
-
-/* ─── BOTÓN SUCCESS PARA “Comprar Entradas” ──────────────────────────────── */
-.btn.success {
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: #238636;
-  color: #fff;
-  border-radius: 6px;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.btn.success:hover {
-  background-color: #2ea043;
-}
-/* ─── BOTÓN error PARA Cerrar el model de  “Comprar Entradas” ──────────────────────────────── */
-.btn.error {
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: #dc3545;
-  color: #fff;
-  border-radius: 6px;
-  font-weight: 600;
-  border: none;
-  white-space: nowrap;
-}
-.btn.error:hover {
-  background-color: #c82333;
-}
-
-/* ─── MODAL DE ADVERTENCIA “Sin enlace disponible” ───────────────────────── */
-#noLinkModal .modal-content {
-  background: #161b22;
-  color: #c9d1d9;
-}
-#noLinkModal .btn-close-white {
-  filter: invert(100%);
-}
-
-/* ─── Animacion shake ───────────────────────── */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-8px); }
-  40%, 80% { transform: translateX(8px); }
-}
-.btn.shake {
-  animation: shake 0.5s;
-}
-
-/* Limita alto del popup y permite scroll interno */
-.asistencia-modal .modal-content {
-  max-width: 400px;
-  max-height: 100vh;
-}
-
-/* Recorta la imagen sin deformar y la limita al 50% de altura */
-.asistencia-modal img {
-  width: 100%;
-  max-height: 20vh;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-/* Toolbard mensualidades */
-#mensuToolbar .form-select {
-  background-color:#21262d !important;
-  color:#c9d1d9 !important;
-  border-color:#30363d !important;
-}
-
-
-/* ─── Responsive para eventos en móvil ───────────────────────────── */
-@media (max-width: 767px) {
-  .events-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .event-card .info p {
-    display: none;
-  }
-  .event-card img {
-    height: 140px;
-  }
-}
-
-/* ─── Tienda: grid y tarjetas ─────────────────────────────────────────── */
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  gap: 1rem;
-  margin: 2rem auto;
-  max-width: 1200px;
-}
-@media (max-width: 1024px) {
-  .products-grid { grid-template-columns: repeat(3,1fr); }
-}
-@media (max-width: 768px) {
-  .products-grid { grid-template-columns: repeat(2,1fr); }
-}
-@media (max-width: 420px) {
-  .products-grid { grid-template-columns: 1fr; }
-}
-
-.product-card {
-  background:#161b22;
-  border-radius:12px;
-  overflow:hidden;
-  display:flex; flex-direction:column;
-  transition: transform .2s, box-shadow .2s;
-}
-.product-card:hover { transform: translateY(-4px); box-shadow:0 8px 16px rgba(0,0,0,.5); }
-
-.product-thumb {
-  background:#0d1117;
-}
-.product-thumb img {
-  display:block;
+/* Contenedores de los calendarios */
+#calendarStudent, #calendarProf{
   width:100%;
-  height:100%;
-  object-fit: cover;
-  background: transparent;
+  background:var(--surface-700);
+  border:1px solid #22303d; border-radius:16px; padding:10px; box-sizing:border-box;
+  box-shadow:var(--shadow-lg);
 }
-.product-card .info { padding:1rem; display:flex; flex-direction:column; gap:.5rem; }
-.product-card .info h3 { margin:0; text-align:center; color:#58a6ff; font-size:1.05rem; }
-.prod-meta { display:flex; justify-content:space-between; align-items:center; color:#c9d1d9; font-size:.9rem; }
-.prod-meta .price { font-weight:700; }
 
-/* Modal producto imagen */
-.product-modal-imgwrap {
-  width:100%; aspect-ratio: 1 / 1; overflow:hidden; border-radius:8px; margin-bottom:.5rem;
-}
-.product-modal-imgwrap img { width:100%; height:100%; object-fit:cover; }
+/* FullCalendar look & feel */
+.fc, #calendarStudent, #calendarProf{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+.fc-theme-standard td, .fc-theme-standard th{ border-color:#2b3138; }
+.fc .fc-toolbar-title{ font-weight:700; font-size:clamp(1.05rem,2.6vw,1.25rem); }
+.fc .fc-daygrid-day-number{ color:var(--text-300); }
+.fc-daygrid-event .fc-event-title{ font-weight:800; font-size:22px; color:#fff; text-align:center; }
+@media (max-width:600px){ .fc-daygrid-event .fc-event-title{ font-size:18px; } }
+.fc .fc-daygrid-event{ background:#2b5fd6; border:0; color:#fff; font-weight:700; border-radius:8px; padding:2px 4px; }
 
-/* FAB carrito */
-.cart-fab {
-  position: fixed; right: 16px; bottom: 16px;
-  background:#238636; color:#fff; border:none;
-  padding:10px 14px; border-radius:999px; cursor:pointer;
-  z-index: 1100; box-shadow: 0 6px 16px rgba(0,0,0,.4);
-}
-.cart-fab span { font-weight:700; margin-left:6px; }
+/* Días deshabilitados (no clicables) */
+.disabled-day{ filter:grayscale(.45) opacity(.75); }
 
-/* Lista carrito */
-.cart-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem; }
-.cart-row img { width:48px; height:48px; object-fit:cover; border-radius:8px; }
-.cart-row .cart-info { flex:1; }
-.cart-row .cart-info .t { font-weight:600; }
-.cart-row .cart-info .p { font-size:.9rem; color:#8b949e; }
+/* Tooltip en staff */
+.custom-tooltip{
+  position:absolute; background:#161b22; color:#c9d1d9; padding:8px 12px; border-radius:8px;
+  font-size:14px; pointer-events:none; box-shadow:0 0 10px rgba(0,0,0,.3); z-index:9999; white-space:pre-line;
+}
 
-/* ----- Checkout ----- */
-.checkout-wrap{
-  max-width: 1100px;
-  margin: 1rem auto 3rem;
-  display:grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
+/* Modales genéricos */
+.custom-modal{
+  position:fixed; inset:0; background:rgba(0,0,0,.6);
+  display:flex; justify-content:center; align-items:center; z-index:9999;
 }
-@media (min-width: 992px){
-  .checkout-wrap{ grid-template-columns: 1.2fr .8fr; } /* más ancho y balanceado */
+.modal-content{ background:#161b22; padding:20px; border-radius:10px; text-align:center; }
+.modal-content button{ margin:10px; }
+
+
+/* Logout */
+#logoutBtn{ margin:20px auto 0; padding:10px 20px; background:#dc3545; color:#fff; border:none; border-radius:10px; cursor:pointer; font-size:16px; }
+#logoutBtn:hover{ background:#c82333; }
+
+/* ─────────────────────────────────────────────────────────────
+   TABLAS / ADMIN
+   ───────────────────────────────────────────────────────────── */
+.table-container{
+  width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  margin-top:.75rem; border-radius:12px;
 }
+.table-container::-webkit-scrollbar{ height:8px; }
+.table-container::-webkit-scrollbar-thumb{ background:#30363d; border-radius:8px; }
+
+#mensualidades-table{ width:100%; border-collapse:collapse; table-layout:fixed; min-width:920px; }
+#usuarios-table{ width:100%; border-collapse:collapse; table-layout:fixed; min-width:700px; }
+
+#mensualidades-table th, #mensualidades-table td,
+#usuarios-table th, #usuarios-table td{
+  padding:clamp(6px,1.6vw,10px); font-size:clamp(12px,2.7vw,14px);
+  white-space:nowrap; text-overflow:ellipsis; overflow:hidden; border-bottom:1px solid #262b33; color:#fdfeff;
+}
+#mensualidades-table thead th, #usuarios-table thead th{
+  position:sticky; top:0; background:#161b22; z-index:1;
+}
+#mensualidades-table input[type="month"]{
+  background:#21262d; border:1px solid #30363d; color:#c9d1d9; border-radius:6px; padding:6px 8px; width:130px;
+}
+@media (max-width:480px){ #mensualidades-table input[type="month"]{ width:115px; } }
+#mensualidades-table .btn, #usuarios-table .btn{ padding:6px 10px; font-size:12px; border-radius:8px; }
+
+/* Filtros */
+.mensu-controls{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px;
+  margin:6px auto 12px;
+}
+.mensu-controls label{ color:#8b949e; font-size:12px; }
+.mensu-controls select{
+  background:#21262d; border:1px solid #30363d; color:#c9d1d9;
+  border-radius:8px; padding:8px 10px; min-width:170px;
+}
+@media (max-width:480px){ .mensu-controls select{ min-width:150px; } }
+
+/* Usuarios – filtros centrados */
+.users-filters{
+  width:100%; display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; margin:.5rem 0 1rem;
+}
+.users-filters label{
+  color:#e6edf3; font-weight:600; display:flex; flex-direction:column; align-items:center; gap:.35rem; text-align:center; min-width:160px;
+}
+@media (min-width:768px){ .users-filters label{ flex-direction:row; text-align:left; } }
+.dark-select{ background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:8px; padding:6px 10px; outline:none; }
+.dark-select:focus{ border-color:#58a6ff; box-shadow:0 0 0 2px rgba(88,166,255,.15); }
+
+/* Perfil */
+.profile-card{ width:min(96vw,720px); margin:0 auto; overflow:visible; max-width:560px; }
+.profile-header{ display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:center; margin-bottom:8px; text-align:center; }
+.profile-header .avatar{
+  width:64px; height:64px; border-radius:50%; background:#21262d; border:1px solid #30363d; color:#c9d1d9;
+  display:grid; place-items:center; font-weight:800; font-size:1.1rem;
+}
+.ph-info h2{ margin:0 0 6px; } .ph-email{ color:#8b949e; font-size:.95rem; }
+.ph-badges{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.tag{ display:inline-block; padding:.2rem .6rem; border-radius:999px; font-size:.82rem; font-weight:600; border:1px solid transparent; }
+.tag.info{ background:#0d2b4d; color:#cfe9ff; border-color:#1f4b7b; }
+.tag.success{ background:#1f6f2a; color:#d4f1d8; border-color:#2c8a3a; }
+.tag.warn{ background:#5b3a06; color:#ffe1b2; border-color:#8a5b0b; }
+.tag.error{ background:#5a1f23; color:#ffd6da; border-color:#a23a42; }
+
+.profile-grid{ margin-top:8px; display:grid; grid-template-columns:1fr 2fr; gap:8px 14px; }
+.profile-grid .label{ color:#8b949e; }
+.profile-grid .value{ color:#c9d1d9; word-break:break-word; }
+.edit-form{ margin:8px 0 10px; background:#0f141a; border:1px solid #30363d; border-radius:10px; padding:10px; }
+.ef-grid{ display:grid; grid-template-columns:110px 1fr; gap:10px 10px; align-items:center; }
+.ef-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+.btn.small{ padding:6px 10px; font-size:.85rem; border-radius:8px; }
+.btn.outline{ background:transparent; color:#58a6ff; border:1px solid #58a6ff; }
+.btn.outline:hover{ background:rgba(88,166,255,.12); }
+@media (max-width:560px){
+  .profile-card{ width:min(96vw,96vw); }
+  .profile-header .avatar{ width:56px; height:56px; font-size:1rem; }
+  .profile-grid{ grid-template-columns:1fr; }
+  .ef-grid{ grid-template-columns:1fr; }
+}
+
+/* Reportes */
+.reporte-container{
+  margin-top:2rem; padding:1rem; background:var(--surface-800);
+  border:1px solid var(--surface-800); border-radius:6px;
+  box-shadow:0 1px 3px rgba(27,31,35,.12); color:#f3f3f3;
+}
+.asistencia-table{ width:100%; border-collapse:collapse; margin-top:1rem; }
+.asistencia-table th, .asistencia-table td{ border:1px solid var(--surface-800); padding:8px 12px; text-align:left; font-size:14px; }
+.asistencia-table th{ background:var(--surface-800); font-weight:600; }
+.asistencia-table td{ background:var(--surface-800); }
+.asistencia-table tr:hover{ background:var(--surface-800); }
+
+/* GIF central (placeholder) */
+.gif-panel{ display:flex; justify-content:center; align-items:center; min-height:calc(100vh - 100px); padding:2rem; text-align:center; }
+.gif-central{ max-width:400px; width:100%; height:auto; border-radius:1rem; box-shadow:0 0 12px rgba(255,255,255,.1); }
+
+/* Botón para códigos */
+.btn.code-btn{ background:var(--brand-green); color:#fff; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; font-size:.9rem; }
+.btn.code-btn:hover{ background:#2ea043; }
+
+/* Estados de membresía */
+.state-vencida{ color:#e53e3e; font-weight:bold; }
+.state-proxima{ color:#dd6b20; font-weight:bold; }
+.state-activo{ color:#2ea043; font-weight:bold; }
+
+/* Eventos / tienda (se mantienen) */
+.events-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:2rem auto; max-width:1200px; }
+.event-card{ background:#161b22; border-radius:12px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s; display:flex; flex-direction:column; }
+.event-card:hover{ transform:translateY(-4px); box-shadow:0 8px 16px rgba(0,0,0,.5); }
+.event-card img{ width:100%; height:180px; object-fit:cover; }
+.event-card .info{ padding:1rem; flex:1; }
+.event-card .info h3{ text-align:center; margin-bottom:.5rem; color:#58a6ff; }
+.event-card .info p{ margin:0; font-size:.9rem; color:#c9d1d9; }
+@media (max-width:767px){
+  .events-grid{ grid-template-columns:repeat(2,1fr); }
+  .event-card .info p{ display:none; }
+  .event-card img{ height:140px; }
+}
+
+.products-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:2rem auto; max-width:1200px; }
+@media (max-width:1024px){ .products-grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:768px){ .products-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:420px){ .products-grid{ grid-template-columns:1fr; } }
+.product-card{ background:#161b22; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; transition:transform .2s, box-shadow .2s; }
+.product-card:hover{ transform:translateY(-4px); box-shadow:0 8px 16px rgba(0,0,0,.5); }
+.product-thumb{ background:#0d1117; }
+.product-thumb img{ display:block; width:100%; height:100%; object-fit:cover; background:transparent; }
+.product-card .info{ padding:1rem; display:flex; flex-direction:column; gap:.5rem; }
+.product-card .info h3{ margin:0; text-align:center; color:#58a6ff; font-size:1.05rem; }
+.prod-meta{ display:flex; justify-content:space-between; align-items:center; color:#c9d1d9; font-size:.9rem; }
+.prod-meta .price{ font-weight:700; }
+.cart-fab{ position:fixed; right:16px; bottom:16px; background:var(--brand-green); color:#fff; border:none; padding:10px 14px; border-radius:999px; cursor:pointer; z-index:1100; box-shadow:0 6px 16px rgba(0,0,0,.4); }
+.cart-fab span{ font-weight:700; margin-left:6px; }
+.checkout-wrap{ max-width:1100px; margin:1rem auto 3rem; display:grid; grid-template-columns:1fr; gap:1rem; }
+@media (min-width:992px){ .checkout-wrap{ grid-template-columns:1.2fr .8fr; } }
 .checkout-card{ background:#161b22; border-radius:12px; padding:1rem; }
 .checkout-item{ display:flex; gap:.75rem; align-items:center; }
 .checkout-item img{ width:64px; height:64px; object-fit:cover; border-radius:8px; }
@@ -910,969 +415,1170 @@ main.container {
 .qty-ctrl button{ background:#21262d; color:#c9d1d9; border:1px solid #30363d; border-radius:6px; padding:.25rem .5rem; }
 .remove-btn{ background:#dc3545; color:#fff; border:none; border-radius:8px; padding:.35rem .6rem; }
 
+/* Misc */
+.hidden{ display:none !important; }
 
-/* ───────── Mensualidades: ajuste mobile first (SOLO para esta página) ───────── */
-.calendar-wrapper main.card{
-  width: min(96vw, 1100px);
-  margin: 0 auto;
+/* ─────────────────────────────────────────────
+   PATCH #1 (Fase de Corrección)
+   Pegar al FINAL de style.css
+   ───────────────────────────────────────────── */
+
+/* ===== Tokens de identidad (por si falta en el archivo) ===== */
+:root{
+  --bg-900:#0D1117; --surface-800:#161B22; --surface-700:#0F141A;
+  --text-100:#F5F5F5; --text-300:#B0B0B0;
+  --brand-green:#2ECC71; --brand-yellow:#FFD43B; --brand-red:#E63946;
+  --outline:#30363d;
 }
-.calendar-wrapper h1{
-  font-size: clamp(1.35rem, 5.6vw, 2.2rem);
+
+/* ===== 1) LOGIN: card centrada, labels apilados, ancho coherente ===== */
+body.login-page{ display:flex; min-height:100vh; }
+.login-page main, .login-page .container{ width:100%; margin:0 auto; padding:0; }
+.login-page .auth-card{ width:min(90vw,420px); margin:72px auto 24px; }
+.login-page #loginForm{ width:100%; max-width:360px; margin:0 auto; display:flex; flex-direction:column; gap:8px; }
+#tab-login #loginForm label{ display:block; margin:10px 0 6px; color:#B0B0B0; font-size:14px; }
+#tab-login #loginForm input[type="email"],
+#tab-login #loginForm input[type="password"]{
+  width:100%; display:block; box-sizing:border-box;
+  background:#21262d; border:1px solid #30363d; color:#F5F5F5; border-radius:8px; padding:10px 12px;
+}
+#tab-login #loginForm button[type="submit"]{ width:100%; max-width:360px; margin:10px auto 8px; }
+
+/* Tabs login: activo en amarillo de tu paleta */
+.auth-tabs{ border-bottom:1px solid var(--outline); }
+.auth-tab{ border:1px solid var(--outline); }
+.auth-tab.active{ background:#21262d; border-color:var(--brand-yellow); color:var(--brand-yellow); }
+
+/* ===== 2) ADMIN HOME: títulos/botones centrados + días bloqueados + modal ===== */
+main h1, .container > h1{ text-align:center; line-height:1.2; }
+.calendar-wrapper{ align-items:center; } /* asegura centrado del contenedor */
+
+ /* Bloqueo visual de días que no sean vie/vie */
+.fc-theme-standard .fc-daygrid-day.disabled-day,
+.fc .fc-daygrid-day.disabled-day{
+  background-color:#0b1117 !important;
+  filter:grayscale(.45) opacity(.75);
+  pointer-events:none;
+}
+.fc .disabled-day .fc-daygrid-day-top,
+.fc .disabled-day .fc-daygrid-day-events{ opacity:.55; }
+
+/* ===== 3–4) USUARIOS / MENSUALIDADES: heading centrado + switch restaurado + tabla mejorada ===== */
+.users-list h2, .users-list h1,
+#mensualidades h1, .page-mensualidades h1{
+  text-align:center;
+}
+
+/* Switch clásico (no confunde con el del role-switch) */
+.switch{ position:relative; display:inline-block; width:46px; height:26px; vertical-align:middle; }
+.switch input{ opacity:0; width:0; height:0; }
+.switch .slider{
+  position:absolute; inset:0;
+  background:#2f3947; border:1px solid #3a4657;
+  border-radius:999px; transition:all .25s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.switch .slider:before{
+  content:""; position:absolute; width:20px; height:20px; left:3px; top:50%;
+  transform:translateY(-50%); background:#F5F5F5; border-radius:50%; transition:all .25s ease;
+}
+.switch input:checked + .slider{ background:#14532d; border-color:#166534; }
+.switch input:checked + .slider:before{ transform:translate(20px,-50%); background:#bbf7d0; }
+
+/* Tablas (ambas vistas): look consistente oscuro */
+.table, .asistencia-table, #usuarios-table, #mensualidades-table{
+  width:100%; border-collapse:collapse; background:var(--surface-800);
+  border-radius:12px; overflow:hidden;
+}
+.table th, .table td,
+.asistencia-table th, .asistencia-table td,
+#usuarios-table th, #usuarios-table td,
+#mensualidades-table th, #mensualidades-table td{
+  padding:10px 12px; font-size:14px; color:var(--text-100);
+  border-bottom:1px solid #262b33;
+}
+.table thead th,
+.asistencia-table thead th,
+#usuarios-table thead th,
+#mensualidades-table thead th{
+  background:#0f1720; font-weight:700;
+}
+@media (max-width:480px){
+  .table th, .table td,
+  #usuarios-table th, #usuarios-table td,
+  #mensualidades-table th, #mensualidades-table td{ padding:8px 10px; font-size:13px; }
+}
+
+/* ===== 5) ROLES: filtros/controles más claros ===== */
+.users-filters, .mensu-controls{
+  justify-content:center; gap:.6rem; margin:.5rem auto 1rem;
+}
+.users-filters label, .mensu-controls label{ color:#B0B0B0; font-weight:600; }
+.users-filters select, .mensu-controls select{
+  background:#21262d; color:#F5F5F5; border:1px solid #30363d;
+  border-radius:8px; padding:.45rem .6rem; min-width:170px;
+}
+
+/* ===== 6) NAVBAR: mejor tacto en móvil + backdrop ===== */
+.sidebar{
+  background:var(--surface-800);
+  width:min(280px, 85vw);
+  padding-top:64px;
+  box-shadow:-4px 0 20px rgba(0,0,0,.5);
+}
+.sidebar ul{ padding:0 10px; }
+.sidebar ul li{ margin-bottom:.5rem; }
+.sidebar a{
+  padding:14px 14px;
+  font-size:1rem;
+  border-radius:10px;
+  transition:background-color .2s ease, transform .05s ease;
+}
+.sidebar a:hover{ background:rgba(255,255,255,.06); }
+.sidebar a:active{ transform:scale(.98); }
+
+/* Backdrop (si existe en DOM) */
+.sidebar-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.35);
+  z-index:999; display:none;
+}
+.sidebar-backdrop.active{ display:block; }
+
+/* Hamburguesa nítida y táctil */
+.hamburger-btn{
+  width:42px; height:42px; line-height:1; padding:0;
+  border-radius:10px; border:1px solid #334155;
+  background:#0f172a; color:#F5F5F5; font-size:20px;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+
+/* ===== Calendario: sin espacio muerto inferior + títulos legibles ===== */
+#calendarStudent, #calendarProf{
+  width:100%; height:auto !important; min-height:0 !important; padding:10px; box-sizing:border-box;
+  background:var(--surface-700); border:1px solid #22303d; border-radius:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+.fc .fc-toolbar-title{ font-weight:700; font-size:clamp(1.05rem,2.6vw,1.25rem); }
+.fc-theme-standard td, .fc-theme-standard th{ border-color:#2b3138; }
+/* "Píldoras" para conteos del staff */
+.fc .fc-daygrid-event{ background:#2b5fd6; border:0; color:#fff; font-weight:700; border-radius:8px; padding:2px 4px; }
+
+/* ===== Ajustes visuales menores ===== */
+.logo-text, footer a{ color:#F5F5F5; }
+
+/* =======================
+   Sidebar: acción especial
+   ======================= */
+
+/* Espaciado del listado (evita usar <br>) */
+.sidebar ul{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;                /* separa todos los ítems */
+  padding: 12px 16px;       /* respira un poco */
+}
+.sidebar ul li{ margin: 0; } /* anula el margin-bottom grande previo */
+
+/* Botón “Forzar actualización” más compacto y agradable */
+.sidebar #btnInstall{
+  display: block;
+  width: 100%;
+  margin: 4px 0 10px;       /* aire antes de “Cerrar sesión” */
+  padding: 7px 10px;        /* menos alto */
+  font-size: .95rem;        /* más pequeño */
+  line-height: 1.2;
+  border-radius: 10px;
+  background: var(--brand-green);                 /* #2ECC71 */
+  color: #000000;                                  /* contraste */
+  border: 1px solid rgba(46,204,113,.35);
+  box-shadow: 0 1px 2px rgba(0,0,0,.25),
+              inset 0 -1px 0 rgba(255,255,255,.06);
+}
+.sidebar #btnInstall:hover{ background:#27ae60; }
+
+/* Un pelín más chico en móviles muy estrechos */
+@media (max-width: 420px){
+  .sidebar #btnInstall{ font-size: .9rem; padding: 6px 10px; }
+}
+
+/* ==============================
+   TABLAS PRO (oscuro, sticky, zebra)
+   Aplica directo a tus IDs actuales
+   ============================== */
+
+.table-wrap{
+  background: var(--surface-800);
+  border: 1px solid #22303d;
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;                /* redondeo perfecto en bordes */
+  margin: 10px 0 18px;
+}
+
+.table-wrap .table-toolbar{
+  display: flex; gap: 10px; flex-wrap: wrap;
+  align-items: center; justify-content: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #22303d;
+}
+
+#usuarios-table, #mensualidades-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  min-width: 720px;              /* evita aplastar columnas */
+  font-size: 14px;
+}
+
+#usuarios-table thead th,
+#mensualidades-table thead th{
+  position: sticky; top: 0;
+  background: #11161d;           /* header más oscuro */
+  color: #F5F5F5;
+  z-index: 1;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #22303d;
+}
+
+#usuarios-table tbody td,
+#mensualidades-table tbody td{
+  padding: 10px 12px;
+  color: var(--text-100);
+  border-bottom: 1px solid #1f2630;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#usuarios-table tbody tr:nth-child(odd),
+#mensualidades-table tbody tr:nth-child(odd){
+  background: rgba(255,255,255,.02);
+}
+#usuarios-table tbody tr:hover,
+#mensualidades-table tbody tr:hover{
+  background: rgba(255,255,255,.05);
+}
+
+/* Checkboxes nítidos */
+.table-wrap input[type="checkbox"]{
+  width: 16px; height: 16px; cursor: pointer;
+  accent-color: var(--brand-green);
+}
+
+/* Switch compacto dentro de celdas (reusa tu .switch) */
+#usuarios-table .switch,
+#mensualidades-table .switch{
+  transform: scale(.88);
+  transform-origin: left center;
+}
+
+/* Buscador “pill” y selects oscuros (barrita de filtros) */
+.table-wrap .searchbar{
+  display: flex; align-items: center; gap: 8px;
+  background: #0f141a; border: 1px solid #22303d;
+  border-radius: 999px; padding: 8px 12px; min-width: 260px;
+  color: var(--text-100);
+}
+.table-wrap .searchbar input{
+  background: transparent; border: 0; outline: none;
+  color: var(--text-100); width: 100%;
+}
+.table-wrap .searchbar i{ opacity:.7; }
+
+.table-wrap .dark-select,
+.table-wrap select{
+  background: #21262d; color: #c9d1d9;
+  border: 1px solid #30363d; border-radius: 10px;
+  padding: 8px 10px; min-width: 160px;
+}
+.table-wrap .dark-select:focus,
+.table-wrap select:focus{
+  border-color: var(--brand-yellow);
+  box-shadow: 0 0 0 2px rgba(255,212,59,.18);
+}
+
+/* Títulos centrados sin tocar HTML */
+main.container > h1:first-of-type{
   text-align: center;
+  margin: 6px auto 12px;
 }
-.calendar-wrapper .logo-img{
-  width: clamp(64px, 16vw, 110px);
-  height: clamp(64px, 16vw, 110px);
+/* Barra de filtros centrada y consistente */
+.users-filters, .mensu-controls, .table-filters, .roles-filters{
+  width: 100%;
+  display:flex; flex-wrap: wrap;
+  align-items:center; justify-content:center;
+  gap: 10px; margin: 8px auto 12px;
+}
+.users-filters label, .roles-filters label{
+  color: #e6edf3; font-weight: 600;
+}
+.filter-chip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding: 6px 10px; border-radius: 999px;
+  background:#0f141a; border:1px solid #22303d; color:#c9d1d9;
 }
 
-/* Fallback de desplazamiento horizontal (desktop/tablet) */
-.table-container{
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+/* ======== ROLES: filtros y tarjetas ======== */
+
+/* Filtro principal (selector de rol + buscador) */
+.roles-filters{
+  gap: 10px; justify-content: center;
+}
+.roles-filters .role-select{
+  background:#21262d; color:#c9d1d9;
+  border:1px solid #30363d; border-radius:10px;
+  padding:8px 10px; min-width: 180px;
+}
+.roles-filters .role-select:focus{
+  border-color: var(--brand-yellow);
+  box-shadow: 0 0 0 2px rgba(255,212,59,.18);
+}
+.roles-filters .searchbar{ min-width: 260px; }
+
+/* Grid de tarjetas de usuarios por rol */
+.roles-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px; margin: 10px 0 18px;
+}
+.role-card{
+  background: var(--surface-800);
+  border: 1px solid #22303d;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
+  display: grid; gap: 6px;
+}
+.role-card .rc-head{
+  display:flex; align-items:center; justify-content:space-between;
+}
+.role-card .rc-name{
+  color:#F5F5F5; font-weight:700;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.role-card .rc-role{
+  font-size:.82rem; padding:.15rem .5rem; border-radius:999px;
+  border:1px solid #30363d; color:#B0B0B0;
+}
+.role-card .rc-meta{ color:#B0B0B0; font-size:.9rem; }
+.role-card .rc-actions{
+  display:flex; gap:8px; justify-content:flex-end; margin-top: 6px;
+}
+.role-card .btn{ padding:6px 10px; border-radius:10px; font-size:.9rem; }
+.role-card .btn.promote{ background:#0f2f52; color:#ddecff; border:1px solid #264b73; }
+.role-card .btn.demote{  background:#3d0f12; color:#ffdfe2; border:1px solid #6b2a2f; }
+.role-card .btn.promote:hover{ filter:brightness(1.05); }
+.role-card .btn.demote:hover{  filter:brightness(1.05); }
+
+/* Días deshabilitados: más obvio y sin clic */
+.fc .fc-daygrid-day.disabled-day{
+  position: relative;
+  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.35));
+  filter: grayscale(.55) opacity(.85);
+  pointer-events: none;
+}
+.fc .fc-daygrid-day.disabled-day .fc-daygrid-day-number{
+  color: #7d8590 !important;
 }
 
-/* Ajustes generales de la tabla */
-#mensualidades-table{
-  width: 100%;
+/* ────────────────────
+   Search bar (reutilizable)
+   ──────────────────── */
+.search-bar{
+  display:flex; align-items:center; gap:10px;
+  max-width:520px; margin:8px 0 6px;
+  padding:8px 12px; border-radius:12px;
+  background:#0f131a; border:1px solid #2b2f38;
 }
-#mensualidades-table th,
-#mensualidades-table td{
-  white-space: normal;
-  word-break: break-word;
+.search-bar i{ opacity:.75; }
+.search-bar input{ all:unset; width:100%; color:#e6e8eb; }
+.search-bar .btn-ghost{
+  border:none; background:transparent; cursor:pointer;
+  padding:4px 6px; border-radius:8px;
+}
+.search-bar .btn-ghost:hover{ background:#1a2030; }
+
+/* ────────────────────
+   USUARIOS: tabla compacta
+   ──────────────────── */
+#usuarios-table{
+  table-layout: fixed;        /* estable */
+  min-width: 700px;
+}
+#usuarios-table thead th,
+#usuarios-table tbody td{
+  padding: 8px 10px;
   vertical-align: middle;
 }
 
-/* ── MODO TARJETA en móviles: convierte la tabla en bloques legibles ── */
+/* Col 3 = Acciones | Col 4 = Código | Col 5 = Generar */
+#usuarios-table th:nth-child(3),
+#usuarios-table td:nth-child(3){ width: 70px; text-align:center; }
+#usuarios-table th:nth-child(4),
+#usuarios-table td:nth-child(4){
+  width: 55px; text-align:center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+#usuarios-table th:nth-child(5),
+#usuarios-table td:nth-child(5){ width: 60px; text-align:center; }
 
-  /* Etiquetas por columna */
-  #mensualidades-table td:nth-child(1)::before{ content:"Nombre"; }
-  #mensualidades-table td:nth-child(2)::before{ content:"Correo"; }
-  #mensualidades-table td:nth-child(3)::before{ content:"Autorizado"; }
-  #mensualidades-table td:nth-child(4)::before{ content:"Expira"; }
-  #mensualidades-table td:nth-child(5)::before{ content:"Estado"; }
-  #mensualidades-table td:nth-child(6)::before{ content:"Mes a pagar"; }
-  #mensualidades-table td:nth-child(7)::before{ content:"Acción"; }
-
-  /* inputs y botones a ancho completo dentro de la tarjeta */
-  #mensualidades-table input[type="month"]{
-    width:100%;
-    max-width:none;
-    background:#21262d;
-    border:1px solid #30363d;
-    color:#c9d1d9;
-    border-radius:6px;
-    padding:6px 8px;
-  }
-  #mensualidades-table .btn{
-    width:100%;
-  }
-
-  /* switch más compacto en móvil */
-  #mensualidades-table .switch{ width:46px; height:26px; }
-  #mensualidades-table .slider:before{ width:20px; height:20px; }
-
-/* ==== Tablas de administración 100% usables en móviles ==== */
-
-/* Contenedor con scroll horizontal (iOS-friendly) */
-.table-container{
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin-top: .75rem;
-  border-radius: 12px;
+/* Botones/controles compactos en esas columnas */
+#usuarios-table td:nth-child(3) .btn,
+#usuarios-table td:nth-child(5) .btn,
+#usuarios-table td:nth-child(3) button,
+#usuarios-table td:nth-child(5) button{
+  padding: 6px 10px;
+  font-size: .9rem;
+  border-radius: 10px;
+  line-height: 1;
 }
 
-/* Barra de scroll más discreta (opcional) */
-.table-container::-webkit-scrollbar{ height: 8px; }
-.table-container::-webkit-scrollbar-thumb{
-  background: #ffffff; border-radius: 8px;
+/* Si usas interruptor/switch en Acciones (cuando vuelva) */
+#usuarios-table td:nth-child(3) .switch{
+  width: 46px; height: 26px;
+  transform: scale(.95);
+  transform-origin: center;
 }
 
-/* Mensualidades: 7 columnas → pedimos un ancho mínimo cómodo */
+/* ────────────────────
+   MENSUALIDADES: que el <input type="month"> no se recorte
+   ──────────────────── */
 #mensualidades-table{
-  width: 100%;
-  border-collapse: collapse;
   table-layout: fixed;
-  min-width: 920px; /* evita que se “aplasten” columnas; el resto se ve con scroll */
+  min-width: 920px;
 }
-
-/* Usuarios: 4 columnas → un poco menos */
-#usuarios-table{
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 700px;
-}
-
-/* Celdas y cabeceras: tipografía/paddings fluidos */
-#mensualidades-table th, #mensualidades-table td,
-#usuarios-table th,      #usuarios-table td{
-  padding: clamp(6px, 1.6vw, 10px);
-  font-size: clamp(12px, 2.7vw, 14px);
-  white-space: nowrap;      /* evita cortes feos; el usuario hace scroll horizontal */
-  text-overflow: ellipsis;
-  overflow: hidden;
-  border-bottom: 1px solid #262b33;
-}
-
-/* Cabeceras fijas dentro del contenedor (mejora lectura en scroll horizontal) */
 #mensualidades-table thead th,
-#usuarios-table thead th{
-  position: sticky;
-  top: 0;
-  background: #161b22;
-  z-index: 1;
-}
-
-/* Inputs/controles dentro de celdas: compactos en móvil */
-#mensualidades-table input[type="month"]{
-  background:#21262d; border:1px solid #37679e; color:#c9d1d9;
-  border-radius:6px; padding:6px 8px; width: 130px;
-}
-@media (max-width: 480px){
-  #mensualidades-table input[type="month"]{ width: 115px; }
-}
-
-/* Botones dentro de celdas */
-#mensualidades-table .btn, #usuarios-table .btn{
-  padding: 6px 10px; font-size: 12px; border-radius: 8px;
-}
-
-/* Switch compacto en tablas (reutiliza tu .switch) */
-#mensualidades-table .switch, #usuarios-table .switch{
-  transform: scale(.85);
-  transform-origin: left center;
-}
-
-/* Título, logo y tarjeta contenedora: escala mejor en móvil */
-.calendar-wrapper .card h1{
-  font-size: clamp(1.4rem, 5.5vw, 2.2rem);
-  margin: .25rem 0 1rem;
-}
-.logo-img{ width: clamp(70px, 22vw, 110px); height: clamp(70px, 22vw, 110px); }
-
-/* La tarjeta que envuelve la tabla no debe forzar ancho en móvil */
-.calendar-wrapper .card{
-  width: 100%;
-  max-width: 1100px;
-  box-sizing: border-box;
-}
-
-/* ───────────────── Mensualidades: barra de orden ───────────────── */
-#mensualidades .subs-controls{
-  display:flex; 
-  align-items:center; 
-  gap:.5rem;
-  margin: .25rem 0 .5rem;
-}
-#mensualidades .subs-controls label{ color:#eeeeee; }
-#mensualidades .subs-controls select{
-  background:#21262d; border:1px solid #30363d; color:#c9d1d9;
-  border-radius:8px; padding:.4rem .6rem;
-}
-
-/* El contenedor-card principal */
-#mensualidades.card{ width:min(96vw,1100px); margin:auto; }
-
-/* Tabla normal en desktop; tarjetas elegantes en móvil */
-@media (max-width: 768px){
-  #mensualidades-table thead{ display:none; }
-  #mensualidades-table, #mensualidades-table tbody,
-  #mensualidades-table tr, #mensualidades-table td{
-    display:block; width:100%;
-  }
-
-  /* Tarjeta */
-  #mensualidades-table tr{
-    margin-bottom: 14px;
-    background:#161b22;
-    border:1px solid #30363d;
-    border-radius:14px;
-    padding:12px 12px 10px;
-    box-shadow: 0 4px 14px rgba(0,0,0,.25);
-  }
-
-  /* Celdas en dos columnas: etiqueta + valor/control */
-  #mensualidades-table td{
-    border:0;
-    padding:8px 0;
-    display:grid;
-    grid-template-columns: 44% 56%;
-    align-items:center;
-    gap:10px;
-  }
-  #mensualidades-table td::before{
-    color:#8b949e;
-    font-weight:600;
-    content: attr(data-label);
-  }
-
-  /* Etiquetas automáticamente por orden de columna */
-  #mensualidades-table td:nth-child(1){ --label:"Nombre"; }
-  #mensualidades-table td:nth-child(2){ --label:"Correo"; }
-  #mensualidades-table td:nth-child(3){ --label:"Autorizado"; }
-  #mensualidades-table td:nth-child(4){ --label:"Expira"; }
-  #mensualidades-table td:nth-child(5){ --label:"Estado"; }
-  #mensualidades-table td:nth-child(6){ --label:"Mes a pagar"; }
-  #mensualidades-table td:nth-child(7){ --label:"Acción"; }
-
-  /* Truco: inyectamos la etiqueta en data-label si no la has puesto en JS */
-  #mensualidades-table td:not([data-label])::before{
-    content: var(--label);
-  }
-
-  /* Controles compactos */
-  #mensualidades-table input[type="month"],
-  #mensualidades-table select{
-    width:100%;
-    background:#21262d; border:1px solid #30363d; color:#c9d1d9;
-    border-radius:8px; padding:.45rem .6rem;
-  }
-  #mensualidades-table .switch{ width:50px; height:28px; }
-  #mensualidades-table .slider:before{ width:22px; height:22px; }
-
-  /* Celda de Acción: botón corto y a la derecha */
-  #mensualidades-table td:last-child{
-    display:flex; justify-content:flex-end; align-items:center;
-  }
-  #mensualidades-table td:last-child .btn{
-    padding:.5rem .9rem;
-    border-radius:10px;
-    width:auto;              /* deja de ocupar todo el ancho */
-    min-width: 120px;
-  }
-}
-
-/* Desktop: un poco más compacto y con scroll horizontal si hace falta */
-.table-container{
-  width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;
-  border-radius:12px; margin-top:.5rem;
-}
-.table-container::-webkit-scrollbar{ height:8px; }
-.table-container::-webkit-scrollbar-thumb{ background:#30363d; border-radius:8px; }
-
-/* Título y logo un poquito más fluidos */
-#mensualidades .logo-img{
-  width: clamp(70px, 18vw, 110px); height: clamp(70px, 18vw, 110px);
-}
-#mensualidades h1{
-  font-size: clamp(1.4rem, 5.5vw, 2.2rem);
-  text-align:center; margin:.25rem 0 .5rem;
-}
-
-/* ====== Bootstrap modal “bonito” (look de tu captura) ====== */
-.appmodal { border: none; border-radius: 1rem; }
-.appmodal .modal-header { border-bottom: none; color:#fff; border-radius: 1rem 1rem 0 0; }
-.appmodal .btn-close { filter: brightness(0) invert(1); opacity:.8; }
-.appmodal .btn-close:hover { opacity:1; }
-.appmodal .modal-body { background:#fff; color:#495057; }
-.appmodal .modal-footer { border-top: none; background:#fff; }
-
-.gradient-danger{ background: linear-gradient(90deg,#ff6b6b,#ff8787); }
-.gradient-success{ background: linear-gradient(90deg,#22c55e,#4ade80); }
-.gradient-info{ background: linear-gradient(90deg,#3b82f6,#60a5fa); }
-.gradient-warning{ background: linear-gradient(90deg,#f59e0b,#fbbf24); }
-
-.appmodal .btn { padding:.6rem 1.5rem; border-radius:.5rem; font-weight:500; }
-
-/* ====== Página de Mensualidades: texto claro y controles dark ====== */
-.page-mensualidades .card,
-.page-mensualidades table,
-.page-mensualidades label,
-.page-mensualidades h1,
-.page-mensualidades th,
-.page-mensualidades td {
-  color: #e6edf3 !important;   /* blanco GitHub */
-}
-
-.page-mensualidades input,
-.page-mensualidades select,
-.page-mensualidades button.btn,
-.page-mensualidades .form-select {
-  background: #21262d;
-  border: 1px solid #30363d;
-  color: #e6edf3;
-}
-
-.page-mensualidades .form-select:focus,
-.page-mensualidades input:focus {
-  outline: none;
-  box-shadow: 0 0 0 .2rem rgba(35,134,54,.25);
-  border-color: #238636;
-}
-
-/* Botón Guardar de ancho contenido en móvil */
-@media (max-width: 768px){
-  #mensualidades-table .btnPay.btn{
-    width: 100%;
-    max-width: 360px;
-  }
-}
-
-/* Filtros arriba (si los usas) */
-#mensaFilterBar .form-select {
-  min-width: 150px;
-}
-
-/* ======= Filtros (Usuarios) centrados bajo el título ======= */
-.users-filters{
-  width: 100%;
-  display: flex;
-  justify-content: center;     /* <— centra horizontalmente */
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin: .5rem 0 1rem;
-}
-
-.users-filters label{
-  color: #e6edf3;
-  font-weight: 600;
-  display: flex;
-  flex-direction: column;      /* en móviles: etiqueta arriba, select abajo */
-  align-items: center;
-  gap: .35rem;
-  text-align: center;
-  min-width: 160px;
-}
-
-@media (min-width: 768px){
-  .users-filters label{
-    flex-direction: row;       /* en desktop: etiqueta y select en una fila */
-    text-align: left;
-  }
-}
-
-/* Select oscuro que ya veníamos usando */
-.dark-select{
-  background: #21262d;
-  color: #c9d1d9;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  padding: 6px 10px;
-  outline: none;
-}
-.dark-select:focus{
-  border-color: #58a6ff;
-  box-shadow: 0 0 0 2px rgba(88,166,255,.15);
-}
-
-/* === Login con pestañas (no afecta otras vistas) =================== */
-.auth-card{
-  /* tu .card ya define fondo, bordes y sombra; aquí solo anchura */
-  max-width: 520px;       /* como tu login original */
-  margin: 0 auto;         /* centrado */
-  width: 100%;
-}
-
-.auth-tabs{
-  display: flex;
-  gap: .5rem;
-  border-bottom: 1px solid #30363d;
-  margin: -4px -4px 12px -4px; /* cuadra visual con padding interno de .card */
-  padding: 0 4px 8px 4px;
-}
-
-.auth-tab{
-  background: transparent;
-  border: 1px solid #30363d;
-  color: #c9d1d9;
-  padding: .45rem .9rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-.auth-tab.active{
-  background: #21262d;
-  border-color: #58a6ff;
-  color: #58a6ff;
-}
-
-.auth-panel{ display: none; }
-.auth-panel.active{ display: block; }
-
-/* el formulario mantiene tu look original */
-.auth-panel form h2{
-  margin-top: 0;
-  margin-bottom: .75rem;
-}
-.auth-panel form button[type="submit"]{
-  width: 100%;
-}
-
-/* ====== Tarjetas de precios, compactas y elegantes ====== */
-.pricing-grid{
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: .75rem;
-}
-
-.price-card{
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 12px;
-  overflow: hidden;
-}
-.price-head{
-  padding: .75rem 1rem;
-  text-align: center;
-  color: #fff;
-}
-.head-blue { background: linear-gradient(90deg,#2563eb,#3b82f6); }
-.head-green{ background: linear-gradient(90deg,#15803d,#22c55e); }
-
-.price-title{ margin: 0; font-weight: 700; }
-
-.price-body{ padding: .9rem 1rem; }
-.price-amount{
-  text-align: center;
-  font-size: 1.6rem;
-  font-weight: 800;
-  margin-bottom: .25rem;
-}
-.price-amount small{ font-size: .9rem; color: #8b949e; }
-
-.price-list{
-  list-style: none; padding: 0; margin: .5rem 0 1rem;
-  color: #c9d1d9; line-height: 1.35;
-}
-.price-list .muted{ color:#8b949e; }
-
-.price-cta{ text-align:center; }
-.pill{
-  display:inline-block; padding:.25rem .6rem; border-radius:999px;
-  font-size:.8rem; border:1px solid #30363d; color:#8b949e;
-}
-.pill.success{ border-color:#2ea043; color:#2ea043; }
-
-/* en pantallas anchas (pero sigue dentro de la card) */
-@media (min-width: 720px){
-  .pricing-grid{ grid-template-columns: 1fr 1fr; }
-}
-
-/* ====== LOGIN (pestaña "Ingreso") – Overrides seguros ====== */
-#tab-login .card {
-  max-width: 640px;                  /* evita que se estire en pantallas grandes */
-  margin: 0 auto;
-}
-
-/* Contenedor interior para centrar el formulario */
-#tab-login #loginForm {
-  width: 100%;
-  max-width: 520px;                  /* ancho cómodo del formulario */
-  margin: 0 auto;
-}
-
-/* Apilar etiquetas y campos (nada en línea) */
-#tab-login #loginForm label {
-  display: block;
-  margin: 10px 0 6px;
-  color: #8b949e;                    /* igual que el resto del sitio */
-  font-size: 14px;
-}
-
-#tab-login #loginForm input[type="email"],
-#tab-login #loginForm input[type="password"] {
-  width: 100%;
-  display: block;
-  background-color: #21262d;
-  border: 1px solid #30363d;
-  color: #c9d1d9;
-  border-radius: 6px;
-  padding: 10px 12px;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-/* Botón: centrado, altura cómoda y sin ocupar TODO el ancho en desktop */
-#tab-login #loginForm button[type="submit"] {
-  display: block;
-  width: 100%;
-  max-width: 360px;                  /* reduce el ancho del botón en desktop */
-  margin: 10px auto 8px;             /* centrado */
-  padding: 10px 16px;                /* altura justa */
-  background-color: #238636;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  color: #fff;
-  cursor: pointer;
-}
-#tab-login #loginForm button[type="submit"]:hover {
-  background-color: #2ea043;
-}
-
-/* Pie del formulario */
-#tab-login #loginForm p {
-  text-align: center;
-  margin-top: 8px;
-  font-size: 14px;
-}
-
-/* Responsive: en móviles el botón vuelve a 100% y todo ocupa bien */
-@media (max-width: 480px) {
-  #tab-login #loginForm { max-width: 100%; }
-  #tab-login #loginForm button[type="submit"] { max-width: 100%; }
-}
-
-/* ===== Perfil ===== */
-.profile-card{
-  width: min(96vw, 720px);
-  margin: 0 auto;
-  overflow: hidden;
-}
-
-.profile-header{
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.profile-header .avatar{
-  width: 64px; height: 64px; border-radius: 50%;
-  background:#21262d; border:1px solid #30363d; color:#c9d1d9;
-  display:grid; place-items:center; font-weight:800; font-size:1.1rem;
-}
-
-.ph-info h2{ margin: 0 0 6px; }
-.ph-email{ color:#8b949e; font-size:.95rem; }
-.ph-badges{ display:flex; gap:8px; flex-wrap:wrap; }
-.ph-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-
-/* Chips estado/plan (verde/amarillo/rojo) */
-.tag{
-  display:inline-block; padding:.2rem .6rem; border-radius:999px;
-  font-size:.82rem; font-weight:600; border:1px solid transparent;
-}
-.tag.info{    background:#0d2b4d; color:#cfe9ff; border-color:#1f4b7b; }
-.tag.success{ background:#1f6f2a; color:#d4f1d8; border-color:#2c8a3a; } /* Activa (verde) */
-.tag.warn{    background:#5b3a06; color:#ffe1b2; border-color:#8a5b0b; } /* Por Vencer (amarillo) */
-.tag.error{   background:#5a1f23; color:#ffd6da; border-color:#a23a42; } /* Vencida (rojo) */
-
-/* Grid de datos */
-.profile-grid{
-  margin-top: 8px;
-  display:grid; grid-template-columns: 1fr 2fr; gap:8px 14px;
-}
-.profile-grid .label{ color:#8b949e; }
-.profile-grid .value{ color:#c9d1d9; word-break:break-word; }
-
-/* Form edición */
-.edit-form{ margin: 8px 0 10px; background:#0f141a; border:1px solid #30363d; border-radius:10px; padding:10px; }
-.ef-grid{ display:grid; grid-template-columns: 110px 1fr; gap:10px 10px; align-items:center; }
-.ef-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
-
-.btn.small{ padding:6px 10px; font-size:.85rem; border-radius:8px; }
-.btn.outline{ background:transparent; color:#58a6ff; border:1px solid #58a6ff; }
-.btn.outline:hover{ background:rgba(88,166,255,.12); }
-
-/* Mejoras móviles */
-@media (max-width: 560px){
-  .profile-card{ width: min(96vw, 96vw); }
-  .profile-header .avatar{ width:56px; height:56px; font-size:1rem; }
-  .profile-grid{ grid-template-columns: 1fr; }
-  .ef-grid{ grid-template-columns: 1fr; }
-}
-
-
-/* ============================================================
-   FIX: Mensualidades SIEMPRE en formato tabla (también móvil)
-   - Mantiene encabezados
-   - Desactiva el modo "tarjeta" previo en @media max-width:768px
-   - Habilita scroll horizontal elegante en pantallas pequeñas
-   ============================================================ */
-
-/* Contenedor con scroll horizontal (no cambia tu marca) */
-.table-container{
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin-top: .75rem;
-  border-radius: 12px;
-}
-
-/* Mantén la tabla con ancho mínimo para que no se aplaste */
-#mensualidades-table{
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 920px;          /* <- ajusta si quieres más compacto */
-}
-
-/* Cabeceras pegajosas al hacer scroll horizontal/vertical */
-#mensualidades-table thead th{
-  position: sticky;
-  top: 0;
-  background: #161b22;
-  z-index: 1;
-}
-
-/* Tipografía y separación coherente */
-#mensualidades-table th,
-#mensualidades-table td{
+#mensualidades-table tbody td{
   padding: 8px 10px;
-  font-size: 14px;
-  color: #fdfeff;           /* Fuerza texto claro en la tabla */
-  border-bottom: 1px solid #262b33;
-  white-space: nowrap;       /* Evita cortes feos; usarás scroll horizontal */
-  text-overflow: ellipsis;
-  overflow: hidden;
+  vertical-align: middle;
 }
 
-/* Botones y controles más compactos dentro de la tabla */
-#mensualidades-table .btn{
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 8px;
-  width: auto;               /* <- evita "botón a 100%" */
-}
-#mensualidades-table input[type="month"]{
-  background:#21262d;
-  border:1px solid #30363d;
-  color:#fafdff;
-  border-radius:6px;
-  padding:6px 8px;
-  width: 130px;
+/* Col 4 = Expira | Col 5 = Estado | Col 6 = Mes a pagar | Col 7 = Acción */
+#mensualidades-table th:nth-child(3),
+#mensualidades-table td:nth-child(3){
+  width:60px;                 
+  overflow: visible;
+  text-align: center;
 }
 
-/* Switch ligeramente reducido para celdas estrechas */
-#mensualidades-table .switch{
-  transform: scale(.9);
-  transform-origin: left center;
-}
-
-/* ---------- OVERRIDE clave: anula el "modo tarjeta" móvil ---------- */
-@media (max-width: 768px){
-  /* Asegura estructura de TABLA, no bloques */
-  #mensualidades-table thead{ display: table-header-group !important; }
-  #mensualidades-table tbody{ display: table-row-group !important; }
-  #mensualidades-table tr   { display: table-row !important; }
-  #mensualidades-table td,
-  #mensualidades-table th   { display: table-cell !important; width: auto !important; }
-
-  /* Elimina etiquetas generadas por ::before en el modo tarjeta */
-  #mensualidades-table td::before{ content: none !important; }
-
-  /* Mantén el scroll horizontal en móviles */
-  .table-container{ overflow-x: auto !important; }
-}
-
-/* ─── Mensualidades: barra de filtros fija ───────────────────────────── */
-.mensu-controls{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  margin: 6px auto 12px;
-}
-.mensu-controls label{
-  color:#8b949e;
-  font-size:12px;
-}
-.mensu-controls select{
-  background:#21262d;
-  border:1px solid #30363d;
-  color:#c9d1d9;
-  border-radius:8px;
-  padding:8px 10px;
-  min-width: 170px;
-}
-@media (max-width:480px){
-  .mensu-controls{ gap:8px; }
-  .mensu-controls select{ min-width: 150px; }
-}
-
-/* ─── Notificaciones (campana junto al botón de escaneo) ─── */
-.notify-bell{
-  display:inline-flex;
-  align-items:center;
-  gap:.15rem;
-  position: static;         /* queda dentro del contenedor del botón de escaneo */
-  margin-right: .5rem;      /* separada del botón QR */
-}
-.notify-bell .badge{
-  display:inline-flex;
-  min-width: 10px;
-  height: 20px;
-  padding: 0 6px;
-  align-items:center;
-  justify-content:center;
-  border-radius: 999px;
-  background: #a83030;      /* rojo GitHub */
-  color:#fff;
-  font-size:12px;
-  font-weight:700;
-}
-
-/* ===== PERFIL: centrado real y dropdown contenido ===== */
-
-/* 1) Evita cualquier desbordamiento horizontal global */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
-
-/* 2) El contenedor principal no debe fijar un ancho raro.
-      Forzamos que el <main class="container profile-container"> se centre. */
-.container.profile-container {
-  width: 100% !important;           /* ignora el width inline que tenía */
-  max-width: 960px;                  /* mismo límite que métricas */
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 12px;
-  padding-right: 12px;
-  box-sizing: border-box;
-}
-
-/* 3) La card ocupa todo el ancho disponible del contenedor,
-      y luego limitamos su máximo para móviles. */
-.profile-card {
-  width: 100%;
-  max-width: 600px;                  /* ancho cómodo en móviles */
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-  padding-left: 16px;                /* respirito interno */
-  padding-right: 16px;
-}
-
-/* 4) Asegura que nada “corte” el menú del <select> ni provoque scroll lateral */
-.profile-card,
-.profile-grid,
-.edit-form {
+#mensualidades-table th:nth-child(4),
+#mensualidades-table td:nth-child(4){
+  width:70px;                 
   overflow: visible;
 }
 
-/* 5) Campos del formulario: que nunca excedan el ancho y el dropdown
-      se alinee con el input (sin salirse visualmente) */
-.edit-form .ef-grid select,
-.edit-form .ef-grid input[type="text"],
-.edit-form .ef-grid input[type="tel"],
-.edit-form .ef-grid input[type="date"] {
-  max-width: 100%;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* 6) Ajuste del <select> para que la flecha y el padding no lo “ensanche” */
-.edit-form .ef-grid select {
-  padding-right: 2.5rem;  /* espacio para la flecha */
-  -webkit-appearance: none;
-  appearance: none;
-  background-clip: padding-box;
-}
-
-/* 7) Títulos, correo y chips centrados y con buen ritmo vertical */
-.profile-header {
+#mensualidades-table th:nth-child(5),
+#mensualidades-table td:nth-child(5){
+  width:90px;                 /* da aire al mes en español */
+  overflow: visible;
   text-align: center;
 }
-.profile-header .ph-top,
-.profile-header .ph-badges,
-.profile-header .ph-email {
-  justify-content: center;
+#mensualidades-table th:nth-child(6),
+#mensualidades-table td:nth-child(6){
+  width: 180px;                 /* da aire al mes en español */
+  overflow: visible;
 }
-.profile-header .ph-top h2 {
-  max-width: 100%;
+#mensualidades-table th:nth-child(7),
+#mensualidades-table td:nth-child(7){
+  width: 90px;
+  text-align: center;
 }
-.profile-header .ph-badges { gap: 8px; margin-top: 6px; }
-.profile-header #pfEdit { margin-top: 8px; }
 
-/* ======== FIX LAYOUT MÓVIL & CENTRADO GLOBAL ======== */
-/* Elimina cualquier sangría lateral heredada y scroll horizontal */
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
+/* El control de mes: que “quepa” y sea tocable */
+#mensualidades-table input[type="month"]{
+  min-width: 170px;          /* evita corte (septiembre/diciembre) */
   width: 100%;
-  max-width: 100%;
-  overflow-x: hidden !important;
+  padding: 6px 8px;
+  background:#21262d; border:1px solid #30363d; color:#c9d1d9;
+  border-radius: 8px; box-sizing: border-box;
+  position: relative; z-index: 1; pointer-events: auto;
 }
 
-/* Contenedores principales: centrados de verdad */
-main,
-.container,
-.app-container,
-.page,
-.page-content {
-  max-width: 960px;                 /* ancho cómodo en desktop */
+/* Botón Guardar más discreto en esa columna */
+#mensualidades-table td:nth-child(7) .btn{
+  padding: .5rem .8rem;
+  border-radius: 10px;
+}
+
+/* ────────────────────
+   ROLES (admin-roles.html)
+   Aplica si el <body> tiene class="roles-page"
+   (nos llevamos el CSS inline a la hoja)
+   ──────────────────── */
+   
+/* Navbar: oculto por defecto los items solo-admin; se muestra por JS */
+.sidebar .admin-only{ display:none; }
+
+
+@keyframes modal-pop{
+  from{ transform: translateY(6px) scale(.98); opacity:.0; }
+  to  { transform: translateY(0)   scale(1);    opacity:1; }
+}
+
+/* Lista limpia y legible */
+#listaUsuarios{
+  max-height: 52vh;
+  overflow: auto;
+  margin: 0 2px 12px;
+  padding: 0;
+  list-style: none;
+}
+#listaUsuarios li{
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-700);
+  border: 1px solid #22303d;
+  margin-bottom: 8px;
+}
+#listaUsuarios li:last-child{ margin-bottom: 0; }
+
+/* Check moderno (sin romper el input nativo) */
+#listaUsuarios input[type="checkbox"]{
+  transform: scale(1.15);
+  accent-color: var(--brand-green);
+}
+
+/* Botón cerrar vistoso */
+#cerrarPopupBtn{
+  display: block;
+  margin: 0 auto 2px;
+  padding: 10px 18px;
+  border: none; border-radius: 10px;
+  background: var(--brand-green); color: #0d1117;
+  font-weight: 700; cursor: pointer;
+  box-shadow: 0 8px 16px rgba(46,204,113,.2);
+}
+#cerrarPopupBtn:hover{ filter: brightness(1.05); }
+
+/* ───────────── Paginación reutilizable ───────────── */
+.pager{
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin: 12px auto 6px;
   width: 100%;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding-left: 16px;
-  padding-right: 16px;
-  box-sizing: border-box;
+}
+.pager .btn-pg{
+  background: #21262d; color:#e6edf3; border:1px solid #30363d;
+  padding: 8px 12px; border-radius: 10px; cursor: pointer;
+  min-width: 96px; text-align: center; font-weight: 700;
+}
+.pager .btn-pg[disabled]{ opacity:.5; cursor:not-allowed; }
+.pager .count{
+  font-weight: 700; color: var(--text-300);
+  padding: 6px 10px; border-radius: 10px; border:1px dashed #2b3138;
 }
 
-/* En pantallas pequeñas, evita “empujes” desde reglas viejas */
-@media (max-width: 768px) {
-  main,
-  .container,
-  .page,
-  .page-content {
-    max-width: 640px;               /* más estrecho para móviles */
-    padding-left: 14px;
-    padding-right: 14px;
-  }
-}
-
-/* Si alguna regla histórica hacía “layout con sidebar” empujando el contenido,
-   la neutralizamos: (clases típicas que suelen aparecer en themes) */
-body.with-sidebar main,
-body.sidebar-open main,
-main.shifted,
-.content.shifted,
-body.push-left main,
-body.push-left .container {
-  margin-left: auto !important;
-  transform: none !important;
-  padding-left: 0 !important;
-}
-
-/* Cards y secciones: sin desplazamientos laterales */
-.card,
-.section,
-.panel,
-.block {
-  margin-left: auto !important;
-  margin-right: auto !important;
-  transform: none !important;
-}
-
-/* Sidebar siempre flotante, no debe “empujar” el layout */
-.sidebar {
+/* ===== MODAL ASISTENCIA – NUEVO LOOK ===== */
+.asistencia-modal{
   position: fixed;
-  inset: 0 auto 0 0;
-  width: 280px;
-  max-width: 85vw;
-  transform: translateX(-100%);
-  transition: transform .25s ease;
-  z-index: 1000;
-}
-.sidebar.active { transform: translateX(0); }
-
-/* Botón hamburguesa siempre clicable por encima del sidebar */
-.hamburger-btn,
-#toggleNav {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 1100;          /* > sidebar */
-}
-
-/* Evita que dropdowns (ej. <select>) se recorten dentro de tarjetas */
-.card,
-.panel,
-.section {
-  overflow: visible;      /* importante para selects en Android */
-}
-
-/* Perfil: bloque más compacto en móviles */
-.profile-card {
-  max-width: 560px;       /* un poco más estrecho */
-  margin-inline: auto;
-}
-
-/* Select estilizado sin salirse del contenedor */
-select,
-.ef-grid select {
-  max-width: 100%;
-  background-clip: padding-box;
-}
-
-/* ===== FIX GLOBAL: el body solo se centra en páginas de autenticación ===== */
-body {                      /* neutraliza el body-flex global */
-  display: block !important;
-  min-height: auto !important;
-}
-
-body.auth-center {          /* úsalo SOLO en login y registro */
-  display: flex !important;
-  flex-direction: column;
-  justify-content: center;
+  inset: 0;
+  display: none;                 /* se muestra con .active (tu JS actual) */
   align-items: center;
-  min-height: 100vh;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(13,17,23,.55);
+  backdrop-filter: blur(3px);
+  z-index: 12000;
+}
+.asistencia-modal.active{ display:flex; }
+
+.asistencia-modal .modal-content{
+  position: relative;
+  width: min(92vw, 520px);
+  background: var(--surface-800);
+  border: 1px solid #22303d;
+  border-radius: 16px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.45);
+  padding: 16px 16px 14px;
+  color: var(--text-100);
 }
 
-/* Contenedores centrados y sin “empujes” laterales */
-main, .container, .page, .page-content, .app-container {
-  max-width: 960px;
-  width: 100%;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding-left: 12px;
-  padding-right: 12px;
-  box-sizing: border-box;
+/* cabecera */
+.asistencia-modal .modal-content h3{
+  margin: 0 0 10px 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: clamp(1rem, 3.8vw, 1.1rem);
+}
+.asistencia-modal .modal-content h3 #fechaReserva{
+  color: var(--brand-yellow);
+  font-weight: 700;
 }
 
-/* El sidebar no debe empujar el layout */
-.sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  width: 280px;
-  max-width: 85vw;
-  transform: translateX(-100%);
-  transition: transform .25s ease;
-  z-index: 1000;
+/* botón X arriba a la derecha – reutiliza #cerrarPopupBtn */
+#cerrarPopupBtn{
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: #0f141a;
+  border: 1px solid #2b3138;
+  color: var(--text-100);
+  cursor: pointer;
+  font-size: 0;                   /* oculta el “Cerrar” textual */
+  transition: transform .15s ease, background .2s ease, border-color .2s ease;
 }
-.sidebar.active { transform: translateX(0); }
-
-/* El botón hamburguesa siempre por encima */
-.hamburger-btn, #toggleNav {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 1100;
+#cerrarPopupBtn::before{
+  content: "✕";
+  font-size: 18px;
+  line-height: 36px;
+  display: block;
+  text-align: center;
+}
+#cerrarPopupBtn:hover{
+  background: #111a22;
+  border-color: var(--brand-yellow);
+  transform: scale(1.04);
 }
 
-/* Evita que los <select> y menús se recorten dentro de tarjetas */
-.card, .panel, .section { overflow: visible; }
-
-/* Extra para formularios de auth: un poco más angosto en móvil */
-.auth-wrap { width: min(92vw, 400px); margin: 64px auto 20px; }
-.hidden { display: none !important; }
-
-/* --- Switch Estudiante / Profesor --- */
-.role-switch{
-  margin:14px auto 10px; display:flex; gap:10px; align-items:center; justify-content:center;
-  font-size:.95rem; color:#cbd5e1;
+/* lista scrolleable y limpia */
+#listaUsuarios{
+  margin: 6px 0 12px;
+  padding: 0 2px;
+  max-height: min(60vh, 420px);
+  overflow: auto;
+  list-style: none;
 }
-.role-switch.hidden{ display:none; }
-.role-switch .role-label{ opacity:.85 }
-.role-switch .toggle{ position:relative; width:58px; height:30px; }
-.role-switch .toggle input{ opacity:0; width:0; height:0; }
-.role-switch .slider{
-  position:absolute; inset:0; background:#1f2937; border:1px solid #334155; border-radius:999px;
-  transition:all .25s ease; box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+#listaUsuarios li{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: transparent;
 }
-.role-switch .slider:before{
-  content:""; position:absolute; height:24px; width:24px; left:3px; top:50%; transform:translateY(-50%);
-  background:#e5e7eb; border-radius:50%; transition:all .25s ease;
-}
-.role-switch input:checked + .slider{ background:#14532d; border-color:#166534; }
-.role-switch input:checked + .slider:before{ transform:translate(28px,-50%); background:#bbf7d0; }
+#listaUsuarios li + li{ margin-top: 4px; }
 
-/* --- Tarjeta "flip" con dos caras --- */
+/* check bonito con tu verde */
+#listaUsuarios input[type="checkbox"]{
+  accent-color: var(--brand-green);
+  transform: scale(1.05);
+}
+
+/* botón de acción alternativo (por si lo usas en el pie del modal) */
+.asistencia-modal .btn-primary{
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--brand-green);
+  border: 0;
+  color: #0b1a10;
+  font-weight: 700;
+  cursor: pointer;
+}
+.asistencia-modal .btn-primary:hover{ filter: brightness(1.02); }
+
+/* ===== Tarjetas Roles (admin-users) – pulido visual ===== */
+#list .card{
+  background: var(--surface-800);
+  border: 1px solid #22303d;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow-lg);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .2s ease;
+}
+#list .card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(0,0,0,.35);
+  border-color: #2b5fd6;
+}
+
+#list .row1{ gap: 12px; }
+#list .avatar{
+  width: 46px; height: 46px;
+  background:#0f1623;
+  border:1px solid #273247;
+  color:#cfe2ff;
+  font-weight:800;
+}
+#list .name{ font-weight: 800; }
+#list .mail{ color: var(--text-300); }
+
+#list .badge{
+  background:#0f1623;
+  border-color:#273247;
+}
+#list .badge.green{
+  background:#0f2e18;
+  border-color:#1e5b31;
+  color:#b7f5c9;
+}
+
+/* chips de rol con la nueva paleta */
+#list .roles{ gap: 8px; }
+#list .chip{
+  border-radius: 999px;
+  padding: 7px 12px;
+  border: 1px solid #2c3344;
+  background: #0f1623;
+  color: #d6deea;
+  font-weight: 600;
+  transition: background .15s ease, border-color .15s ease, transform .08s ease;
+}
+#list .chip:hover{ transform: translateY(-1px); }
+#list .chip[data-role="admin"]{ border-color:#5e2f2f; }
+#list .chip[data-role="professor"]{ border-color:#2f5e44; }
+#list .chip[data-role="student"]{ border-color:#2f4f5e; }
+
+#list .chip.active[data-role="admin"]{ background:#3a1f24; color:#ffd6d6; }
+#list .chip.active[data-role="professor"]{ background:#1f3a2b; color:#c8f5da; }
+#list .chip.active[data-role="student"]{ background:#1f2d3a; color:#cfe7ff; }
+#list .chip.lock{ opacity:.45; cursor:not-allowed; }
+
+#list .actions .btn.save{
+  background:#0f2e18; border-color:#1e5b31; color:#b7f5c9;
+  padding: 8px 14px; border-radius: 10px; font-weight:700;
+}
+#list .actions .btn.save:hover{ filter: brightness(1.06); }
+
+@media (min-width: 920px){
+  #list{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ROLES • Tarjeta centrada, chips bonitos y sin avatar
+   Afecta SOLO a la página admin-roles.html (usamos #list)
+   ────────────────────────────────────────────────────────────*/
+#list .card{
+  border-radius: 16px;
+  background: var(--surface-800);
+  border: 1px solid var(--outline);
+  box-shadow: var(--shadow-lg);
+  padding: 20px;
+}
+
+#list .row1{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; gap:10px;
+}
+
+/* Oculta el avatar con letras (ya no lo usamos) */
+#list .avatar{ display:none !important; }
+
+#list .name{ font-weight:800; }
+#list .mail{ color: var(--text-300); max-width: 520px; }
+
+/* Badges de estado/rol asignado arriba de los chips */
+#list .badges{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
+#list .badge{
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #0f1a13;
+  border: 1px solid #244b35;
+  color: #bdeeca;
+  font-size: .78rem;
+}
+#list .badge.green{ background:#0f1a13; border-color:#2b8d55; color:#c8f7d6; }
+
+/* Fila 2: chips centrados + botón */
+#list .roles{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+#list .chip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #2b3446;
+  background: var(--surface-700);
+  color: var(--text-100);
+  font-weight:600; font-size:.85rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  transition: transform .08s ease, border-color .2s ease, box-shadow .2s ease;
+}
+#list .chip i{ font-size: 1rem; opacity: .9; }
+#list .chip:hover{ transform: translateY(-1px); }
+
+#list .chip[data-role="admin"]    { border-color: rgba(255,212,59,.45); }
+#list .chip[data-role="professor"]{ border-color: rgba(46,204,113,.45); }
+#list .chip[data-role="student"]  { border-color: rgba(111,86,111,.45); }
+
+#list .chip.active[data-role="admin"]{
+  background: rgba(255,212,59,.10); box-shadow: 0 0 0 1px rgba(255,212,59,.35) inset;
+}
+#list .chip.active[data-role="professor"]{
+  background: rgba(46,204,113,.12); box-shadow: 0 0 0 1px rgba(46,204,113,.35) inset;
+}
+#list .chip.active[data-role="student"]{
+  background: rgba(176,0,176,.12);  box-shadow: 0 0 0 1px rgba(176,0,176,.35) inset;
+}
+#list .chip.lock{ opacity:.45; cursor:not-allowed; }
+
+#list .actions{ display:flex; justify-content:center; margin-top: 6px; }
+#list .btn.save{
+  background: var(--brand-green);
+  color:#0b1b12; border:none;
+  padding:10px 16px; border-radius:10px; font-weight:800;
+}
+#list .btn.save:hover{ filter: brightness(1.06); }
+
+/* Info extra en tarjetitas finas */
+#list .badge.info {
+  display:block; width: 100%;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--surface-700);
+  border: 1px solid var(--outline);
+  color: var(--text-300);
+  text-align: left;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ADMIN-USERS (Roles) • Filtros y SELECT de rol con estilo
+   ────────────────────────────────────────────────────────────*/
+
+/* Layout de filtros */
+.filters{
+  display:grid;
+  gap:10px;
+  grid-template-columns: 1fr;
+  margin: 8px auto 12px;
+}
+@media (min-width:560px){ .filters{ grid-template-columns: repeat(2,1fr); } }
+@media (min-width:900px){ .filters{ grid-template-columns: repeat(5,1fr); } } /* 4 inputs + 1 select */
+
+/* Contador “X usuarios” que pones debajo (más discreto) */
+#total.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--outline);
+  background: var(--surface-700);
+  color: var(--text-300);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SELECTX – Select custom para filtro de rol (admin-users)
+   ───────────────────────────────────────────────────────────── */
+/* Contenedor general del grupo de filtros */
+.filters{
+  display:grid; gap:20px; grid-template-columns:1fr; margin:9px auto 12px;
+}
+@media (min-width:460px){ .filters{ grid-template-columns:repeat(2,1fr); } }
+@media (min-width:450px){ .filters{ grid-template-columns:repeat(5,1fr); } } /* 4 inputs + 1 select */
+
+/* Filtros: “pill” con ícono */
+.filters .f{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:12px;
+  background:var(--surface-700); border:1px solid var(--outline); color:var(--text-100);
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+.filters .f i{ opacity:.75; font-size:1rem; }
+.filters .f input{ all:unset; width:100%; color:inherit; font-size:.95rem; }
+
+/* SelectX (estilizado) */
+.selectx{ position:relative; display:flex; align-items:center; gap:10px; width:100%; }
+.selectx-native{ position:absolute; inset:0; opacity:0; pointer-events:none; } /* oculto pero accesible */
+
+.selectx .caret{
+  width:18px; height:18px; border-radius:0%;
+  display:inline-grid; place-items:center;
+  border:1px solid #3a4657; background:#0f141a;
+}
+.selectx .caret::after{
+  content:""; display:block; width:6px; height:6px; border-right:2px solid #B0B0B0; border-bottom:2px solid #B0B0B0; transform:rotate(45deg);
+}
+
+.selectx.open { opacity:1; transform:translateY(0); pointer-events:auto; }
+
+/* Enfoque accesible (sin duplicar el glow en SelectX) */
+.filters .f:focus-within{ border-color:var(--brand-yellow); box-shadow:0 0 0 3px rgba(255,212,59,.18); }
+
+/* ─────────────────────────────────────────────
+   SELECTX v2 — estiliza el select de rol (#fRol)
+   (coincide con el JS enhanceRoleSelect)
+   ───────────────────────────────────────────── */
+.filters .f{ position: relative; }               /* para stacking limpio */
+
+.selectx{
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  width: 94%;
+}
+.selectx-native{
+  position: absolute; inset: 0;
+  opacity: 0; pointer-events: none;            /* sigue accesible para el JS */
+}
+
+/* Botón visible */
+.selectx-display{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; width: 100%;
+  background: transparent; border: 0; color: inherit; font: inherit;
+  cursor: pointer; text-align: left;
+}
+.selectx-display .chev{
+  opacity: .85; transition: transform .15s ease;
+}
+.selectx.open .selectx-display .chev{ transform: rotate(180deg); }
+
+/* Panel de opciones */
+.selectx-list{
+  position: absolute; left: 0; right: 0; top: calc(100% + 8px);
+  background: #0f141a; border: 1px solid #22303d; border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+  margin: 0; padding: 6px; list-style: none;
+  max-height: min(50vh, 340px); overflow: auto;
+  z-index: 12050;
+  opacity: 0; transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.selectx.open .selectx-list{
+  opacity: 1; transform: translateY(0); pointer-events: auto;
+}
+
+/* Abre hacia arriba si no hay espacio (lo decide el JS con .dropup) */
+.selectx.dropup .selectx-list{
+  top: auto; bottom: calc(100% + 8px);
+}
+
+/* Ítems */
+.selectx-list .item{
+  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  color: #e6edf3;
+}
+.selectx-list .item:hover{ background: #12202c; }
+.selectx-list .item[aria-selected="true"]{
+  background: #153822; color: #d4f7e0;
+}
+
+/* Enfoque accesible del contenedor de filtro */
+.filters .f:focus-within{
+  border-color: var(--brand-yellow);
+  box-shadow: 0 0 0 3px rgba(255,212,59,.18);
+}
+
+/* ── Centrar título de la página de roles ───────────────────── */
+.roles-page .page-title,
+.header .page-title{
+  text-align: center;
+  margin: 8px auto 14px;   /* un poco de aire arriba/abajo */
+  display: block;
+}
+
+/* ── Más aire entre tarjetas de #list ───────────────────────── */
+#list{
+  display: grid;           /* asegura layout en columna con gap */
+  gap: 14px;               /* separación vertical entre cards */
+}
+@media (min-width: 920px){
+  #list{ gap: 16px; }      /* un pelín más en desktop */
+}
+
+/* evitar que algún margin colapse dentro del grid */
+#list .card{ margin: 0; }
+
+/* ─────────────────────────────────────────────
+   CLIENT DASHBOARD – estilos y fixes
+   ───────────────────────────────────────────── */
+
+/* Página del cliente */
+body.client-page .container{ max-width: 760px; }
+
+/* Cabecera con logo + títulos centrados */
+.logo-container{ position: relative; margin: 8px auto 6px; text-align: center; }
+.logo-container .logo-img{ width: 96px; height: 96px; object-fit: cover; border-radius: 50%; margin: 0 auto 6px; }
+.logo-text{ display: block; text-align: center; margin: 0 0 4px; font-weight: 800; }
+.attendance-code{ margin: 4px 0 2px; font-size: 1rem; font-weight: 800; color: var(--text-100); text-align: center; }
+#local-time{ color: var(--text-300); font-size: .95rem; text-align: center; }
+
+/* Botón hamburguesa igual al admin (dentro del header) */
+.logo-container .hamburger-btn{
+  position: absolute; top: 6px; right: 6px; z-index: 5;
+  width: 42px; height: 42px; border-radius: 10px;
+  border: 1px solid #334155; background: #0f172a; color: #e5e7eb;
+}
+
+/* Botonera principal */
+.page-actions{ text-align: center; margin: 14px 0; }
+.page-actions .btn{ margin: 0 6px; }
+
+/* Tarjeta del calendario */
+.calendar-wrapper{ margin: 6px 0 18px; }
+.calendar-wrapper .card{
+  max-width: 760px; margin: 0 auto; padding: 12px;
+  background: var(--surface-800); border: 1px solid #22303d;
+  border-radius: 16px; box-shadow: var(--shadow-lg);
+  overflow: visible;
+}
+
+/* Flip 3D sin “hueco” (grid superpuesto → el contenedor sí tiene altura) */
 .cal-deck{
-  position:relative; perspective:1000px;
-  margin:6px auto 18px; max-width:680px; width:100%;
-  min-height:520px; /* asegura espacio para el calendario */
+  position: relative; perspective: 1000px;
+  display: grid; grid-auto-rows: min-content;
+  margin: 8px auto 0; width: 100%;
 }
 .cal-deck .face{
-  position:absolute; inset:0; backface-visibility:hidden; transform-style:preserve-3d;
+  grid-area: 1 / 1;               /* superpone ambas caras */
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
   transition: transform .48s ease;
 }
 .cal-deck .face-student{ transform: rotateY(0deg); }
 .cal-deck .face-prof   { transform: rotateY(180deg); }
-
 .cal-deck[data-mode="prof"] .face-student{ transform: rotateY(180deg); }
 .cal-deck[data-mode="prof"] .face-prof   { transform: rotateY(360deg); }
 
-/* FullCalendar dentro de la tarjeta */
+/* Calendarios – mismos estilos que admin y altura auto */
 #calendarStudent, #calendarProf{
-  background:#0f141a; border:1px solid #22303d; border-radius:16px; padding:10px;
-  box-shadow:0 8px 24px rgba(0,0,0,.28);
-  height:100%; min-height:520px;
+  width: 100%;
+  background: var(--surface-700);
+  border: 1px solid #22303d; border-radius: 16px;
+  padding: 10px; box-sizing: border-box;
+  box-shadow: var(--shadow-lg);
+  height: auto !important; min-height: 0 !important;
 }
+.fc, #calendarStudent, #calendarProf{ -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.fc-theme-standard td, .fc-theme-standard th{ border-color: #2b3138; }
+.fc .fc-toolbar-title{ font-weight: 700; font-size: clamp(1.05rem,2.6vw,1.25rem); }
+.fc .fc-daygrid-event{ background:#2b5fd6; border:0; color:#fff; font-weight:700; border-radius:8px; padding:2px 4px; }
+.fc .fc-daygrid-day.disabled-day{ filter: grayscale(.45) opacity(.75); pointer-events:none; }
+
+/* Switch de rol (ya tenías estilos, solo ajustes minimos) */
+.role-switch{ margin: 10px auto 8px; }
+
+/* Modal de asistencia (staff) */
+#attModal{
+  position: fixed; inset: 0; display: none; place-items: center;
+  z-index: 12000; background: rgba(13,17,23,.55); backdrop-filter: blur(3px);
+}
+#attModal.active{ display: grid; }
+#attModal .att-card{
+  width: min(92vw, 520px);
+  background: var(--surface-800); color: var(--text-100);
+  border: 1px solid #22303d; border-radius: 16px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.45);
+  padding: 16px 16px 14px;
+}
+#attModal .att-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+#attModal .att-list{ display:grid; gap:8px; max-height:50vh; overflow:auto; padding-right:4px; }
+#attModal .att-item{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid #233140; border-radius:10px; background:#0f1720; }
+#attModal .close-btn{ padding:8px 12px; border-radius:10px; background:#1f2937; border:1px solid #334155; color:#e5e7eb; cursor:pointer; }
+
+/* Tooltip de nombres (staff) */
+.custom-tooltip{
+  position: fixed; z-index: 12010;
+  background:#0b2540; color:#b4d7ff; border:1px solid #1e3a5f;
+  padding:6px 8px; border-radius:8px; pointer-events:none;
+}
+
+/* Scanner modal (reusa tu .asistencia-modal global) */
+.asistencia-modal .modal-content h2{ margin: 0 0 8px; text-align: center; }
+
+/* Separación extra debajo del contenido (evita sensación de “bloque”) */
+body.client-page main.container{ padding-bottom: 20px; }
+
+/* ===== CLIENTE – cabecera y textos centrados (mismo look admin) ===== */
+.client-page .page-title{
+  text-align:center; font-weight:800;
+  font-size:clamp(1.4rem, 5vw, 2rem);
+  margin: 6px 0 4px;
+}
+.client-page .page-subtitle{ text-align:center; margin:0; color:var(--text-100); }
+.client-page .page-subnote{ text-align:center; margin-top:2px; color:var(--text-300); }
+
+/* CTA (solo QR ahora) */
+.client-cta{ display:flex; justify-content:center; gap:10px; margin:10px 0 12px; }
+
+/* ===== Calendario – tarjeta y nitidez ===== */
+.calendar-wrapper{ margin: 6px auto 18px; }
+.calendar-card{ overflow: visible; }
+
+.fc-shell{
+  background: var(--surface-700);
+  border: 1px solid #22303d;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+#calendarStudent .fc, #calendarProf .fc{
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background: transparent;
+}
+#calendarStudent .fc-scrollgrid, #calendarProf .fc-scrollgrid{
+  border:0; background:transparent; border-radius:12px;
+}
+#calendarStudent .fc-toolbar, #calendarProf .fc-toolbar{ margin-bottom:6px; }
+.fc-theme-standard td, .fc-theme-standard th{ border-color:#2b3138; }
+.fc .fc-toolbar-title{ font-weight:700; font-size:clamp(1.05rem,2.6vw,1.25rem); }
+
+/* ===== Flip deck 3D sin blur (transform solo al animar) ===== */
+.cal-deck{
+  position: relative;
+  perspective: 1000px;
+  width: 100%;
+  max-width: 760px;
+  margin: 8px auto 0;
+  height: auto;                 /* el JS fija la altura real */
+}
+.cal-deck .face{
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: transform .48s ease;
+}
+/* En reposo: visible = none (nítido), oculta = 180deg */
+.cal-deck .face-student{ transform: none; }
+.cal-deck .face-prof   { transform: rotateY(180deg); }
+
+/* Durante animación: aplica el flip */
+.cal-deck.animating .face-student{ transform: rotateY(0deg); }
+.cal-deck.animating .face-prof{ transform: rotateY(180deg); }
+.cal-deck.animating[data-mode="prof"] .face-student{ transform: rotateY(180deg); }
+.cal-deck.animating[data-mode="prof"] .face-prof   { transform: rotateY(360deg); }
+
+/* Días deshabilitados */
+.disabled-day{ filter: grayscale(.45) opacity(.7); }
+
+/* Modal QR pequeños ajustes */
+.qr-reader{ width:300px; margin:1rem auto; }
+.asistencia-modal .modal-actions{ text-align:center; margin-top:1rem; }
+
+/* Sidebar coherente con admin */
+.client-page .sidebar{ width:min(280px,85vw); }
+
+/* Footer por encima de cualquier overlay accidental */
+.client-page footer{ position:relative; z-index:1; }
+
+/* Calendario – flip limpio, sin blur y sin capas muertas */
+.cal-deck{
+  position: relative;
+  perspective: 1000px;
+}
+.cal-deck .face{
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  transform-origin: center;
+  transition: transform .48s ease, opacity .18s ease;
+}
+.cal-deck .face-student{ transform: rotateY(0deg); }
+.cal-deck .face-prof{    transform: rotateY(-180deg); }
+
+/* Cuando se muestra PROF, la cara student queda “fuera” y sin eventos */
+.cal-deck[data-mode="prof"] .face-student{
+  transform: rotateY(180deg);
+  opacity: 0;
+  pointer-events: none;
+}
+.cal-deck[data-mode="prof"] .face-prof{
+  transform: rotateY(0deg);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Cuando se muestra STUDENT, la cara prof queda “fuera” y sin eventos */
+.cal-deck[data-mode="student"] .face-student{
+  opacity: 1; pointer-events: auto;
+}
+.cal-deck[data-mode="student"] .face-prof{
+  opacity: 0; pointer-events: none;
+}
+
+/* El deck toma la altura de la cara visible (client.js la fija) */
+#calendarDeck{ height:auto; }
+
+/* Oculta totalmente el banner de pwa-install si sólo usarás el navbar */
+#installBanner{ display: none !important; }

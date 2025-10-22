@@ -165,3 +165,25 @@ async function guardarAsistencia(day, uid, presente) {
     showAlert('Error al guardar asistencia', 'error');
   }
 }
+
+// —— Cerrar modal asistencia con overlay y con ESC (no rompe tu lógica actual)
+(() => {
+  const overlay = document.getElementById('asistenciaPopup');
+  const btnClose = document.getElementById('cerrarPopupBtn');
+  if (!overlay || !btnClose) return;
+
+  const close = () => overlay.classList.remove('active');
+
+  // clic en X
+  btnClose.addEventListener('click', close);
+
+  // clic fuera de la tarjeta
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+
+  // tecla ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) close();
+  });
+})();

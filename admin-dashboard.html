@@ -17,31 +17,12 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v6">
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v7">
   <meta name="theme-color" content="#0d1117">
   <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Bocaraca">
-
-  <!-- Fallbacks mínimos (sidebar + calendario) -->
-  <style>
-    /* Botón hamburguesa por encima de todo */
-    .hamburger-btn { position: fixed; right: 16px; top: 16px; z-index: 10001; }
-
-    /* Sidebar: forzar animación visible si otros estilos no aplican */
-    .sidebar {
-      position: fixed; inset: 0 auto 0 0; width: 260px; height: 100vh;
-      transform: translateX(-100%);
-      transition: transform .25s ease;
-      z-index: 10000;
-    }
-    .sidebar.active { transform: translateX(0); }
-
-    /* Asegurar altura del calendario/área */
-    #calendar-admin { min-height: 560px; }
-    .calendar-wrapper .card { padding: 12px; }
-  </style>
 </head>
 
 <body>
@@ -54,11 +35,12 @@
   <nav id="sidebar" class="sidebar">
     <ul>
       <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
-      <li><a href="./usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
-      <li><a href="./control-mensualidades.html"><i class="bi bi-cash-coin"></i> Mensualidades</a></li>
-      <li><a href="./admin-users.html"><i class="bi bi-person-rolodex"></i> Roles</a></li>
+      <li><a href="./admin-usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+      <li><a href="./admin-mensualidades.html"><i class="bi bi-cash-coin"></i> Mensualidades</a></li>
+      <li><a href="./admin-roles.html"><i class="bi bi-person-rolodex"></i> Roles</a></li>
       <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
       <li><a href="./admin-metrics.html"><i class="bi bi-pie-chart-fill"></i> Métricas</a></li>
+      <li><button id="btnInstall" class="btn" onclick="window.forceHardReset()">Forzar actualización</button></li>
       <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
     </ul>
   </nav>
@@ -69,9 +51,8 @@
       <img src="./assets/android-chrome-512x512.png" alt="Logo" class="logo-img">
       <h1 class="logo-text">Reservas confirmadas</h1>
       <!-- En admin-dashboard.html (o donde quieras) -->
-  <button id="btnInstall" class="btn" onclick="window.forceHardReset()">Forzar actualización</button>
-
     </div>
+    
     <div class="calendar-wrapper">
       <div class="card">
         <div id="calendar-admin"></div>
@@ -96,5 +77,9 @@
   <script type="module" src="./js/pwa-install.js"></script>
   
   <script type="module" src="./js/sw-register.js"></script>
+
+    <footer>
+      <p>© 2025 <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>. Todos los derechos reservados.</p>
+  </footer>
 </body>
 </html>
