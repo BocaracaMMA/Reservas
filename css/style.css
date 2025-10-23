@@ -217,22 +217,6 @@ body.auth-center{
 .role-switch input:checked + .slider{ background:#14532d; border-color:#166534; }
 .role-switch input:checked + .slider:before{ transform:translate(28px,-50%); background:#bbf7d0; }
 
-/* Tarjeta “flip” con dos caras */
-.cal-deck{
-  position:relative; perspective:1000px;
-  margin:6px auto 18px; max-width:680px; width:100%;
-  /* no fijamos min-height alto para evitar hueco extra */
-}
-.cal-deck .face{
-  position:absolute; inset:0; backface-visibility:hidden;
-  transform-style:preserve-3d; transition:transform .48s ease;
-  transform:translateZ(0); /* evita blur por GPU */
-}
-.cal-deck .face-student{ transform:rotateY(0deg); }
-.cal-deck .face-prof{ transform:rotateY(180deg); }
-.cal-deck[data-mode="prof"] .face-student{ transform:rotateY(180deg); }
-.cal-deck[data-mode="prof"] .face-prof{ transform:rotateY(360deg); }
-
 /* Contenedores de los calendarios */
 #calendarStudent, #calendarProf{
   width:100%;
@@ -1403,23 +1387,6 @@ body.client-page .container{ max-width: 760px; }
   overflow: visible;
 }
 
-/* Flip 3D sin “hueco” (grid superpuesto → el contenedor sí tiene altura) */
-.cal-deck{
-  position: relative; perspective: 1000px;
-  display: grid; grid-auto-rows: min-content;
-  margin: 8px auto 0; width: 100%;
-}
-.cal-deck .face{
-  grid-area: 1 / 1;               /* superpone ambas caras */
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
-  transition: transform .48s ease;
-}
-.cal-deck .face-student{ transform: rotateY(0deg); }
-.cal-deck .face-prof   { transform: rotateY(180deg); }
-.cal-deck[data-mode="prof"] .face-student{ transform: rotateY(180deg); }
-.cal-deck[data-mode="prof"] .face-prof   { transform: rotateY(360deg); }
-
 /* Calendarios – mismos estilos que admin y altura auto */
 #calendarStudent, #calendarProf{
   width: 100%;
@@ -1505,7 +1472,7 @@ body.client-page main.container{ padding-bottom: 20px; }
 .fc-theme-standard td, .fc-theme-standard th{ border-color:#2b3138; }
 .fc .fc-toolbar-title{ font-weight:700; font-size:clamp(1.05rem,2.6vw,1.25rem); }
 
-/* ===== Flip deck 3D sin blur (transform solo al animar) ===== */
+/* === FLIP 3D NÍTIDO (sin blur en reposo) === */
 .cal-deck{
   position: relative;
   perspective: 1000px;
@@ -1514,71 +1481,35 @@ body.client-page main.container{ padding-bottom: 20px; }
   margin: 8px auto 0;
   height: auto;                 /* el JS fija la altura real */
 }
+
+/* ambas caras comparten base */
 .cal-deck .face{
   position: absolute; inset: 0;
   backface-visibility: hidden;
-  transform-style: preserve-3d;
-  transition: transform .48s ease;
-}
-/* En reposo: visible = none (nítido), oculta = 180deg */
-.cal-deck .face-student{ transform: none; }
-.cal-deck .face-prof   { transform: rotateY(180deg); }
-
-/* Durante animación: aplica el flip */
-.cal-deck.animating .face-student{ transform: rotateY(0deg); }
-.cal-deck.animating .face-prof{ transform: rotateY(180deg); }
-.cal-deck.animating[data-mode="prof"] .face-student{ transform: rotateY(180deg); }
-.cal-deck.animating[data-mode="prof"] .face-prof   { transform: rotateY(360deg); }
-
-/* Días deshabilitados */
-.disabled-day{ filter: grayscale(.45) opacity(.7); }
-
-/* Modal QR pequeños ajustes */
-.qr-reader{ width:300px; margin:1rem auto; }
-.asistencia-modal .modal-actions{ text-align:center; margin-top:1rem; }
-
-/* Sidebar coherente con admin */
-.client-page .sidebar{ width:min(280px,85vw); }
-
-/* Footer por encima de cualquier overlay accidental */
-.client-page footer{ position:relative; z-index:1; }
-
-/* Calendario – flip limpio, sin blur y sin capas muertas */
-.cal-deck{
-  position: relative;
-  perspective: 1000px;
-}
-.cal-deck .face{
-  position: absolute; inset: 0;
-  backface-visibility: hidden;
-  transform-origin: center;
   transition: transform .48s ease, opacity .18s ease;
+  /* sin preserve-3d, sin will-change, sin translateZ(0) */
 }
-.cal-deck .face-student{ transform: rotateY(0deg); }
-.cal-deck .face-prof{    transform: rotateY(-180deg); }
 
-/* Cuando se muestra PROF, la cara student queda “fuera” y sin eventos */
+/* REPOSO: estudiante visible SIN transform; prof girada */
+.cal-deck .face-student{ transform: none; }       /* <- clave */
+.cal-deck .face-prof   { transform: rotateY(-180deg); }
+
+/* MODO PROF: invertimos. La visible vuelve a NONE. */
 .cal-deck[data-mode="prof"] .face-student{
   transform: rotateY(180deg);
-  opacity: 0;
-  pointer-events: none;
-}
-.cal-deck[data-mode="prof"] .face-prof{
-  transform: rotateY(0deg);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Cuando se muestra STUDENT, la cara prof queda “fuera” y sin eventos */
-.cal-deck[data-mode="student"] .face-student{
-  opacity: 1; pointer-events: auto;
-}
-.cal-deck[data-mode="student"] .face-prof{
   opacity: 0; pointer-events: none;
 }
+.cal-deck[data-mode="prof"] .face-prof{
+  transform: none;               /* <- clave */
+  opacity: 1; pointer-events: auto;
+}
 
-/* El deck toma la altura de la cara visible (client.js la fija) */
-#calendarDeck{ height:auto; }
+/* MODO STUDENT: por claridad */
+.cal-deck[data-mode="student"] .face-student{ opacity:1; pointer-events:auto; }
+.cal-deck[data-mode="student"] .face-prof{   opacity:0; pointer-events:none; }
 
-/* Oculta totalmente el banner de pwa-install si sólo usarás el navbar */
-#installBanner{ display: none !important; }
+/* Calendario sin forzar antialias light */
+.fc, #calendarStudent, #calendarProf{
+  -webkit-font-smoothing: auto;
+  text-rendering: auto;
+}
