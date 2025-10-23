@@ -1472,44 +1472,250 @@ body.client-page main.container{ padding-bottom: 20px; }
 .fc-theme-standard td, .fc-theme-standard th{ border-color:#2b3138; }
 .fc .fc-toolbar-title{ font-weight:700; font-size:clamp(1.05rem,2.6vw,1.25rem); }
 
-/* === FLIP 3D NÍTIDO (sin blur en reposo) === */
+/* ===== Flip 3D nítido: 3D SOLO durante el giro ===== */
 .cal-deck{
   position: relative;
-  perspective: 1000px;
   width: 100%;
   max-width: 760px;
   margin: 8px auto 0;
-  height: auto;                 /* el JS fija la altura real */
+  height: auto;
+  perspective: none;                 /* <- nada de 3D en reposo */
 }
 
-/* ambas caras comparten base */
+/* Cuando se está animando, activamos la perspectiva */
+.cal-deck.toggling{ perspective: 1000px; }
+
 .cal-deck .face{
   position: absolute; inset: 0;
   backface-visibility: hidden;
-  transition: transform .48s ease, opacity .18s ease;
-  /* sin preserve-3d, sin will-change, sin translateZ(0) */
-}
-
-/* REPOSO: estudiante visible SIN transform; prof girada */
-.cal-deck .face-student{ transform: none; }       /* <- clave */
-.cal-deck .face-prof   { transform: rotateY(-180deg); }
-
-/* MODO PROF: invertimos. La visible vuelve a NONE. */
-.cal-deck[data-mode="prof"] .face-student{
-  transform: rotateY(180deg);
+  /* En reposo: sin transform y sin transición (super nítido) */
+  transform: none;
+  transition: none;
   opacity: 0; pointer-events: none;
 }
-.cal-deck[data-mode="prof"] .face-prof{
-  transform: none;               /* <- clave */
-  opacity: 1; pointer-events: auto;
-}
 
-/* MODO STUDENT: por claridad */
+/* Cara visible en cada modo (sin transform) */
 .cal-deck[data-mode="student"] .face-student{ opacity:1; pointer-events:auto; }
-.cal-deck[data-mode="student"] .face-prof{   opacity:0; pointer-events:none; }
+.cal-deck[data-mode="prof"]    .face-prof   { opacity:1; pointer-events:auto; }
 
-/* Calendario sin forzar antialias light */
+/* SOLO durante el flip aplicamos transform + transición */
+.cal-deck.toggling .face{ transition: transform .48s ease, opacity .18s ease; }
+.cal-deck.toggling[data-mode="student"] .face-student{ transform: rotateY(0deg); }
+.cal-deck.toggling[data-mode="student"] .face-prof   { transform: rotateY(-180deg); }
+.cal-deck.toggling[data-mode="prof"]    .face-student{ transform: rotateY(180deg); }
+.cal-deck.toggling[data-mode="prof"]    .face-prof   { transform: rotateY(0deg); }
+
+/* Calendario sin forzar suavizado “light” (evita blur) */
 .fc, #calendarStudent, #calendarProf{
   -webkit-font-smoothing: auto;
   text-rendering: auto;
+}
+
+/* === Perfil: tarjeta tipo “app card” ================================ */
+.profile-shell{ max-width:420px; width:100%; margin:86px auto 28px; padding-inline:14px; }
+.profile-card{ background:#1f2735; border:1px solid #2c3a4d; border-radius:18px; padding:16px; box-shadow:0 12px 40px rgba(0,0,0,.25); }
+
+/* Hamburguesa por encima del sidebar */
+.profile-page .hamburger-btn{ position:fixed; top:16px; right:16px; z-index:1101; width:40px; height:40px; display:grid; place-items:center; border-radius:10px; }
+.profile-page .sidebar{ z-index:1100; }
+
+/* HERO */
+.profile-hero{ display:grid; gap:12px; text-align:center; }
+.hero-top{ display:flex; align-items:center; }
+.hero-top .grow{ flex:1; }
+.icon-btn{ width:36px; height:36px; display:grid; place-items:center; border-radius:12px; border:1px solid #334155; background:#0f172a; color:#dbe5f1; }
+.avatar{ width:96px; height:96px; margin:6px auto 0; border-radius:50%; display:grid; place-items:center; background:radial-gradient(120px 120px at 50% 40%, #2a3347 0, #1b2232 65%); border:2px solid rgba(255,255,255,.06); box-shadow:0 10px 30px rgba(0,0,0,.35); }
+.avatar i{ font-size:48px; color:#e8edf7; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+.hero-name{ margin:0; font-weight:800; font-size:1.35rem; color:#ecf2ff; }
+.hero-sub{ margin:0; color:#b3bfd1; font-size:.95rem; overflow-wrap:anywhere; }
+.badge-row{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+
+.btn-cta{ padding:.7rem 1.1rem; border-radius:999px; border:0; color:white; font-weight:700;
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%); box-shadow:0 8px 24px rgba(236,72,153,.25);
+}
+.cta-row{ display:flex; justify-content:center; margin-top:4px; }
+
+/* Stats circulares (3) */
+.hero-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:6px; }
+.stat{ display:grid; gap:6px; justify-items:center; }
+.stat-icon{ width:64px; height:64px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:26px; }
+.stat-icon.ig{ background: radial-gradient(circle at 25% 25%, #ff5ea1, #ff8a00); }
+.stat-icon.tg{ background: radial-gradient(circle at 25% 25%, #3b82f6, #6366f1); }
+.stat-icon.dr{ background: radial-gradient(circle at 25% 25%, #ff6b6b, #f97316); }
+.stat-value{ color:#eef4ff; font-weight:800; font-size:.95rem; }
+.stat-label{ color:#a8b3c7; font-size:.8rem; }
+
+/* Tags (se mantienen) */
+.tag{ border:1px solid transparent; border-radius:999px; padding:4px 10px; font-size:.85rem; }
+.tag.info{    background:#0b2540; color:#b4d7ff; border-color:#1e3a5f; }
+.tag.success{ background:#0f2d1b; color:#a7f3d0; border-color:#1f513a; }
+.tag.warn{    background:#382a05; color:#fde68a; border-color:#5a4a18; }
+.tag.error{   background:#341316; color:#fecaca; border-color:#55363a; }
+
+/* Detalle */
+.profile-info{ margin-top:14px; display:grid; gap:10px; }
+.info-row{ display:grid; grid-template-columns:110px 1fr; gap:10px; padding:10px 12px; border:1px solid #2b3a4e; background:#0f1725; border-radius:12px; }
+.info-row .label{ color:#9fb0c2; font-size:.9rem; align-self:center; }
+.info-row .value{ color:#e8edf3; overflow-wrap:anywhere; }
+
+/* Form edición */
+.edit-form{ margin-top:16px; border-top:1px dashed #2b3a4e; padding-top:14px; }
+.ef-grid{ display:grid; gap:10px; }
+.ef-grid label{ color:#9fb0c2; font-size:.9rem; }
+.ef-grid input[type="text"], .ef-grid input[type="date"], .ef-grid select{
+  width:100%; padding:11px 12px; border-radius:12px; border:1px solid #2a3441; background:#0f1720; color:#e6edf3; outline:none; appearance:none;
+}
+.ef-grid input:focus, .ef-grid select:focus{ border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+.ef-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
+
+/* Skeleton shimmer */
+.pf-skeleton{ display:grid; gap:10px; }
+.pf-skeleton.hidden{ display:none; }
+.pf-card.hidden{ display:none; }
+.pf-card.reveal{ animation:pfFade .35s ease both; }
+@keyframes pfFade{ from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none} }
+.sk{ position:relative; overflow:hidden; border-radius:12px; background:#161d2a; border:1px solid #22303d; }
+.sk::after{ content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent); animation:skMove 1.2s infinite; }
+@keyframes skMove{ 100%{ transform:translateX(100%);} }
+.sk-avatar{ width:96px; height:96px; margin:8px auto; border-radius:50%; }
+.sk-title{ height:22px; width:60%; margin:0 auto; }
+.sk-subtitle{ height:14px; width:50%; margin:0 auto; }
+.sk-badges{ height:28px; width:56%; margin:0 auto; border-radius:999px; }
+.sk-cta{ height:44px; width:48%; margin:0 auto; border-radius:999px; }
+.sk-stat{ height:80px; }
+.sk-row{ height:44px; }
+
+/* Footer utilitario */
+.footer.centered{ text-align:center; }
+.footer.muted{ color:#8b949e; }
+/* Perfil – mejorar ancho útil, evitar recortes y permitir wrapping en KPIs */
+.profile-shell{
+  max-width: 480px;           /* un poquito más ancho para textos largos */
+  padding-inline: 16px;       /* margen lateral cómodo en pantallas chicas */
+}
+
+.profile-card{ 
+  padding: 16px; 
+  overflow: hidden;           /* evita que nada “asome” fuera de la tarjeta */
+}
+
+/* El bloque hero ya no usa hero-top; por si aún existe en el DOM, escóndelo */
+.profile-hero .hero-top{ display:none !important; }
+
+/* KPIs: columnas flexibles y sin recortes */
+.hero-stats{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* 0 permite que el contenido encoja sin desbordar */
+  gap: 12px;
+}
+.stat{ min-width: 0; }        /* habilita que el texto pueda wrappear dentro */
+.stat-value{
+  max-width: 100%;
+  white-space: normal;        /* permite salto de línea */
+  overflow-wrap: anywhere;    /* rompe palabras largas si es necesario */
+  text-align: center;
+  line-height: 1.15;
+}
+.stat-label{
+  text-align: center;
+}
+
+/* Ajustes finos para pantallas muy estrechas */
+@media (max-width: 280px){
+  .stat-value{ font-size: .82rem; }
+  .info-row{ grid-template-columns: 100px 1fr; }
+}
+
+/* Por si algún padding negativo causaba “corte” visual a la derecha */
+.profile-page, .profile-shell, .profile-card{ box-sizing: border-box; }
+
+/* ===== PERFIL – centrado perfecto y sin recortes ===== */
+
+/* El <main class="profile-shell"> queda centrado y con padding simétrico */
+.profile-shell{
+  width: 100%;
+  max-width: 520px;                 /* ancho cómodo para móvil */
+  margin: 86px auto 28px;           /* centrado */
+  padding-inline: 16px;             /* margen lateral igual a ambos lados */
+  box-sizing: border-box;
+}
+
+/* La tarjeta ocupa el ancho disponible y NO recorta overlays (calendario) */
+.profile-card{
+  width: 100%;
+  margin-inline: auto;
+  overflow: visible;                 /* <- antes podía cortar el popup del date */
+  box-sizing: border-box;
+}
+
+/* KPIs del hero: que nunca “empujen” hacia afuera */
+.hero-stats{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.stat{ min-width: 0; }               /* permite wrap interno */
+.stat-value{
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.15;
+}
+.stat-label{ text-align: center; }
+
+/* ===== Edición: inputs 100% y date sin salirse ===== */
+.edit-form .ef-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.edit-form .ef-grid input[type="text"],
+.edit-form .ef-grid input[type="tel"],
+.edit-form .ef-grid select,
+.edit-form .ef-grid input[type="date"]{
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Pulido del <input type="date"> */
+.edit-form .ef-grid input[type="date"]{
+  padding-right: 42px;               /* deja espacio al icono */
+  font-variant-numeric: tabular-nums;
+  background: #0f1720;
+  border: 1px solid #2a3441;
+  color: #e6edf3;
+  border-radius: 12px;
+}
+.edit-form .ef-grid input[type="date"]:focus{
+  border-color:#3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* Icono del calendario en navegadores WebKit */
+.edit-form .ef-grid input[type="date"]::-webkit-calendar-picker-indicator{
+  filter: invert(1) opacity(.9);
+  background: none;
+  cursor: pointer;
+}
+
+/* Quita controles innecesarios en algunos navegadores */
+.edit-form .ef-grid input[type="date"]::-webkit-inner-spin-button,
+.edit-form .ef-grid input[type="date"]::-webkit-clear-button{
+  display: none;
+}
+
+/* Botonera: que no se pegue a los bordes en pantallas estrechas */
+.ef-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  flex-wrap: wrap;
+}
+
+/* Ajustes en pantallas muy pequeñas */
+@media (max-width: 380px){
+  .stat-value{ font-size: .82rem; }
+  .info-row{ grid-template-columns: 100px 1fr; }
 }

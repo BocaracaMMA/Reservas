@@ -1,4 +1,4 @@
-// ./js/client.js — Cliente (estudiante / profesor)
+// ./js/client.js — Cliente
 import { auth, db } from './firebase-config.js';
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
@@ -15,7 +15,6 @@ let unsubStaff   = null;
 
 /* ───────── Sidebar (mismo comportamiento que admin) ───────── */
 function ensureSidebarRuntimeDefaults(){
-  // Backdrop si no existe
   if (!document.getElementById('sidebarBackdrop')){
     const bd = document.createElement('div');
     bd.id = 'sidebarBackdrop';
@@ -28,7 +27,6 @@ function ensureSidebarRuntimeDefaults(){
     btn.setAttribute('aria-expanded', 'false');
     btn.setAttribute('aria-controls', 'sidebar');
   }
-  // Asegura visibilidad (evita flashes raros)
   if (sb){ sb.style.visibility = 'visible'; }
 }
 function toggleSidebar(forceOpen){
@@ -67,7 +65,6 @@ function bindSidebarOnce(){
   back?.addEventListener('click', ()=> toggleSidebar(false));
   back?.addEventListener('touchstart', ()=> toggleSidebar(false), { passive:true });
 
-  // Cerrar al navegar dentro del sidebar
   sb.addEventListener('click', (e)=>{
     const a = e.target.closest('a[href]');
     if (a) toggleSidebar(false);
@@ -85,24 +82,43 @@ function bindLogoutOnce(){
   });
   a.dataset.bound = '1';
 }
+
+/* ───────── Navbar: PWA + acciones ───────── */
 function bindNavbarActions(){
   const hard    = document.getElementById('navHardReset');
   const install = document.getElementById('navInstall');
   const ios     = document.getElementById('navInstallIOS');
 
-  hard?.addEventListener('click', (e)=>{ e.preventDefault(); window.forceHardReset?.(); toggleSidebar(false); });
+  hard?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    window.forceHardReset?.();
+    toggleSidebar(false);
+  });
 
+  // Intentamos función global de pwa-install.js; si no, simulamos click al botón oculto
   install?.addEventListener('click', (e)=>{
     e.preventDefault();
-    if (window.tryPWAInstall) { window.tryPWAInstall(); }
-    else if (window.deferredPrompt) { window.deferredPrompt.prompt(); }
-    else { showAlert('Ejecutando proceso de instalacion!.', 'success'); }
+    let done = false;
+    try {
+      if (typeof window.tryPWAInstall === 'function') {
+        window.tryPWAInstall();
+        done = true;
+      }
+    } catch {}
+    if (!done) {
+      const btn = document.getElementById('btnInstall');
+      if (btn) { btn.click(); done = true; }
+    }
+    if (!done) showAlert('La instalación no está disponible ahora.', 'error');
     toggleSidebar(false);
   });
 
   ios?.addEventListener('click', (e)=>{
     e.preventDefault();
-    showAlert('En iPhone: botón Compartir ▸ “Añadir a pantalla de inicio”.', 'success');
+    // Abre el tip que crea pwa-install.js
+    const tipBtn = document.getElementById('btnIosTip');
+    if (tipBtn) tipBtn.click();
+    else showAlert('En iPhone: Compartir ▸ “Añadir a pantalla de inicio”.', 'success');
     toggleSidebar(false);
   });
 }
@@ -190,45 +206,32 @@ function sizeDeckNow(){
   const face   = deck.querySelector(isProf ? '.face-prof' : '.face-student');
   if (!face) return;
 
-  // Intenta medir el contenedor real del FC
-  const inner = face.querySelector('.fc') || face.querySelector('.fc-shell') || face.firstElementChild;
+  const inner = face.querySelector('.fc') || face.firstElementChild;
   const h = (inner?.offsetHeight || face.offsetHeight || 0);
   deck.style.height = h ? `${h}px` : '';
 }
-function sizeDeckSoon(){ clearTimeout(_sizeDeckTimer); _sizeDeckTimer = setTimeout(sizeDeckNow, 50); }
+function sizeDeckSoon(){ clearTimeout(_sizeDeckTimer); _sizeDeckTimer = setTimeout(sizeDeckNow, 60); }
 function queueSizeDeck(){ sizeDeckSoon(); }
 
-/* ───────── Flip 3D sin blur (transform solo durante animación) ───────── */
-function restDeckTransforms() {
+/* ───────── Flip 3D sin blur (3D solo durante el giro) ───────── */
+function flipDeck(toProf){
   const deck = document.getElementById('calendarDeck');
   if (!deck) return;
-  const isProf = deck.dataset.mode === 'prof';
-  const s = deck.querySelector('.face-student');
-  const p = deck.querySelector('.face-prof');
 
-  // En reposo: la cara visible queda con transform:none (nítido)
-  if (s) {
-    s.style.transform = isProf ? 'rotateY(180deg)' : 'none';
-    s.style.pointerEvents = isProf ? 'none' : 'auto';
-  }
-  if (p) {
-    p.style.transform = isProf ? 'none' : 'rotateY(180deg)';
-    p.style.pointerEvents = isProf ? 'auto' : 'none';
-  }
+  // Activa 3D y transiciones SOLO durante el flip
+  deck.classList.add('toggling');
+  deck.setAttribute('data-mode', toProf ? 'prof' : 'student');
 
-  deck.classList.remove('animating');
-  queueSizeDeck();
-}
-function flipDeckAnimate() {
-  const deck = document.getElementById('calendarDeck');
-  if (!deck) return;
-  deck.classList.add('animating');
-
-  const end = () => {
-    deck.removeEventListener('transitionend', end, true);
-    restDeckTransforms(); // vuelve a estado nítido
+  // Al acabar la transición, limpias 3D y ajustas medidas
+  const done = () => {
+    deck.classList.remove('toggling');
+    deck.removeEventListener('transitionend', done, true);
+    if (toProf) { calStaff?.updateSize(); } else { calStudent?.updateSize(); }
+    queueSizeDeck();
   };
-  deck.addEventListener('transitionend', end, true);
+  // Por si el navegador no dispara transitionend en algunos nodos, metemos timeout de seguridad
+  const safety = setTimeout(done, 520);
+  deck.addEventListener('transitionend', () => { clearTimeout(safety); done(); }, true);
 }
 
 /* ───────── Calendario Estudiante ───────── */
@@ -310,7 +313,7 @@ function buildStaffCalendar(holderEl){
     height:'auto', contentHeight:'auto', expandRows:true, handleWindowResize:true,
 
     events(info, success, failure){
-      const qAll = query(collection(db,'reservations')); // requiere reglas para staff
+      const qAll = query(collection(db,'reservations'));
       unsubStaff = onSnapshot(qAll, snap=>{
         try{
           const byDate = {};
@@ -504,7 +507,6 @@ document.addEventListener('DOMContentLoaded', () => {
   bindLogoutOnce();
   bindNavbarActions();
 
-  // Recalcular alto del deck en cambios de viewport
   window.addEventListener('resize', sizeDeckSoon);
   window.addEventListener('orientationchange', sizeDeckSoon);
 
@@ -552,14 +554,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isStaff) {
       buildStaffCalendar(elProf);
 
-      // wiring del switch
+      // Switch con flip 3D nítido
       const toggle = document.getElementById('modeToggle');
       if (toggle && !toggle.dataset.bound){
         toggle.addEventListener('change', ()=>{
-          deck?.setAttribute('data-mode', toggle.checked ? 'prof' : 'student');
-          flipDeckAnimate();                 // animación 3D sin blur
-          if (toggle.checked) { calStaff?.updateSize(); } else { calStudent?.updateSize(); }
-          queueSizeDeck();
+          const toProf = !!toggle.checked;
+          flipDeck(toProf); // activa clase .toggling solo durante el giro
         });
         toggle.dataset.bound = '1';
       }
@@ -567,8 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
       deck?.setAttribute('data-mode', 'student');
     }
 
-    // Estado inicial nítido + altura correcta del deck
-    restDeckTransforms();
+    // Altura correcta del deck de inicio
     queueSizeDeck();
   });
 });

@@ -1,248 +1,206 @@
-// ./js/profile.js  (parche: cédula no editable + update parcial)
+// ./js/profile.js — Perfil estilo “card”, skeleton y avatar por género
 import { auth, db } from './firebase-config.js';
-import {
-  signOut,
-  onAuthStateChanged,
-  updateProfile,
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import {
-  doc, getDoc, setDoc
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
 
-/* ───────────────── Sidebar ───────────────── */
-(function setupSidebarToggle(){
-  const btn = document.getElementById('toggleNav');
-  const sb  = document.getElementById('sidebar');
-  if (btn && sb) btn.addEventListener('click', ()=> sb.classList.toggle('active'));
-})();
-
-/* ───────────────── Logout ───────────────── */
-const logoutBtn = document.getElementById('logoutSidebar');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    try { await signOut(auth); showAlert('Sesión cerrada','success'); }
-    catch { showAlert('Error al cerrar sesión','error'); }
-    finally { setTimeout(()=> location.href='index.html', 800); }
-  });
-}
-
-/* ───────────────── Utilidades ───────────────── */
-function crToday() {
-  return new Date(new Date().toLocaleString('en-US',{ timeZone:'America/Costa_Rica'}));
-}
-function daysUntil(dateStr){
-  if (!dateStr) return -9999;
-  const [y,m,d] = dateStr.split('-').map(Number);
-  const target  = new Date(y, m-1, d);
-  return Math.floor( (target - crToday()) / (1000*60*60*24) );
-}
-function computeState(u) {
-  if (!u?.autorizado) return { label:'Vencida', cls:'error' };
-  const left = daysUntil(u?.expiryDate);
-  if (left < 0)  return { label:'Vencida', cls:'error' };
-  if (left <= 5) return { label:'Por Vencer', cls:'warn' };
-  return { label:'Activa', cls:'success' };
-}
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    const [y,m,d] = dateStr.split('-').map(Number);
-    return new Date(y, m-1, d).toLocaleDateString('es-CR',
-      { year:'numeric', month:'long', day:'2-digit' });
-  } catch { return dateStr; }
-}
-
-/* ───────────────── Referencias UI ───────────────── */
-const displayEl  = document.getElementById('pfDisplay');
-const emailChip  = document.getElementById('pfEmail');
-const planChip   = document.getElementById('pfPlan');
-const statusChip = document.getElementById('pfStatus');
-
-const pfNombre      = document.getElementById('pfNombre');
-const pfApellidos   = document.getElementById('pfApellidos');
-const pfCorreo      = document.getElementById('pfCorreo');
-const pfCedula      = document.getElementById('pfCedula');
-const pfMembresia   = document.getElementById('pfMembresia');
-const pfEstado      = document.getElementById('pfEstado');
-const pfExpira      = document.getElementById('pfExpira');
-const pfGenero      = document.getElementById('pfGenero');
-const pfNacimiento  = document.getElementById('pfNacimiento');
-
-const editBtn       = document.getElementById('pfEdit');
-const editForm      = document.getElementById('editForm');
-
-const efNombre      = document.getElementById('efNombre');
-const efApellidos   = document.getElementById('efApellidos');
-const efCelular     = document.getElementById('efCelular');          // opcional si existe en tu HTML
-const efCorreo      = document.getElementById('efCorreo');           // opcional si existe en tu HTML
-const efGenero      = document.getElementById('efGenero');
-const efNacimiento  = document.getElementById('efNacimiento');
-
-const efCedula      = document.getElementById('efCedula');           // ← si existen, se deshabilitan
-const efCedulaTipo  = document.getElementById('efCedulaTipo');
-const efCedulaExt   = document.getElementById('efCedulaExtranjera');
-
-const efCancel      = document.getElementById('efCancel');
-
-let CURRENT_UID = null;
-let ORIGINAL = {};   // valores originales para detectar cambios
-
-/* ───────────────── Carga de perfil ───────────────── */
-onAuthStateChanged(auth, async (user) => {
-  if (!user) { location.href = './index.html'; return; }
-  CURRENT_UID = user.uid;
-
-  const ref = doc(db, 'users', CURRENT_UID);
-  const snap = await getDoc(ref);
-  const u = snap.exists() ? snap.data() : {};
-
-  // Datos base
-  const nombre    = u.nombre || '—';
-  const apellidos = u.apellidos || '—';
-  const correo    = u.correo || user.email || '—';
-  const plan      = u.membresia || u.membershipType || 'General';
-  const expiry    = u.expiryDate || '—';
-  const state     = computeState(u);
-
-  // Cédulas/IDs (solo display)
-  const cedulaTipo = u.cedulaTipo || (u.cedula ? 'nacional' : (u.cedulaExtranjera ? 'extranjera':''));
-  const cedula     = u.cedula || u.cedulaExtranjera || '—';
-
-  // Header
-  displayEl && (displayEl.textContent = `${nombre} ${apellidos}`.trim());
-  emailChip && (emailChip.textContent = correo);
-
-  planChip && (planChip.textContent = plan, planChip.className = 'tag info');
-  statusChip && (statusChip.textContent = state.label, statusChip.className = `tag ${state.cls}`);
-
-  // Grid (visual)
-  pfNombre     && (pfNombre.textContent    = nombre);
-  pfApellidos  && (pfApellidos.textContent = apellidos);
-  pfCorreo     && (pfCorreo.textContent    = correo);
-  pfCedula     && (pfCedula.textContent    = cedula);
-  pfMembresia  && (pfMembresia.textContent = plan);
-  pfEstado     && (pfEstado.textContent    = state.label);
-  pfExpira     && (pfExpira.textContent    = formatDate(expiry));
-  pfGenero     && (pfGenero.textContent    =
-    (u.genero || u.gender)
-      ? ({masculino:'Masculino', femenino:'Femenino', no_binario:'No binario', prefiero_no_decir:'Prefiero no decir', otro:'Otro', no_especificado:'Prefiero no decir'}[(u.genero||u.gender)] || '—')
-      : '—'
-  );
-  pfNacimiento && (pfNacimiento.textContent = u.birthDate ? formatDate(u.birthDate) : '—');
-
-  // Prefill edición
-  efNombre      && (efNombre.value      = nombre === '—' ? '' : nombre);
-  efApellidos   && (efApellidos.value   = apellidos === '—' ? '' : apellidos);
-  efCelular     && (efCelular.value     = u.celular || '');
-  efCorreo      && (efCorreo.value      = correo === '—' ? '' : correo);
-  efGenero      && (efGenero.value      = (u.genero || u.gender || 'no_especificado'));
-  efNacimiento  && (efNacimiento.value  = u.birthDate || '');
-
-  // CÉDULA: deshabilitar edición si los inputs existen en el HTML
-  [efCedula, efCedulaTipo, efCedulaExt].forEach(el => {
-    if (el) {
-      el.value = el.id === 'efCedulaTipo'
-        ? (cedulaTipo || '')
-        : (cedula === '—' ? '' : cedula);
-      el.setAttribute('disabled','true');
-      el.classList.add('is-readonly'); // por si quieres estilizar en CSS
-    }
-  });
-
-  // Guarda originales para diff
-  ORIGINAL = {
-    nombre: efNombre ? efNombre.value : '',
-    apellidos: efApellidos ? efApellidos.value : '',
-    celular: efCelular ? efCelular.value : undefined,
-    correo: efCorreo ? efCorreo.value : undefined,
-    genero: efGenero ? efGenero.value : undefined,
-    birthDate: efNacimiento ? efNacimiento.value : undefined,
-  };
-});
-
-/* ───────────────── Toggle edición ───────────────── */
-editBtn?.addEventListener('click', ()=> {
-  if (!editForm) return;
-  editForm.hidden = !editForm.hidden;
-  if (!editForm.hidden) efNombre?.focus();
-});
-efCancel?.addEventListener('click', ()=> { if (editForm) editForm.hidden = true; });
-
-/* ───────────────── Guardar edición (parcial) ───────────────── */
-editForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!CURRENT_UID) return;
-
-  // Toma valores actuales
-  const vNombre     = efNombre ? efNombre.value.trim()     : undefined;
-  const vApellidos  = efApellidos ? efApellidos.value.trim(): undefined;
-  const vCelular    = efCelular ? efCelular.value.trim()    : undefined;
-  const vCorreo     = efCorreo ? efCorreo.value.trim()      : undefined;
-  const vGenero     = efGenero ? efGenero.value             : undefined;
-  const vBirthDate  = efNacimiento ? efNacimiento.value     : undefined;
-
-  // Construye payload SOLO con cambios y **sin** cédula/cédulaTipo/cédulaExtranjera
-  const payload = {};
-  const putIfChanged = (key, val) => {
-    if (typeof val === 'undefined') return;
-    const before = (ORIGINAL[key] ?? '');
-    if (val !== before) payload[key] = val;  // permite vacío
-  };
-
-  putIfChanged('nombre', vNombre);
-  putIfChanged('apellidos', vApellidos);
-  putIfChanged('celular', vCelular);
-  putIfChanged('correo', vCorreo);
-  // En tu base algunas veces está 'genero' y otras 'gender'; usa 'genero' de forma canónica
-  if (typeof vGenero !== 'undefined' && vGenero !== ORIGINAL.genero) payload.genero = vGenero;
-  putIfChanged('birthDate', vBirthDate);
-
-  // Nunca enviar campos de cédula en updates desde perfil
-  // (si existen inputs, están deshabilitados y además los ignoramos aquí)
-  // payload.cedula, payload.cedulaTipo, payload.cedulaExtranjera → INTENCIONALMENTE NO
-
-  if (!Object.keys(payload).length) {
-    showAlert('No hay cambios por guardar.', 'success');
-    editForm.hidden = true;
-    return;
+/* Sidebar básico */
+function ensureSidebar(){
+  if (!document.getElementById('sidebarBackdrop')){
+    const b = document.createElement('div'); b.id='sidebarBackdrop'; b.className='sidebar-backdrop'; document.body.appendChild(b);
   }
+}
+function toggleSidebar(force){
+  const sb=document.getElementById('sidebar'), btn=document.getElementById('toggleNav'), bd=document.getElementById('sidebarBackdrop');
+  if(!sb||!btn) return;
+  const open = (typeof force==='boolean')?force:!sb.classList.contains('active');
+  if(open){ sb.classList.add('active'); btn.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; bd?.classList.add('active'); }
+  else{ sb.classList.remove('active'); btn.setAttribute('aria-expanded','false'); document.body.style.overflow=''; bd?.classList.remove('active'); }
+}
+(function bindSidebar(){
+  ensureSidebar();
+  const btn=document.getElementById('toggleNav'), sb=document.getElementById('sidebar'), bd=document.getElementById('sidebarBackdrop');
+  if(!btn||!sb||btn.dataset.bound) return;
+  const h=(e)=>{ e.preventDefault(); toggleSidebar(); };
+  btn.addEventListener('click',h); btn.addEventListener('touchstart',h,{passive:false});
+  window.addEventListener('keydown',(e)=>{ if(e.key==='Escape') toggleSidebar(false); });
+  bd?.addEventListener('click',()=>toggleSidebar(false));
+  sb.addEventListener('click',(e)=>{ if(e.target.closest('a[href]')) toggleSidebar(false); });
+  btn.dataset.bound='1';
+})();
+document.getElementById('logoutSidebar')?.addEventListener('click', async (e)=>{
+  e.preventDefault();
+  try{ await signOut(auth); showAlert('Sesión cerrada','success'); }catch{ showAlert('Error al cerrar sesión','error'); }
+  finally{ setTimeout(()=>location.href='index.html',800); }
+});
 
-  try {
-    const ref = doc(db, 'users', CURRENT_UID);
-    console.log('[profile] setDoc users/%s (merge) payload:', CURRENT_UID, payload);
-    await setDoc(ref, payload, { merge: true });
+/* Utilidades */
+function crNow(){ return new Date(new Date().toLocaleString('en-US',{ timeZone:'America/Costa_Rica'})); }
+function daysUntil(dateStr){
+  if(!dateStr) return -9999;
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const t=new Date(y,m-1,d);
+  return Math.floor((t - crNow())/(1000*60*60*24));
+}
+function computeState(u){
+  if(!u?.autorizado) return {label:'Vencida', cls:'error'};
+  const left=daysUntil(u?.expiryDate);
+  if(left<0) return {label:'Vencida', cls:'error'};
+  if(left<=5) return {label:'Por Vencer', cls:'warn'};
+  return {label:'Activa', cls:'success'};
+}
+function fmtDate(s){
+  if(!s) return '—';
+  try{ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('es-CR',{year:'numeric',month:'long',day:'2-digit'});}catch{return s;}
+}
 
-    // Actualiza displayName si cambió
-    if ((payload.nombre || payload.apellidos) && auth.currentUser) {
+/* Avatar por género (Bootstrap Icons) */
+const GENDER_ICON = {
+  masculino: 'bi-gender-male',
+  femenino: 'bi-gender-female',
+  no_binario: 'bi-gender-ambiguous',
+  prefiero_no_decir: 'bi-person',
+  otro: 'bi-person-bounding-box',
+  no_especificado: 'bi-person'
+};
+function paintAvatar(gen){
+  const wrap = document.getElementById('pfAvatar');
+  if(!wrap) return;
+  const i = wrap.querySelector('i');
+  i.className = `bi ${GENDER_ICON[gen] || 'bi-person'}`;
+}
+
+/* Refs UI */
+const sk  = document.getElementById('pfSkeleton');
+const card= document.getElementById('pfCard');
+
+const pfDisplay = document.getElementById('pfDisplay');
+const pfEmail   = document.getElementById('pfEmail');
+const pfPlan    = document.getElementById('pfPlan');
+const pfStatus  = document.getElementById('pfStatus');
+
+const pfMembresia = document.getElementById('pfMembresia');
+const pfEstado    = document.getElementById('pfEstado');
+const pfExpira    = document.getElementById('pfExpira');
+
+const pfNombre  = document.getElementById('pfNombre');
+const pfAp      = document.getElementById('pfApellidos');
+const pfCorreo  = document.getElementById('pfCorreo');
+const pfCedula  = document.getElementById('pfCedula');
+const pfGenero  = document.getElementById('pfGenero');
+const pfNac     = document.getElementById('pfNacimiento');
+
+const btnEdit   = document.getElementById('pfEdit');
+const form      = document.getElementById('editForm');
+const efNombre  = document.getElementById('efNombre');
+const efAp      = document.getElementById('efApellidos');
+const efGenero  = document.getElementById('efGenero');
+const efNac     = document.getElementById('efNacimiento');
+const efCancel  = document.getElementById('efCancel');
+
+let UID = null, ORIGINAL = {};
+
+function startLoading(){ card?.classList.add('hidden'); sk?.classList.remove('hidden'); }
+function stopLoading(){ sk?.classList.add('hidden'); if(card){ card.classList.remove('hidden'); card.classList.add('reveal'); setTimeout(()=>card.classList.remove('reveal'),400);} }
+
+/* Carga */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href='./index.html'; return; }
+  UID = user.uid;
+  try{
+    startLoading();
+    const snap = await getDoc(doc(db,'users',UID));
+    const u = snap.exists() ? snap.data() : {};
+
+    const nombre = u.nombre || '—';
+    const ap     = u.apellidos || '—';
+    const correo = u.correo || user.email || '—';
+    const plan   = u.membresia || u.membershipType || 'General';
+    const expiry = u.expiryDate || '—';
+    const state  = computeState(u);
+
+    pfDisplay.textContent = `${nombre} ${ap}`.trim();
+    pfEmail.textContent   = correo;
+    pfPlan.textContent    = plan;  pfPlan.className = 'tag info';
+    pfStatus.textContent  = state.label; pfStatus.className = `tag ${state.cls}`;
+
+    pfMembresia.textContent = plan;
+    pfEstado.textContent    = state.label;
+    pfExpira.textContent    = fmtDate(expiry);
+
+    pfNombre.textContent = nombre;
+    pfAp.textContent     = ap;
+    pfCorreo.textContent = correo;
+    pfCedula.textContent = u.cedula || u.cedulaExtranjera || '—';
+    pfGenero.textContent = (u.genero || u.gender)
+      ? ({masculino:'Masculino', femenino:'Femenino', no_binario:'No binario', prefiero_no_decir:'Prefiero no decir', otro:'Otro', no_especificado:'Prefiero no decir'}[(u.genero||u.gender)] || '—')
+      : '—';
+    pfNac.textContent = u.birthDate ? fmtDate(u.birthDate) : '—';
+
+    // Avatar por género
+    paintAvatar(u.genero || u.gender || 'no_especificado');
+
+    // Prefill edición
+    efNombre.value = nombre === '—' ? '' : nombre;
+    efAp.value     = ap === '—' ? '' : ap;
+    efGenero.value = (u.genero || u.gender || '');
+    efNac.value    = u.birthDate || '';
+
+    ORIGINAL = { nombre: efNombre.value, apellidos: efAp.value, genero: efGenero.value, birthDate: efNac.value };
+  }catch(e){
+    console.error(e); showAlert('No se pudo cargar el perfil','error');
+  }finally{ stopLoading(); }
+});
+
+/* Edición */
+btnEdit?.addEventListener('click', ()=>{ if(!form) return; form.hidden = !form.hidden; if(!form.hidden) efNombre?.focus(); });
+efCancel?.addEventListener('click', ()=>{ if(form) form.hidden = true; });
+
+form?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if(!UID) return;
+
+  const vNombre = efNombre.value.trim();
+  const vAp     = efAp.value.trim();
+  const vGenero = efGenero.value;
+  const vNac    = efNac.value;
+
+  const payload = {};
+  const put=(k,v)=>{ if(v!==ORIGINAL[k]) payload[k]=v; };
+  put('nombre', vNombre);
+  put('apellidos', vAp);
+  if (vGenero !== ORIGINAL.genero) payload.genero = vGenero;
+  put('birthDate', vNac);
+
+  if(!Object.keys(payload).length){ showAlert('No hay cambios por guardar.','success'); form.hidden=true; return; }
+
+  try{
+    await setDoc(doc(db,'users',UID), payload, { merge:true });
+
+    // actualizar auth displayName si cambió
+    if ((payload.nombre || payload.apellidos) && auth.currentUser){
       const n = payload.nombre ?? ORIGINAL.nombre ?? '';
       const a = payload.apellidos ?? ORIGINAL.apellidos ?? '';
-      try { await updateProfile(auth.currentUser, { displayName: `${n} ${a}`.trim() }); } catch {}
+      try{ await updateProfile(auth.currentUser, { displayName:`${n} ${a}`.trim() }); }catch{}
     }
 
-    // Refleja en UI
-    if ('nombre' in payload)    pfNombre    && (pfNombre.textContent = payload.nombre || '—');
-    if ('apellidos' in payload) pfApellidos && (pfApellidos.textContent = payload.apellidos || '—');
-    if ('correo' in payload)    pfCorreo    && (pfCorreo.textContent = payload.correo || '—');
-    if ('genero' in payload)    pfGenero    && (pfGenero.textContent =
-      payload.genero ? ({masculino:'Masculino', femenino:'Femenino', no_binario:'No binario', prefiero_no_decir:'Prefiero no decir', otro:'Otro', no_especificado:'Prefiero no decir'}[payload.genero] || '—') : '—'
-    );
-    if ('birthDate' in payload) pfNacimiento && (pfNacimiento.textContent = payload.birthDate ? formatDate(payload.birthDate) : '—');
+    // reflejar en UI
+    if('nombre' in payload){ pfNombre.textContent = payload.nombre || '—'; }
+    if('apellidos' in payload){ pfAp.textContent = payload.apellidos || '—'; }
+    if('genero' in payload){
+      pfGenero.textContent = payload.genero
+        ? ({masculino:'Masculino', femenino:'Femenino', no_binario:'No binario', prefiero_no_decir:'Prefiero no decir', otro:'Otro', no_especificado:'Prefiero no decir'}[payload.genero] || '—')
+        : '—';
+      paintAvatar(payload.genero || 'no_especificado');
+    }
+    if('birthDate' in payload){ pfNac.textContent = payload.birthDate ? fmtDate(payload.birthDate) : '—'; }
 
-    // Actualiza ORIGINAL con lo nuevo
+    pfDisplay.textContent = `${pfNombre.textContent} ${pfAp.textContent}`.trim();
     ORIGINAL = { ...ORIGINAL, ...payload };
-
     showAlert('Perfil actualizado','success');
-    editForm.hidden = true;
-
-  } catch (err) {
-    console.error('[profile] Firestore error:', err);
-    // Sugerencia útil para reglas
-    if (err?.code === 'permission-denied') {
-      showAlert('Permisos insuficientes para guardar el perfil. Revisa reglas o campos sensibles.', 'error');
-    } else {
-      showAlert('No se pudo actualizar el perfil.', 'error');
-    }
+    form.hidden = true;
+  }catch(err){
+    console.error(err);
+    showAlert(err?.code==='permission-denied' ? 'Permisos insuficientes.' : 'No se pudo actualizar el perfil.','error');
   }
 });
