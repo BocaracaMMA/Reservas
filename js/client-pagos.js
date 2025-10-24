@@ -1,7 +1,7 @@
 // ./js/client-pagos.js
 import { auth, db, storage } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { doc, getDoc, setDoc, serverTimestamp, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { doc, getDoc, serverTimestamp, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 import { showAlert } from './showAlert.js';
 
@@ -53,7 +53,8 @@ let prevURL    = null;
 /* ======= Drag & drop + vista previa ======= */
 function clearPreview(){
   if (prevURL) { URL.revokeObjectURL(prevURL); prevURL = null; }
-  prevImg.src = ''; prevWrap.hidden = true;
+  if (prevImg) prevImg.src = '';
+  if (prevWrap) prevWrap.hidden = true;
 }
 function showPreview(file){
   clearPreview();
@@ -64,7 +65,7 @@ function showPreview(file){
 }
 function updateFileName(){
   const f = fileIn.files?.[0];
-  fileName.textContent = f?.name || '';
+  if (fileName) fileName.textContent = f?.name || '';
   showPreview(f || null);
 }
 
@@ -78,7 +79,25 @@ drop.addEventListener('drop', e => {
 fileIn.addEventListener('change', updateFileName);
 
 /* ======= Util ======= */
-const WA_NUMBER = '50664289694'; // ← número de la academia
+const WA_NUMBER = '50664289694'; // número de la academia
+
+// Normaliza un monto a número: acepta "₡20.000", "20 000", "20000.50", etc.
+function parseMonto(v){
+  if (!v) return NaN;
+  // quita todo menos dígitos, punto y coma; luego usa el último separador como decimal
+  let s = String(v).trim();
+  s = s.replace(/[^\d.,-]/g, '');
+  // si hay ambas , y ., asumimos que el decimal es el último
+  const lastComma = s.lastIndexOf(',');
+  const lastDot   = s.lastIndexOf('.');
+  if (lastComma > lastDot) {
+    s = s.replace(/\./g, '').replace(',', '.'); // formato 20.000,50 -> 20000.50
+  } else {
+    s = s.replace(/,/g, ''); // formato 20,000.50 -> 20000.50
+  }
+  return Number(s);
+}
+
 const fmtMonth = (ym) => {
   if (!ym) return '—';
   const [y,m] = ym.split('-').map(Number);
@@ -108,16 +127,28 @@ onAuthStateChanged(auth, async user=>{
 form.addEventListener('submit', async (e)=>{
   e.preventDefault();
 
-  if (!fileIn.files?.[0]) { showAlert('Adjunta la imagen del comprobante.','error'); return; }
-  if (!nameEl.value.trim() || !idEl.value.trim() || !mtdEl.value || !amtEl.value || !monEl.value){
-    showAlert('Completa todos los campos obligatorios.','error'); return;
+  const file = fileIn.files?.[0];
+  if (!file) { showAlert('Adjunta la imagen del comprobante.','error'); return; }
+  if (!/^image\//i.test(file.type || '')) { showAlert('El comprobante debe ser una imagen.','error'); return; }
+  if (file.size > 10 * 1024 * 1024) { showAlert('Máximo 10 MB por imagen.','error'); return; }
+
+  // Validaciones de campos
+  const nombre = nameEl.value.trim();
+  const cedula = idEl.value.trim();
+  const metodo = mtdEl.value.trim();
+  const mesStr = monEl.value;              // "YYYY-MM"
+  const monto  = parseMonto(amtEl.value);  // número robusto
+  const codigo = codeEl.value.trim();
+
+  if (!nombre || !cedula || !metodo || !mesStr || !Number.isFinite(monto)) {
+    showAlert('Revisa los datos: método, mes y monto numérico son obligatorios.','error');
+    return;
   }
 
   try{
     sendBtn.disabled = true; payStatus.classList.add('show');
 
     const user = auth.currentUser;
-    const file = fileIn.files[0];
 
     // Ruta: payments/<uid>/<yyyy>/<mm>/<ts>_<name>
     const now = new Date();
@@ -132,30 +163,34 @@ form.addEventListener('submit', async (e)=>{
     await uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
     const url = await getDownloadURL(storageRef);
 
-    // Registrar en Firestore
-    const payDoc = await addDoc(collection(db,'payments'), {
+    // Registrar en Firestore — incluye alias `mes` para reglas antiguas
+    const payload = {
       uid: user.uid,
-      nombre: nameEl.value.trim(),
-      cedula: idEl.value.trim(),
-      metodo: mtdEl.value,
-      monto: Number(amtEl.value),
-      mesPagado: monEl.value,              // YYYY-MM
-      mesPagadoHuman: fmtMonth(monEl.value),
-      codigo: codeEl.value.trim() || null,
-      filePath: path,
-      fileURL: url,
+      nombre,
+      cedula,
+      metodo,
+      monto,                 // number
+      mesPagado: mesStr,     // "YYYY-MM"
+      mes: mesStr,           // ← alias por compatibilidad con reglas estrictas
+      mesPagadoHuman: fmtMonth(mesStr),
+      codigo: codigo || null,
+      filePath: path,        // string
+      fileURL: url,          // string
+      status: 'pendiente',
       createdAt: serverTimestamp()
-    });
+    };
+
+    const payDoc = await addDoc(collection(db,'payments'), payload);
 
     // Abrir WhatsApp con mensaje
     const texto = [
       `*Nuevo comprobante de pago*`,
-      `Nombre: ${nameEl.value.trim()}`,
-      `Cédula: ${idEl.value.trim()}`,
-      `Método: ${mtdEl.value}`,
-      `Monto: ${amtEl.value}`,
-      `Mes: ${fmtMonth(monEl.value)}`,
-      codeEl.value.trim() ? `Código: ${codeEl.value.trim()}` : null,
+      `Nombre: ${nombre}`,
+      `Cédula: ${cedula}`,
+      `Método: ${metodo}`,
+      `Monto: ${monto}`,
+      `Mes: ${fmtMonth(mesStr)} (${mesStr})`,
+      codigo ? `Código: ${codigo}` : null,
       `Archivo: ${url}`,
       `ID registro: ${payDoc.id}`
     ].filter(Boolean).join('\n');
