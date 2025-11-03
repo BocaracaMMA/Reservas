@@ -1630,6 +1630,8 @@ body.client-page main.container{ padding-bottom: 20px; }
 .profile-page, .profile-shell, .profile-card{ box-sizing: border-box; }
 
 /* ===== PERFIL – centrado perfecto y sin recortes ===== */
+/* ===== PERFIL – centrado perfecto y sin recortes ===== */
+/* ===== PERFIL – centrado perfecto y sin recortes ===== */
 
 /* El <main class="profile-shell"> queda centrado y con padding simétrico */
 .profile-shell{
@@ -1664,6 +1666,8 @@ body.client-page main.container{ padding-bottom: 20px; }
 }
 .stat-label{ text-align: center; }
 
+/* ===== Edición: inputs 100% y date sin salirse ===== */
+/* ===== Edición: inputs 100% y date sin salirse ===== */
 /* ===== Edición: inputs 100% y date sin salirse ===== */
 .edit-form .ef-grid{
   display: grid;
@@ -1720,6 +1724,8 @@ body.client-page main.container{ padding-bottom: 20px; }
   .info-row{ grid-template-columns: 100px 1fr; }
 }
 
+/* ========= CLIENT PAGOS ========= */
+/* ========= CLIENT PAGOS ========= */
 /* ========= CLIENT PAGOS ========= */
 .pagos-page .container{ max-width:720px; margin:0 auto; }
 
@@ -1813,3 +1819,170 @@ body.client-page main.container{ padding-bottom: 20px; }
   max-width:100%; max-height:220px;
   margin-top:8px; border-radius:12px; border:1px solid #2b3446;
 }
+
+/* === Registro (layout & estética) === */
+/* === Registro (layout & estética) === */
+/* === Registro (layout & estética) === */
+.hidden{ display:none !important; }
+.t-center{ text-align:center; }
+
+.page-register{ background: #0b0f14; }
+
+.reg-page{
+  width:100%;
+  max-width:860px;
+  margin:72px auto 24px;
+  padding:0 14px;
+  box-sizing:border-box;
+}
+
+.reg-card{
+  width:min(92vw, 480px);
+  margin:0 auto;
+  background:#0f141a;
+  border:1px solid #26313d;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 10px 24px rgba(0,0,0,.28);
+}
+
+.reg-head{ display:grid; gap:8px; place-items:center; text-align:center; margin-bottom:4px; }
+.reg-logo{ width:64px; height:64px; border-radius:14px; }
+.reg-card h1{ margin:4px 0 0; font-size:clamp(1.2rem, 4.6vw, 1.6rem); font-weight:800; color:#e8edf3; }
+.reg-subtitle{ margin:0; color:#95a1ad; font-size:.95rem; }
+
+.reg-form{ display:grid; gap:12px; }
+.reg-row-2{ display:grid; gap:10px; grid-template-columns:1fr; }
+@media (min-width:640px){ .reg-row-2{ grid-template-columns:1fr 1fr; } }
+
+.reg-form label{ color:#9fb0c2; font-size:.92rem; display:block; margin-bottom:6px; }
+
+.reg-form input,
+.reg-form select{
+  width:100%;
+  padding:12px 12px;
+  border-radius:12px;
+  border:1px solid #2a3441;
+  background:#0f1720;
+  color:#e6edf3;
+  outline:none;
+  box-sizing:border-box;
+}
+.reg-form input:focus, .reg-form select:focus{
+  border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* email: input + domain select en línea cuando se pueda */
+.email-wrap{
+  display:grid; grid-template-columns: 1fr; gap:8px;
+}
+@media (min-width:420px){
+  .email-wrap{ grid-template-columns: 1fr auto; align-items:stretch; }
+}
+.email-wrap select{ min-width: 155px; }
+
+/* hints y acciones */
+.hint{ color:#8b949e; font-size:.85rem; margin-top:4px; }
+.reg-actions{ display:flex; gap:10px; justify-content:center; margin-top:6px; }
+.reg-actions .btn{ width:auto; flex:0 0 auto; }
+.reg-actions .btn.primary{ min-width:160px; }
+.reg-actions .btn.outline{ min-width:110px; padding-inline:16px; }
+
+/* 1) En register.html apaga el centrado de auth-center y deja que la página haga scroll */
+body.page-register.auth-center{
+  display: block;
+  min-height: auto;
+  align-items: initial;
+  justify-content: initial;
+}
+
+/* 2) Evita el overflow por usar vw dentro de un contenedor con padding */
+.reg-card{
+  width: 100%;           /* ← en lugar de width:min(92vw, 480px) */
+  max-width: 480px;
+}
+
+/* 3) (Opcional, pero útil) Haz el padding lateral adaptativo para móviles muy estrechos */
+.reg-page{
+  padding-inline: clamp(10px, 4vw, 14px);
+}
+
+/* 4) Micro-safe: asegura el box model para que padding/border no sumen fuera de cálculo */
+*, *::before, *::after{ box-sizing: border-box; }
+
+/* ── Pending users: icon buttons (✓ / ✕) ───────────────────── */
+.row-actions{
+  display:flex; gap:8px; justify-content:flex-end; align-items:center;
+}
+
+.icon-btn{
+  display:inline-grid; place-items:center;
+  width:36px; height:36px; line-height:1;
+  border-radius:10px; cursor:pointer; user-select:none;
+  border:1px solid #2b3446; background:#0f1720; color:#e6edf3;
+  transition:transform .06s ease, background .15s ease, border-color .15s ease;
+  font-weight:900; font-size:18px;
+}
+.icon-btn:active{ transform:scale(.98); }
+.icon-btn:focus{ outline:none; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+
+/* estados */
+.icon-btn.approve{ color:#b7f5c9; border-color:#1e5b31; background:linear-gradient(180deg,#0f1a13,#0b1510); }
+.icon-btn.approve:hover{ background:#12261a; border-color:#2a8a49; }
+
+.icon-btn.reject{  color:#ffd6da; border-color:#6b2a2f; background:linear-gradient(180deg,#1a0f11,#140b0d); }
+.icon-btn.reject:hover{ background:#2a1518; border-color:#a23a42; }
+
+
+/* ===== Email “input group” (usuario + dominio) ===== */
+.email-group{
+  position:relative;
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:0;
+  width:100%;
+}
+.email-group input{
+  border-right:0;
+  border-radius:12px 0 0 12px;
+  padding:12px;
+  background:#0f1720;
+  border:1px solid #2a3441;
+  color:#e6edf3;
+  outline:none;
+}
+.email-group input:focus{
+  border-color:#3b82f6;
+  box-shadow:0 0 0 3px rgba(59,130,246,.15);
+}
+
+.email-addon{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:0 12px;
+  min-width:150px; height:100%;
+  border-radius:0 12px 12px 0;
+  background:#101821;
+  color:#cbd5e1;
+  border:1px solid #2a3441; border-left:0;
+  cursor:pointer; font-weight:700;
+}
+.email-addon .at{ opacity:.9; }
+.email-addon .chev{ margin-left:6px; opacity:.7; }
+.email-addon:focus{ outline:none; box-shadow:0 0 0 3px rgba(59,130,246,.15); border-color:#3b82f6; }
+
+.email-menu{
+  position:absolute; right:0; top:calc(100% + 8px);
+  background:#0f141a; border:1px solid #22303d; border-radius:12px;
+  box-shadow:0 16px 40px rgba(0,0,0,.45);
+  list-style:none; margin:0; padding:6px;
+  min-width: 190px; max-height: 240px; overflow:auto; z-index: 20;
+}
+.email-menu .item{
+  padding:10px 12px; border-radius:10px; cursor:pointer; color:#e6edf3;
+}
+.email-menu .item:hover{ background:#12202c; }
+
+@media (max-width:380px){
+  .email-addon{ min-width:130px; }
+}
+

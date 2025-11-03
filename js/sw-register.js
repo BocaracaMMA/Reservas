@@ -2,7 +2,7 @@
 (function(){
   if (!('serviceWorker' in navigator)) return;
 
-  const swUrl = './service-worker.js?v=2025.10.20.v7';
+  const swUrl = './service-worker.js?v=2025.11.02.v1';
 
   // Pequeño guard para no recargar más de 1 vez en 2 segundos
   const RELOAD_GUARD_KEY = 'sw-reload-guard';

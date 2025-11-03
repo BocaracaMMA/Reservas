@@ -1,5 +1,5 @@
 // ./service-worker.js
-const APP_VERSION = '2025.10.20.v7';
+const APP_VERSION = '2025.11.02.v1';
 const CACHE_NAME  = `app-${APP_VERSION}`;
 
 // Scope real (en GH Pages: /Reservas/)

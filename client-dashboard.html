@@ -13,7 +13,7 @@
 
   <!-- PWA -->
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon">
-  <link rel="manifest" href="./manifest.webmanifest?v=2025.10.20.v7">
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.11.02.v1">
   <meta name="theme-color" content="#0d1117">
   <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -89,6 +89,35 @@
   </main>
 
   <div id="toast-container"></div>
+
+    <!-- Bloqueo de no aprobrados -->
+  <script type="module">
+    import { app } from './js/firebase-config.js';
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = './index.html'; return; }
+
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        const u = snap.exists() ? snap.data() : null;
+
+        // Si no está aprobado → mensaje + signout + redirección
+        if (!u || u.approved === false) {
+          (window.showAlert || alert)('Tu cuenta está pendiente de aprobación. Te avisaremos por correo.', 'warn');
+          try { await signOut(auth); } catch {}
+          location.href = './index.html';
+          return;
+        }
+      } catch(e) {
+        console.warn('No se pudo verificar aprobación:', e);
+      }
+    });
+  </script>
 
   <!-- Libs JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>

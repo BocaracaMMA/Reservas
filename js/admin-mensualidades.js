@@ -1,8 +1,9 @@
 // ./js/admin-mensualidades.js
-import { auth } from './firebase-config.js';
+import { auth, db } from './firebase-config.js';
 import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { collection, getDocs, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { db } from './firebase-config.js';
+import {
+  collection, getDocs, updateDoc, doc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from './showAlert.js';
 import { gateAdminPage } from './role-guard.js';
 import { isOculto } from './visibility-rules.js';
@@ -83,6 +84,39 @@ function stateToClass(s){
   return '';
 }
 
+// ===== util mes actual / próximo (CR) =====
+function getCRYearMonth(){
+  const now = todayCRDate();
+  return { y: now.getFullYear(), m: now.getMonth()+1 };
+}
+function currentYearMonthStr(){
+  const { y, m } = getCRYearMonth();
+  return `${y}-${String(m).padStart(2,'0')}`;
+}
+function isCurrentMonth(ym){ // ym: 'YYYY-MM'
+  const { y, m } = getCRYearMonth();
+  if (!ym) return false;
+  const [yy,mm] = ym.split('-').map(Number);
+  return (yy === y && mm === m);
+}
+function isNextMonth(ym){
+  const { y, m } = getCRYearMonth();
+  if (!ym) return false;
+  const [yy,mm] = ym.split('-').map(Number);
+  const nextY = m === 12 ? y+1 : y;
+  const nextM = m === 12 ? 1   : m+1;
+  return (yy === nextY && mm === nextM);
+}
+function lastDayOfMonth(ym){ // 'YYYY-MM' -> 'YYYY-MM-DD'
+  if (!ym) return '';
+  const [yy,mm] = ym.split('-').map(Number);
+  const last = new Date(yy, mm, 0); // día 0 del mes siguiente
+  const y = last.getFullYear();
+  const m = String(last.getMonth()+1).padStart(2,'0');
+  const d = String(last.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
 // ─── Paginación Mensualidades ───
 let MENS_PAGE = 1;
 const MENS_PER_PAGE = 15;
@@ -110,16 +144,48 @@ function renderMensPager(total){
   cont.querySelector('#pgm-next')?.addEventListener('click', ()=>{ MENS_PAGE++; renderMensualidades(); });
 }
 
-// ===== datos + render =====
+// ===== datos + enforcement =====
 async function loadMensualidades(){
   try {
     const snap = await getDocs(collection(db,'users'));
     usersCache = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    // Enforce desautorización automática por vencimiento
+    const changed = await enforceAuthByExpiry(usersCache);
+    if (changed) {
+      // Releer para reflejar cambios y estados visuales
+      const snap2 = await getDocs(collection(db,'users'));
+      usersCache = snap2.docs.map(d => ({ id:d.id, ...d.data() }));
+    }
     renderMensualidades();
   } catch (e) {
     console.error('Error cargando mensualidades:', e);
     showAlert('No se pudieron cargar los datos','error');
   }
+}
+
+/**
+ * Desautoriza automáticamente a quienes están vencidos.
+ * Se ejecuta al entrar a Mensualidades y tras cada operación relevante.
+ * Devuelve true si hubo cambios en BD.
+ */
+async function enforceAuthByExpiry(list){
+  const updates = [];
+  const now = todayCRDate();
+  for (const u of list){
+    if (!u) continue;
+    if (!u.expiryDate) continue; // si no hay fecha, no tocamos nada automáticamente
+    const [y,m,d] = u.expiryDate.split('-').map(Number);
+    const exp = new Date(y, m-1, d, 23,59,59);
+    if (exp < now && u.autorizado === true) {
+      updates.push(updateDoc(doc(db,'users',u.id), {
+        autorizado: false,
+        autoRevokedAt: serverTimestamp()
+      }));
+    }
+  }
+  if (!updates.length) return false;
+  await Promise.allSettled(updates);
+  return true;
 }
 
 function renderMensualidades(){
@@ -130,6 +196,8 @@ function renderMensualidades(){
   const order       = $sort()?.value   || 'az';
   const queryText   = norm($search()?.value || '');
   const tokens      = queryText.split(/\s+/).filter(Boolean);
+
+  const crMin = currentYearMonthStr(); // ← BLOQUEA MESES PASADOS EN LA UI
 
   let list = usersCache
     .map(u => ({ ...u, __state: getMembershipState(u) }))
@@ -146,7 +214,7 @@ function renderMensualidades(){
 
       // Búsqueda
       if (!tokens.length) return true;
-      const hay = norm(`${u.nombre||''} ${u.correo||''} ${u.cedula||''}`);
+      const hay = norm(`${u.nombre||''} ${u.correo||''}`);
       return tokens.every(t => hay.includes(t));
     });
 
@@ -177,7 +245,14 @@ function renderMensualidades(){
       </td>
       <td>${exp}</td>
       <td><span class="${cls}">${st}</span></td>
-      <td><input type="month" id="month-${uid}" value="${exp==='—'?'':exp.slice(0,7)}"></td>
+      <td>
+        <input
+          type="month"
+          id="month-${uid}"
+          min="${crMin}"
+          value="${exp==='—'?'':exp.slice(0,7)}"
+        >
+      </td>
       <td><button class="btnPay btn" data-uid="${uid}">Guardar</button></td>
     `;
     frag.appendChild(tr);
@@ -188,6 +263,7 @@ function renderMensualidades(){
   tbody.onclick = async (e)=>{
     const t = e.target;
 
+    // Toggle manual de autorizado (se respeta, pero será revertido automáticamente si expira)
     if (t.matches('input[type="checkbox"][data-uid]')){
       const uid = t.getAttribute('data-uid');
       const checked = t.checked;
@@ -201,21 +277,32 @@ function renderMensualidades(){
       }
     }
 
+    // Guardar pago → fija expiryDate al último día del mes elegido
+    // y autoriza SOLO si es el mes actual o el próximo (CR).
     if (t.matches('.btnPay[data-uid]')){
       const uid = t.getAttribute('data-uid');
       const monthVal = document.getElementById(`month-${uid}`)?.value || '';
       if (!monthVal){ showAlert('Selecciona un mes','error'); return; }
-      const [y,m] = monthVal.split('-').map(Number);
-      const lastDay = new Date(y, m, 0).toISOString().split('T')[0];
+
+      const expiryStr = lastDayOfMonth(monthVal);
+      const shouldAuthorize = isCurrentMonth(monthVal) || isNextMonth(monthVal);
+
       try {
         await updateDoc(doc(db,'users',uid), {
-          expiryDate: lastDay,
-          autorizado: true,
+          expiryDate: expiryStr,
+          autorizado: shouldAuthorize,
           lastPaymentAt: serverTimestamp()
         });
-        showAlert('Pago registrado','success');
+        showAlert(
+          shouldAuthorize
+            ? 'Pago registrado y reservas autorizadas.'
+            : 'Pago registrado. (Reservas no autorizadas: seleccione mes actual o próximo).',
+          'success'
+        );
         await loadMensualidades();
-      } catch { showAlert('Error al guardar pago','error'); }
+      } catch {
+        showAlert('Error al guardar pago','error');
+      }
     }
   };
 }
