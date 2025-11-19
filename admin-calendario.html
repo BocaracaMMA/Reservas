@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurar Calendario</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon" />
+
+  <!-- FullCalendar unificado -->
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+</head>
+
+<body>
+  <!-- Botón hamburguesa -->
+  <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <nav id="sidebar" class="sidebar">
+    <ul>
+      <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
+      <li><a href="./admin-usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
+      <li><a href="./admin-mensualidades.html"><i class="bi bi-cash-coin"></i> Mensualidades</a></li>
+      <li><a href="./admin-roles.html"><i class="bi bi-person-rolodex"></i> Roles</a></li>
+      <li><a href="./admin-reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
+      <li><a href="./admin-metrics.html"><i class="bi bi-pie-chart-fill"></i> Métricas</a></li>
+      <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <h1>Configuración del Calendario</h1>
+
+    <div id="calendarAdmin"></div>
+  </main>
+
+  <!-- Modal crear clase -->
+  <div id="modalCreateClass" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>Nueva clase</h2>
+
+      <label>Tipo de clase</label>
+      <input id="createType" type="text" placeholder="MMA Adultos">
+
+      <label>Profesor</label>
+      <select id="createProfessor">
+        <option value="">Seleccione</option>
+      </select>
+
+      <label>Hora inicio</label>
+      <input id="createStartTime" type="time">
+
+      <label>Hora fin</label>
+      <input id="createEndTime" type="time">
+
+      <label>Capacidad mínima</label>
+      <input id="createMinCap" type="number" min="0" value="1">
+
+      <label>Capacidad máxima</label>
+      <input id="createMaxCap" type="number" min="1" value="20">
+
+      <label>Color / tipo de clase</label>
+      <select id="createColorKey">
+        <option value="MMA - GENERAL">MMA - GENERAL</option>
+        <option value="SPARRING">SPARRING</option>
+        <option value="PRIVADA">PRIVADA</option>
+        <option value="_custom">Otro (personalizado)...</option>
+      </select>
+
+      <input id="createColorKeyCustom"
+            type="text"
+            class="hidden"
+            placeholder="Ej: MMA Niños">
+
+
+      <label class="modal-flag"><input id="createPermanent" type="checkbox" checked>Horario permanente (se repite todas las semanas)</label>
+
+      <div class="modal-buttons">
+        <button id="btnCreateSave">Guardar</button>
+        <button id="btnCreateCancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal editar clase -->
+  <div id="modalEditClass" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>Editar clase</h2>
+
+      <input id="editId" type="hidden">
+
+      <label>Tipo de clase</label>
+      <input id="editType" type="text">
+
+      <label>Profesor</label>
+      <select id="editProfessor"></select>
+
+      <label>Hora inicio</label>
+      <input id="editStartTime" type="time">
+
+      <label>Hora fin</label>
+      <input id="editEndTime" type="time">
+
+      <label>Capacidad mínima</label>
+      <input id="editMinCap" type="number" min="0">
+
+      <label>Capacidad máxima</label>
+      <input id="editMaxCap" type="number" min="1">
+
+      <label>Color / tipo de clase</label>
+      <select id="editColorKey">
+        <option value="MMA - GENERAL">MMA - GENERAL</option>
+        <option value="SPARRING">SPARRING</option>
+        <option value="PRIVADA">PRIVADA</option>
+        <option value="_custom">Otro (personalizado)...</option>
+      </select>
+      
+      <input id="editColorKeyCustom"
+            type="text"
+            class="hidden"
+            placeholder="Ej: MMA Niños">
+
+
+     <label class="modal-flag"><input id="editPermanent" type="checkbox">Horario permanente (se repite todas las semanas)</label>
+
+      <div class="modal-buttons">
+        <button id="btnEditSave">Guardar</button>
+        <button id="btnEditDelete">Eliminar</button>
+        <button id="btnEditCancel">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/firebase-config.js"></script>
+
+  <!-- Iconos (lucide) como en admin-dashboard -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Lógica común de admin: sidebar, logout, gateo de rol, etc. -->
+<script type="module" src="./js/admin.js"></script>
+
+<script type="module" src="./js/admin-calendario.js"></script>
+  
+
+</body>
+</html>

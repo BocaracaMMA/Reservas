@@ -1,4 +1,4 @@
-// ./js/reportes.js
+// ./js/admin-reportes.js
 
 import { db } from "./firebase-config.js";
 import {

@@ -102,7 +102,7 @@ if (logoutButton) {
 
 
 
-// ─── TOGGLE DEL SIDEBAR EN REPORTES.HTML ───────────────────────────────────────
+// ─── TOGGLE DEL SIDEBAR EN admin-reportes.html ───────────────────────────────────────
 const toggleNavBtn = document.getElementById('toggleNav');
 if (toggleNavBtn) {
   toggleNavBtn.addEventListener('click', () => {
@@ -115,7 +115,7 @@ if (toggleNavBtn) {
 
 
 
-// ─── CERRAR SESIÓN DESDE EL SIDEBAR EN REPORTES.HTML ───────────────────────────
+// ─── CERRAR SESIÓN DESDE EL SIDEBAR EN admin-reportes.html ───────────────────────────
 const logoutSidebarLink = document.getElementById('logoutSidebar');
 if (logoutSidebarLink) {
   logoutSidebarLink.addEventListener('click', async (e) => {
@@ -134,7 +134,7 @@ if (logoutSidebarLink) {
   if (!('serviceWorker' in navigator)) return;
 
   // Debe coincidir con APP_VERSION del SW
-  const SW_URL = './service-worker.js?v=2025.11.02.v1';
+  const SW_URL = './service-worker.js?v=2025.11.19.v1';
   let reg = null;
 
   async function ensureReg() {

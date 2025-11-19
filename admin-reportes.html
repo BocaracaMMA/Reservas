@@ -24,7 +24,7 @@
   <!-- SheetJS (para exportar a Excel) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <link rel="manifest" href="./manifest.webmanifest?v=2025.11.02.v1">
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.11.19.v1">
   <meta name="theme-color" content="#0d1117">
 
   <!-- iOS “Add to Home Screen” soporte -->
@@ -48,7 +48,6 @@
       <li><a href="./admin-usuarios.html"><i class="bi bi-people-fill"></i> Usuarios</a></li>
       <li><a href="./admin-mensualidades.html"><i class="bi bi-cash-coin"></i> Mensualidades</a></li>
       <li><a href="./admin-roles.html"><i class="bi bi-person-rolodex"></i></i> Roles</a></li>
-      <li><a href="./reportes.html"><i class="bi bi-file-earmark-text-fill"></i> Reportes</a></li>
       <li><a href="./admin-metrics.html"><i class="bi bi-pie-chart-fill"></i></i> Metricas</a></li>
       <li><a href="#" id="logoutSidebar"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
     </ul>
@@ -82,34 +81,26 @@
         </div>
 
         <div id="reporte-container" class="reporte-container mt-4">
-          <!-- Acá irán las tablas que genere reportes.js en tiempo real -->
+          <!-- Acá irán las tablas que genere admin-reportes.js en tiempo real -->
         </div>
       </div>
     </div>
-
-  <footer>
-    <p>
-      © 2025
-      <a href="https://github.com/luisillo1cr" target="_blank">luisillo1cr</a>.
-      Todos los derechos reservados.
-    </p>
-  </footer>
 
   <!-- Asegúrate de que firebase-config.js exporte 'db' y 'auth' -->
   <script type="module" src="./js/firebase-config.js"></script>
 
   <!-- Lógica para obtener y mostrar los reportes -->
-  <script type="module" src="./js/reportes.js"></script>
+  <script type="module" src="./js/admin-reportes.js"></script>
 
   <!-- Lógica para descargar a Excel lo que se muestra en #reporte-container -->
-  <script type="module" src="./js/descargar-reportes.js"></script>
+  <script type="module" src="./js/descargar-admin-reportes.js"></script>
 
   <!-- script.js (controla el comportamiento de navbar/sidebar) -->
   <script type="module" src="./js/script.js"></script>
 
   <!-- Script inline para asignar los listeners del botón “Ver reporte” -->
   <script>
-    // Nos aseguramos de que reportes.js haya expuesto window.getAsistencia
+    // Nos aseguramos de que admin-reportes.js haya expuesto window.getAsistencia
     document.addEventListener("DOMContentLoaded", () => {
       const btnVer = document.getElementById("btnVerReporte");
       btnVer.addEventListener("click", () => {

@@ -15,7 +15,7 @@
   ],
   "shortcuts": [
     { "name": "Calendario", "short_name": "Calendario", "url": "/Reservas/client-dashboard.html?source=shortcut-cal" },
-    { "name": "Perfil", "short_name": "Perfil", "url": "/Reservas/profile.html?source=shortcut-profile" }
+    { "name": "Perfil", "short_name": "Perfil", "url": "/Reservas/client-profile.html?source=shortcut-profile" }
   ],
   "prefer_related_applications": false
 }

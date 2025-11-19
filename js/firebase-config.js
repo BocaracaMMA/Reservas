@@ -8,7 +8,8 @@ import { getStorage }     from "https://www.gstatic.com/firebasejs/11.6.1/fireba
 import { getDatabase }    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-setLogLevel('debug');
+// para ver todo en consola usar 'debug', para errores 'error'
+// setLogLevel('error');
 
 // 2) La configuración
 const firebaseConfig = {

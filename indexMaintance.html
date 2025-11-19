@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bocaraca MMA | Mantenimiento</title>
+
+  <!-- Estilos principales del proyecto -->
+  <link rel="stylesheet" href="./css/maintance.css">
+  <link rel="icon" type="image/png" href="./assets/favicon.ico" />
+  <!-- Bootstrap Icons (usado en el resto del proyecto) -->
+  <link 
+    rel="stylesheet" 
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+  >
+
+  <!-- Meta para PWA / colores del navegador (opcional, por si ya los usas) -->
+  <meta name="theme-color" content="#000000">
+</head>
+<body class="maintenance-body">
+
+  <div class="app-wrapper">
+
+    <!-- Header simple con el logo/nombre del proyecto -->
+
+    <main class="maintenance-main">
+      <section class="maintenance-card">
+        <div class="maintenance-icon-wrapper">
+          <i class="bi bi-wrench-adjustable-circle maintenance-icon" aria-hidden="true"></i>
+        </div>
+
+        <h1 class="maintenance-title">Estamos en mantenimiento</h1>
+
+        <p class="maintenance-text">
+          Estamos realizando una actualización importante de la plataforma de 
+          <strong>Bocaraca MMA</strong> para brindarte una mejor experiencia.
+        </p>
+
+        <p class="maintenance-subtext">
+          Durante este tiempo el sistema puede estar temporalmente fuera de servicio.
+          Agradecemos tu paciencia y comprensión.
+        </p>
+
+        </div>
+
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Scripts mínimos necesarios -->
+  <script>
+    // Recargar la página al presionar "Reintentar"
+    document.addEventListener("DOMContentLoaded", function () {
+      var btnRetry = document.getElementById("btnRetry");
+      if (btnRetry) {
+        btnRetry.addEventListener("click", function () {
+          window.location.reload();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

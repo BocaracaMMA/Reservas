@@ -1986,3 +1986,601 @@ body.page-register.auth-center{
   .email-addon{ min-width:130px; }
 }
 
+/* ============================================================================
+   Calendario configuración (admin-calendario)
+   Aspecto sobrio, compacto y 100% clickeable
+   ========================================================================== */
+
+#calendarAdmin {
+  width: 100%;
+  background: var(--surface-700);
+  border: 1px solid #22303d;
+  border-radius: 16px;
+  padding: 10px;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Contenedor interno de FullCalendar */
+#calendarAdmin .fc {
+  font-size: 0.85rem;
+}
+
+/* Toolbar superior */
+#calendarAdmin .fc-toolbar {
+  margin-bottom: 8px;
+}
+
+#calendarAdmin .fc-toolbar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Botones del toolbar (today, prev, next) */
+#calendarAdmin .fc-button-primary {
+  background: #111827;
+  border: 1px solid #1f2937;
+  color: #e5e7eb;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+#calendarAdmin .fc-button-primary:hover {
+  background: #1f2937;
+}
+
+/* Cabecera de días */
+#calendarAdmin .fc-col-header-cell {
+  background: #020617;
+  border-color: #1f2937;
+}
+
+#calendarAdmin .fc-col-header-cell-cushion {
+  padding: 4px 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Fondo general de la grilla horaria */
+#calendarAdmin .fc-timegrid-slot,
+#calendarAdmin .fc-timegrid-slot-label {
+  border-color: #111827;
+}
+
+/* Etiquetas de horas (ahora 12h por JS) */
+#calendarAdmin .fc-timegrid-slot-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Columna del "hoy" un poco destacada */
+#calendarAdmin .fc-timegrid-col.fc-day-today {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+/* Eventos (bloques de clase) */
+#calendarAdmin .fc-event {
+  font-size: 0.8rem;
+  border-radius: 8px;
+  padding: 2px 4px;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+/* Texto dentro del evento mejor legible en móvil */
+#calendarAdmin .fc-event-main {
+  padding: 1px 2px;
+}
+
+/* Días "sin clases" marcados visualmente, PERO siguen siendo clickeables */
+#calendarAdmin .fc-timegrid-col.disabled-day,
+#calendarAdmin .fc-col-header-cell.disabled-day {
+  background: #020617;
+  filter: grayscale(0.25) opacity(0.9);
+}
+
+/* Por si existe alguna regla vieja que los dejara sin click */
+#calendarAdmin .disabled-day {
+  pointer-events: auto !important;
+}
+
+/* Ajustes móviles */
+@media (max-width: 480px) {
+  #calendarAdmin {
+    padding: 8px;
+  }
+
+  #calendarAdmin .fc-toolbar-title {
+    font-size: 1rem;
+  }
+
+  #calendarAdmin .fc-event {
+    font-size: 0.75rem;
+  }
+}
+
+/* =============================================================================
+   Modales de configuración de clases (admin-calendario)
+   ========================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13,17,23,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+}
+
+.modal-box {
+  width: min(92vw, 420px);
+  background: var(--surface-800);
+  border: 1px solid #22303d;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 16px 16px 14px;
+  color: var(--text-100);
+}
+
+.modal-box h2 {
+  margin: 0 0 10px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.modal-box label {
+  display: block;
+  font-size: .9rem;
+  color: #9fb0c2;
+  margin: 8px 0 4px;
+}
+
+/* Inputs de texto/número/tiempo dentro del modal */
+.modal-box input[type="text"],
+.modal-box input[type="number"],
+.modal-box input[type="time"],
+.modal-box input[type="email"],
+.modal-box select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid #2a3441;
+  background: #0f1720;
+  color: #e6edf3;
+  font-size: .95rem;
+}
+
+/* Checkbox tipo “flag” (por ejemplo: permanente) */
+.modal-flag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .9rem;
+  color: #cbd5e1;
+  margin-top: 8px;
+}
+
+.modal-flag input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Botonera dentro del modal */
+.modal-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.modal-buttons button {
+  flex: 1 1 auto;
+  min-width: 90px;
+}
+
+/* Ajustes móviles */
+@media (max-width: 480px) {
+  #calendarAdmin .fc-event,
+  #calendarClient .fc-event {
+    font-size: 0.75rem;
+  }
+}
+
+/* =============================================================================
+   Panel de configuración: días sin clases permanentes
+   (admin-calendario.html)
+   ========================================================================== */
+
+/* Cabecera de días “apagados” */
+#calendarAdmin .fc-col-header-cell.disabled-day,
+#calendarClient .fc-col-header-cell.disabled-day{
+  background: #111827;
+  color: #6b7280;
+}
+
+/* Columna horaria apagada, pero clickeable */
+#calendarAdmin .fc-timegrid-col.disabled-day,
+#calendarClient .fc-timegrid-col.disabled-day{
+  background: rgba(15,23,42,.92);
+}
+
+/* ============================================================================
+   Modales calendario – colorKey + flag "Horario permanente" (admin-calendario)
+   ========================================================================== */
+
+/* Separación entre el select de color y el campo personalizado */
+#createColorKeyCustom,
+#editColorKeyCustom {
+  margin-top: 8px;
+}
+
+/* Fila limpia para el checkbox de horario permanente */
+.modal-flag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: .9rem;
+  color: #cbd5e1;
+}
+
+/* Checkbox alineado con la paleta del proyecto */
+.modal-flag input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--brand-green);
+}
+
+/* En pantallas pequeñas, que no quede pegado a los botones */
+@media (max-width: 480px) {
+  .modal-flag {
+    margin-top: 12px;
+  }
+}
+
+
+/* ============================================================================
+   Modal "Clases disponibles" (client-dashboard)
+   ========================================================================== */
+
+.class-select-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 10000;
+}
+
+.class-select-content {
+  width: min(96vw, 420px);
+  background: var(--surface-800, #111827);
+  border-radius: 18px;
+  padding: 18px 16px 16px;
+  text-align: center;
+  box-shadow: var(--shadow-lg, 0 18px 40px rgba(0,0,0,0.6));
+}
+
+.class-select-title {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.class-select-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.class-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 12px 0 16px;
+}
+
+.schedule-class-card {
+  background: #020817;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #1f2937;
+  text-align: center; /* Centra hora, tipo y profesor */
+}
+
+.schedule-class-card .class-slot-time {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.schedule-class-card .class-slot-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.schedule-class-card .class-slot-prof {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.schedule-class-card .class-slot-cta {
+  width: 100%;
+}
+
+
+/* ============================================================================
+   Modal de confirmación de reserva y reserva deshabilitada por cupo max (cliente)
+   ========================================================================== */
+
+.custom-modal .modal-content.confirm-modal {
+  width: min(92vw, 360px);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.custom-modal .modal-content.confirm-modal p {
+  margin-bottom: 16px;
+}
+
+.custom-modal .modal-content.confirm-modal .modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.custom-modal .modal-content.confirm-modal .btn {
+  min-width: 110px;
+}
+
+/* ========================================================
+        Nuevas clases de clase llena y modales
+============================================================ */
+
+/* ====== Botón de clase llena ====== */
+.schedule-class-card.slot-full .class-slot-cta {
+  background-color: #6b7280;   /* gris */
+  color: #e5e7eb;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.9;
+}
+.schedule-class-card.slot-full .class-slot-cta:hover,
+.schedule-class-card.slot-full .class-slot-cta:active {
+  transform: none;
+  filter: none;
+}
+
+/* ====== Modales (clases y confirmación) ====== */
+
+.class-select-modal,
+.custom-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 900;
+  animation: modal-fade-in 0.18s ease-out;
+}
+
+.class-select-content,
+.custom-modal .modal-content {
+  animation: modal-pop-in 0.22s ease-out;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-pop-in {
+  from { transform: translateY(8px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Estado de carga en botones */
+.btn.is-loading {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* Texto de capacidad y estado en tarjetas de horario */
+
+.class-slot-capacity {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.class-slot-status {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.class-slot-confirmed {
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+}
+
+.class-slot-pending {
+  background: rgba(234, 179, 8, 0.14);
+  color: #facc15;
+}
+
+/* ====== Días llenos / casi llenos en FullCalendar ====== */
+
+.fc-daygrid-day.day-full {
+  background: linear-gradient(to bottom, rgba(239, 68, 68, 0.12), transparent);
+}
+
+.fc-daygrid-day.day-busy {
+  background: linear-gradient(to bottom, rgba(250, 204, 21, 0.10), transparent);
+}
+
+.fc-daygrid-day.day-full .fc-daygrid-day-number,
+.fc-daygrid-day.day-busy .fc-daygrid-day-number {
+  position: relative;
+}
+
+.fc-daygrid-day.day-full .fc-daygrid-day-number::after,
+.fc-daygrid-day.day-busy .fc-daygrid-day-number::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  position: absolute;
+  right: 4px;
+  top: 4px;
+}
+
+.fc-daygrid-day.day-full .fc-daygrid-day-number::after {
+  background: #ef4444;
+}
+
+.fc-daygrid-day.day-busy .fc-daygrid-day-number::after {
+  background: #facc15;
+}
+
+/* ====== Modal de asistencia (profesor) ====== */
+
+#attModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 950;
+}
+
+#attModal.active {
+  display: flex;
+}
+
+#attModal .att-card {
+  background: #020617;
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  width: min(420px, 92vw);
+  max-height: 80vh;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+}
+
+#attModal .att-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+#attModal .att-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+#attModal .close-btn {
+  border: none;
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #111827;
+  color: #e5e7eb;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#attModal .close-btn::before {
+  content: '✕';
+}
+
+#attModal .close-btn:hover {
+  background: #1f2937;
+}
+
+#attModal .att-list {
+  margin-top: 4px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+#attModal .att-empty {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Cabeceras por horario y filas de asistentes */
+
+#attModal .att-slot-title {
+  margin-top: 10px;
+  margin-bottom: 4px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #020617;
+  border: 1px solid #1f2937;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+#attModal .att-slot-title-main {
+  font-weight: 600;
+}
+
+#attModal .att-slot-title-capacity {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  text-align: right;
+}
+
+#attModal .att-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #020617;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+}
+
+#attModal .att-item:hover {
+  border-color: #1f2937;
+}
+
+#attModal .att-item input[type="checkbox"] {
+  accent-color: #22c55e;
+}

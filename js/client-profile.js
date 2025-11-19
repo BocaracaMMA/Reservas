@@ -1,4 +1,4 @@
-// ./js/profile.js — Perfil estilo “card”, skeleton y avatar por género
+// ./js/client-profile.js — Perfil estilo “card”, skeleton y avatar por género
 import { auth, db } from './firebase-config.js';
 import { signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
