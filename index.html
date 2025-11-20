@@ -12,13 +12,11 @@
   <link rel="manifest" href="./manifest.webmanifest?v=2025.11.19.v1">
   <meta name="theme-color" content="#0d1117">
 
-<!-- iOS -->
-<link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Bocaraca">
-
-
+  <!-- iOS -->
+  <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bocaraca">
 </head>
 <body class="auth-center login-page">
 
@@ -77,10 +75,9 @@
                 <li>• Clases 8:30pm </li>
                 <li>• Lunes, Martes y Jueves </li>
                 <li>• Principiantes / Avanzados</li>
-                <!--<li class="muted">• Competitivo</li> -->
               </ul>
               <div class="price-cta">
-                <!--<span class="pill muted">Informativo</span>-->
+                <!-- Informativo -->
               </div>
             </div>
           </article>
@@ -108,10 +105,17 @@
         </div>
       </section>
     </div>
+
+    <!-- Versión de la app (abajo del card) -->
+    <div class="login-version-wrap">
+      <span id="appVersionLabel">Versión —</span>
+    </div>
   </main>
 
   <!-- Scripts de tu app -->
   <script type="module" src="./js/login.js"></script>
+  <script type="module" src="./js/login-version.js"></script>
+
   <script type="module">
     import { getAuth } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
     import { app } from './js/firebase-config.js';
@@ -139,29 +143,29 @@
     });
   </script>
 
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
-        .then((reg) => {
-          if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
-          reg.addEventListener("updatefound", () => {
-            const nw = reg.installing;
-            if (!nw) return;
-            nw.addEventListener("statechange", () => {
-              if (nw.state === "installed" && navigator.serviceWorker.controller) {
-                reg.waiting?.postMessage("SKIP_WAITING");
-              }
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+          .then((reg) => {
+            if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
+            reg.addEventListener("updatefound", () => {
+              const nw = reg.installing;
+              if (!nw) return;
+              nw.addEventListener("statechange", () => {
+                if (nw.state === "installed" && navigator.serviceWorker.controller) {
+                  reg.waiting?.postMessage("SKIP_WAITING");
+                }
+              });
             });
-          });
-        })
-        .catch(console.error);
-    });
-  }
-</script>
-<script type="module" src="./js/pwa-install.js"></script>
+          })
+          .catch(console.error);
+      });
+    }
+  </script>
 
-<script type="module" src="./js/sw-register.js"></script>
+  <script type="module" src="./js/pwa-install.js"></script>
+  <script type="module" src="./js/sw-register.js"></script>
 
 </body>
 </html>

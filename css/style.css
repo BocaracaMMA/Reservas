@@ -2584,3 +2584,20 @@ body.page-register.auth-center{
 #attModal .att-item input[type="checkbox"] {
   accent-color: #22c55e;
 }
+
+/* ========================================================
+        version del sistema 
+============================================================ */
+
+/* Versión de la app en el login */
+.login-version-wrap {
+  margin: 16px auto 8px;
+  max-width: 420px;        /* alineado al ancho aprox. del card */
+  text-align: center;
+  font-size: 0.95rem;
+  color: #9ca3af;          /* gris suave, acorde al tema */
+}
+
+.login-version-wrap span {
+  opacity: 0.9;
+}

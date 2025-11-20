@@ -54,15 +54,34 @@ self.addEventListener('fetch', (e) => {
 
 // Mensajes desde la página (todo manual)
 self.addEventListener('message', async (event) => {
-  const { type } = event.data || {};
+  const data = event.data;
+  const type = (typeof data === 'string') ? data : (data && data.type);
+
   if (type === 'SKIP_WAITING') {
     await self.skipWaiting();
+    return;
   }
+
   if (type === 'CLEAR_ALL_CACHES') {
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
     const clients = await self.clients.matchAll({ type: 'window' });
     // Avisamos; la página decidirá si recarga.
     clients.forEach(c => c.postMessage({ type: 'CACHES_CLEARED' }));
+    return;
+  }
+
+  if (type === 'GET_VERSION') {
+    try {
+      // Respuesta preferente por MessageChannel
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ version: APP_VERSION });
+      } else if (event.source && event.source.postMessage) {
+        // Fallback simple
+        event.source.postMessage({ type: 'VERSION', version: APP_VERSION });
+      }
+    } catch (e) {
+      // Best-effort, no pasa nada si falla
+    }
   }
 });
