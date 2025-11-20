@@ -1,5 +1,4 @@
 // ./js/admin-reportes.js
-
 import { db } from "./firebase-config.js";
 import {
   collection,
@@ -10,23 +9,37 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 //
-// ──────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // UTILIDADES PARA RENDERIZAR
-// ──────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
-// Genera el HTML de la tabla para una fecha concreta
+// Genera el HTML de la tarjeta + tabla para una fecha concreta
 function generarTablaPorFecha(fecha, data) {
+  const total     = data.length;
+  const presentes = data.filter(u => u.presente).length;
+  const ausentes  = total - presentes;
+
   let tableHTML = `
-    <h3>Asistencia del ${fecha}</h3>
-    <table class="asistencia-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Hora</th>
-          <th>Presente</th>
-        </tr>
-      </thead>
-      <tbody>
+    <article class="report-day-card">
+      <header class="report-day-header">
+        <div class="report-day-title">
+          <i class="bi bi-calendar-event"></i>
+          <span>Asistencia · ${fecha}</span>
+        </div>
+        <div class="report-day-summary">
+          ${presentes} presentes · ${ausentes} ausentes · ${total} registros
+        </div>
+      </header>
+      <div class="report-day-body">
+        <table class="asistencia-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Hora</th>
+              <th>Presente</th>
+            </tr>
+          </thead>
+          <tbody>
   `;
 
   data.forEach((user) => {
@@ -40,15 +53,19 @@ function generarTablaPorFecha(fecha, data) {
   });
 
   tableHTML += `
-      </tbody>
-    </table>
+          </tbody>
+        </table>
+      </div>
+    </article>
   `;
   return tableHTML;
 }
 
-// Renderiza (o actualiza) la tabla de un día concreto en el DOM
+// Renderiza/actualiza la tarjeta de un día concreto
 function renderizarTablaEnDOM(fecha, asistenciaData) {
   const container = document.getElementById("reporte-container");
+  if (!container) return;
+
   const wrapperId = `tabla-${fecha.replace(/:/g, "-")}`;
 
   let wrapper = document.getElementById(wrapperId);
@@ -57,13 +74,13 @@ function renderizarTablaEnDOM(fecha, asistenciaData) {
   } else {
     wrapper = document.createElement("div");
     wrapper.id = wrapperId;
-    wrapper.classList.add("mb-4"); // margen inferior opcional
+    wrapper.classList.add("report-day-wrapper");
     wrapper.innerHTML = generarTablaPorFecha(fecha, asistenciaData);
     container.appendChild(wrapper);
   }
 }
 
-// Elimina la tabla de una fecha (cuando deja de pertenecer al mes)
+// Elimina la tarjeta de una fecha (cuando deja de pertenecer al mes)
 function eliminarTablaDeDOM(fecha) {
   const wrapperId = `tabla-${fecha.replace(/:/g, "-")}`;
   const wrapper = document.getElementById(wrapperId);
@@ -71,57 +88,79 @@ function eliminarTablaDeDOM(fecha) {
 }
 
 //
-// ──────────────────────────────────────────────────────────────────────────────
-// LÓGICA EN TIEMPO REAL (MEZCLA getDocs PARA VERIFICAR Y onSnapshot PARA REFRESCAR)
-// ──────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// LÓGICA EN TIEMPO REAL
+// ─────────────────────────────────────────────────────────────
 
-// Para guardar los listeners de cada subcolección “usuarios”
 let subUnsubsUsuarios = {};
-
-// Para el listener global de “asistencias”
 let unsubscribeAsistencias = null;
 
-/**
- * startRealTimeReporting(month)
- *
- * 1) Limpia el contenedor #reporte-container (para no mostrar datos viejos).
- * 2) Hace un getDocs() puntual para ver si hay documentos en “asistencias”:
- *    – Si no hay ninguno, muestra “No hay reportes para el mes seleccionado.”
- *    – Si los hay, filtra los IDs que empiecen por “YYYY-MM” y los imprime en consola.
- * 3) Sobre cada fecha filtrada, se suscribe con onSnapshot() a “asistencias/{fecha}/usuarios”:
- *    – Cada cambio en esa subcolección renderiza (o actualiza) la tabla correspondiente.
- * 4) Cancela automáticamente los listeners de fechas que ya no pertenezcan al mes seleccionado.
- */
-export async function startRealTimeReporting(month) {
-  const container = document.getElementById("reporte-container");
-  container.innerHTML = ""; // 1) Limpiar contenedor
+// Rellena el select de año con un pequeño rango [Año-2, Año+1]
+function initYearSelect() {
+  const sel = document.getElementById("yearSelect");
+  if (!sel) return;
 
   const currentYear = new Date().getFullYear();
-  const prefijo = `${currentYear}-${month}`; // ej. "2025-06"
+  const startYear   = currentYear - 2;
+  const endYear     = currentYear + 1;
+
+  sel.innerHTML = "";
+  for (let y = startYear; y <= endYear; y++) {
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    if (y === currentYear) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initYearSelect);
+
+/**
+ * startRealTimeReporting(year, month)
+ *
+ * 1) Limpia el contenedor de reportes.
+ * 2) Hace un getDocs() sobre "asistencias" y filtra por prefijo "YYYY-MM".
+ * 3) Se suscribe con onSnapshot() a cada subcolección "asistencias/{fecha}/usuarios".
+ * 4) Cancela listeners de fechas que ya no pertenecen al mes.
+ * 5) Listener global en "asistencias" para detectar nuevas fechas del mes.
+ */
+export async function startRealTimeReporting(year, month) {
+  const container = document.getElementById("reporte-container");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const yearStr = String(year || new Date().getFullYear());
+  const prefijo = `${yearStr}-${month}`; // ej. "2025-06"
 
   try {
-    // 2) getDocs puntual para comprobar SI hay documentos en “asistencias”
     const asistenciasColl = collection(db, "asistencias");
+
+    // 2) getDocs puntual
     const snapshotAll = await getDocs(asistenciasColl);
     const fechasDisponibles = snapshotAll.docs.map((doc) => doc.id);
-    console.log("→ getDocs: fechas disponibles en Firestore:", fechasDisponibles);
-
-    // Filtrar por mes actual (“YYYY-MM”)
     const fechasDelMes = fechasDisponibles.filter((fecha) =>
       fecha.startsWith(prefijo)
     );
-    console.log(`→ Fechas que coinciden con ${prefijo}:`, fechasDelMes);
 
     if (fechasDelMes.length === 0) {
       container.innerHTML = `<p>No hay reportes para el mes seleccionado.</p>`;
+      // Limpiamos listeners antiguos
+      Object.values(subUnsubsUsuarios).forEach(unsub => unsub());
+      subUnsubsUsuarios = {};
+      if (unsubscribeAsistencias) {
+        unsubscribeAsistencias();
+        unsubscribeAsistencias = null;
+      }
       return;
     }
 
-    // 3) SUBSCRIBIRSE A CADA subcolección “asistencias/{fecha}/usuarios”
+    // 3) Suscribirse a cada subcolección "usuarios"
     fechasDelMes.forEach((fecha) => {
       if (!subUnsubsUsuarios[fecha]) {
         const usuariosRef = collection(db, "asistencias", fecha, "usuarios");
-        const qUsuarios = query(usuariosRef, orderBy("hora", "asc"));
+        const qUsuarios   = query(usuariosRef, orderBy("hora", "asc"));
 
         const unsubUsuarios = onSnapshot(
           qUsuarios,
@@ -131,7 +170,6 @@ export async function startRealTimeReporting(month) {
               const data = docUser.data();
               asistenciaData.push({ id: docUser.id, ...data });
             });
-            console.log(`→ Datos de asistencia para ${fecha}:`, asistenciaData);
             renderizarTablaEnDOM(fecha, asistenciaData);
           },
           (err) => {
@@ -146,7 +184,7 @@ export async function startRealTimeReporting(month) {
       }
     });
 
-    // 4) CANCELAR listeners de fechas que ya no pertenezcan al mes
+    // 4) Cancelar listeners de fechas que ya no están en el mes
     Object.keys(subUnsubsUsuarios).forEach((fechaRegistrada) => {
       if (!fechasDelMes.includes(fechaRegistrada)) {
         subUnsubsUsuarios[fechaRegistrada]();
@@ -155,28 +193,22 @@ export async function startRealTimeReporting(month) {
       }
     });
 
-    // 5) OPCIONAL: listener “global” en toda la colección asistencias, para detectar
-    //    si alguien crea/elimina un documento de fecha “{YYYY-MM-DD}” durante esta sesión.
-    //    (Si no lo necesitas, puedes comentar este bloque.)
+    // 5) Listener global sobre "asistencias" para detectar nuevas fechas en el mes
     if (unsubscribeAsistencias) unsubscribeAsistencias();
     unsubscribeAsistencias = onSnapshot(
       asistenciasColl,
       (snapshotGlobal) => {
-        // Cada vez que cambie la colección “asistencias” entera, recargo el mes
         const todasFechas = snapshotGlobal.docs.map((d) => d.id);
         const fechasNuevasDelMes = todasFechas.filter((f) =>
           f.startsWith(prefijo)
         );
-        // Si detectamos que cambió la lista de fechasDelMes,
-        // reejecutamos esta función para refrescar listeners/tables:
+
         if (
-          JSON.stringify(fechasNuevasDelMes.sort()) !==
-          JSON.stringify(fechasDelMes.sort())
+          JSON.stringify([...fechasNuevasDelMes].sort()) !==
+          JSON.stringify([...fechasDelMes].sort())
         ) {
-          console.log(
-            "→ Cambio detectado en colección asistencias; recargando mes."
-          );
-          startRealTimeReporting(month);
+          // Si cambia la lista de fechas del mes, recargamos el reporte
+          startRealTimeReporting(yearStr, month);
         }
       },
       (err) => {
@@ -189,10 +221,14 @@ export async function startRealTimeReporting(month) {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// EXPONER getAsistencia AL GLOBAL
-// ──────────────────────────────────────────────────────────────────────────────
+// Exponer getAsistencia al global para el botón
 window.getAsistencia = function () {
-  const mes = document.getElementById("monthSelect").value; // ej. "06"
-  startRealTimeReporting(mes);
+  const mesEl  = document.getElementById("monthSelect");
+  const yearEl = document.getElementById("yearSelect");
+  if (!mesEl) return;
+
+  const mes  = mesEl.value;
+  const year = yearEl ? yearEl.value : String(new Date().getFullYear());
+
+  startRealTimeReporting(year, mes);
 };

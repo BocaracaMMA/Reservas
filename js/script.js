@@ -134,7 +134,7 @@ if (logoutSidebarLink) {
   if (!('serviceWorker' in navigator)) return;
 
   // Debe coincidir con APP_VERSION del SW
-  const SW_URL = './service-worker.js?v=2025.11.19.v1';
+  const SW_URL = './service-worker.js?v=2025.11.19.v2';
   let reg = null;
 
   async function ensureReg() {
