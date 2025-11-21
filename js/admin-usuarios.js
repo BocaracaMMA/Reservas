@@ -11,7 +11,9 @@ import { isOculto } from './visibility-rules.js';
 
 await gateAdminPage();
 
-// ===== helpers navbar =====
+/* ============================================================================
+   Helpers navbar
+============================================================================ */
 const ready = (fn) =>
   (document.readyState === 'loading')
     ? document.addEventListener('DOMContentLoaded', fn, { once:true })
@@ -29,13 +31,20 @@ function bindLogoutOnce(){
   if (!a || a.dataset.bound) return;
   a.addEventListener('click', async (e)=>{
     e.preventDefault();
-    try { await signOut(auth); showAlert('Sesión cerrada','success'); setTimeout(()=> location.href='index.html', 900); }
-    catch { showAlert('Error al cerrar sesión','error'); }
+    try {
+      await signOut(auth);
+      showAlert('Sesión cerrada','success');
+      setTimeout(()=> location.href='index.html', 900);
+    } catch {
+      showAlert('Error al cerrar sesión','error');
+    }
   });
   a.dataset.bound = '1';
 }
 
-// ===== estado UI =====
+/* ============================================================================
+   Estado UI
+============================================================================ */
 let usersCache   = []; // aprobados
 let pendingCache = []; // pendientes
 
@@ -54,7 +63,79 @@ const $pempty  = () => document.getElementById('pendingEmpty');
 const norm = s => (s ?? '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
-// ─── Paginación Usuarios ───
+/* ============================================================================
+   Modal de confirmación reutilizable (misma estética que el resto)
+============================================================================ */
+function openConfirmDialog({
+  title,
+  message,
+  confirmText = 'Confirmar',
+  cancelText  = 'Cancelar',
+  confirmVariant = 'primary', // 'primary' (verde) | 'danger' (rojo)
+  onConfirm
+}) {
+  // Cerrar cualquier modal anterior por si acaso
+  document.querySelectorAll('.custom-modal').forEach(m => m.remove());
+
+  const confirmCls = confirmVariant === 'danger' ? 'btn error' : 'btn';
+  const cancelCls  = confirmVariant === 'danger' ? 'btn' : 'btn error';
+
+  const m = document.createElement('div');
+  m.className = 'custom-modal';
+  m.innerHTML = `
+    <div class="modal-content confirm-modal">
+      ${title ? `<h3 class="modal-title">${title}</h3>` : ''}
+      <p class="modal-message">${message}</p>
+      <div class="modal-actions">
+        <button type="button" class="${confirmCls}" data-role="confirm">${confirmText}</button>
+        <button type="button" class="${cancelCls}" data-role="cancel">${cancelText}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  const confirmBtn = m.querySelector('[data-role="confirm"]');
+  const cancelBtn  = m.querySelector('[data-role="cancel"]');
+
+  const close = () => {
+    m.remove();
+    window.removeEventListener('keydown', onKey);
+  };
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    }
+  };
+
+  cancelBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
+  });
+
+  m.addEventListener('click', (e) => {
+    if (e.target === m) close();
+  });
+
+  confirmBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!onConfirm) { close(); return; }
+    confirmBtn.disabled = true;
+    try {
+      await onConfirm();
+    } finally {
+      confirmBtn.disabled = false;
+      close();
+    }
+  });
+
+  window.addEventListener('keydown', onKey);
+}
+
+/* ============================================================================
+   Paginación Usuarios
+============================================================================ */
 let USERS_PAGE = 1;
 const USERS_PER_PAGE = 15;
 
@@ -81,7 +162,9 @@ function renderUsersPager(totalItems){
   cont.querySelector('#pg-next')?.addEventListener('click', ()=>{ USERS_PAGE++; renderUsers(); });
 }
 
-// ===== datos / helpers =====
+/* ============================================================================
+   Datos / helpers Firestore
+============================================================================ */
 async function generateUniqueCode() {
   const randomCode = () => Math.floor(1000 + Math.random() * 9000).toString();
   let code, exists = true;
@@ -94,13 +177,14 @@ async function generateUniqueCode() {
   return code;
 }
 
-// Pendientes (approved:false)
+/* ---- Pendientes (approved:false) ---- */
 async function loadPending(){
   const q1 = query(collection(db,'users'), where('approved','==', false));
   const s1 = await getDocs(q1);
   pendingCache = s1.docs.map(d => ({ id:d.id, ...d.data() }));
   renderPending();
 }
+
 function renderPending(){
   const tbody = $ptbody(); if (!tbody) return;
   tbody.innerHTML = '';
@@ -127,7 +211,8 @@ function renderPending(){
   });
 }
 
-async function approveUser(u){
+/* Lógica real de aprobación (sin confirm) */
+async function doApproveUser(u){
   try{
     const patch = { approved:true };
     if (!u.attendanceCode) patch.attendanceCode = await generateUniqueCode();
@@ -147,20 +232,28 @@ async function approveUser(u){
   }
 }
 
-async function rejectUser(u){
-  if (!confirm(`¿Eliminar la solicitud de ${u.correo || 'este usuario'}? Esta acción no se puede deshacer.`)) return;
+/* Lógica real de rechazo (sin confirm) */
+async function doRejectUser(u){
   try{
+    // limpiar índices y reservas asociadas
     try{
       if (u.cedula) { await deleteDoc(doc(db,'cedula_index', String(u.cedula))); }
     }catch{}
+
     try{
       const rs = await getDocs(query(collection(db,'reservations'), where('userId','==',u.id)));
       await Promise.all(rs.docs.map(d => deleteDoc(doc(db,'reservations', d.id))));
     }catch{}
 
     await deleteDoc(doc(db,'users', u.id));
+
     try{
-      await addDoc(collection(db,'audit_logs'), { type:'registration_reject', uid:u.id, correo:u.correo||null, at: Date.now() });
+      await addDoc(collection(db,'audit_logs'), {
+        type:   'registration_reject',
+        uid:    u.id,
+        correo: u.correo || null,
+        at:     Date.now()
+      });
     }catch{}
 
     pendingCache = pendingCache.filter(x=>x.id!==u.id);
@@ -172,7 +265,32 @@ async function rejectUser(u){
   }
 }
 
-// Aprobados (excluye approved:false)
+/* Wrappers con modal bonito */
+function approveUser(u){
+  const name = u.nombre || u.correo || 'este usuario';
+  openConfirmDialog({
+    title: 'Aprobar solicitud',
+    message: `¿Aprobar la solicitud de registro de <strong>${name}</strong>?`,
+    confirmText: 'Aprobar',
+    cancelText: 'Cancelar',
+    confirmVariant: 'primary',
+    onConfirm: () => doApproveUser(u)
+  });
+}
+
+function rejectUser(u){
+  const name = u.correo || u.nombre || 'este usuario';
+  openConfirmDialog({
+    title: 'Rechazar solicitud',
+    message: `¿Eliminar la solicitud de <strong>${name}</strong>? Esta acción no se puede deshacer.`,
+    confirmText: 'Eliminar',
+    cancelText: 'Cancelar',
+    confirmVariant: 'danger',
+    onConfirm: () => doRejectUser(u)
+  });
+}
+
+/* ---- Aprobados (excluye approved:false) ---- */
 async function loadUsers() {
   const snap = await getDocs(collection(db, "users"));
   usersCache = snap.docs
@@ -249,7 +367,9 @@ function renderUsers() {
   document.getElementById('empty').style.display = list.length ? 'none' : 'block';
 }
 
-// ===== init =====
+/* ============================================================================
+   Init
+============================================================================ */
 function init(){
   bindSidebarOnce();
   bindLogoutOnce();
