@@ -1,10 +1,4 @@
 // ./js/admin-calendario.js
-// Configuración del calendario semanal de clases (solo administración).
-// - Define bloques recurrentes (día, hora, profesor, cupos).
-// - Marca visualmente como deshabilitados los días sin NINGUNA clase activa.
-// - Usa una "colorKey" para decidir el color del evento en el calendario.
-// - Permite elegir una key predefinida (dropdown) o una personalizada.
-
 import { db } from "./firebase-config.js";
 import {
   collection,
@@ -12,47 +6,46 @@ import {
   updateDoc,
   deleteDoc,
   getDocs,
+  getDoc,
+  setDoc,
   doc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { showAlert } from "./showAlert.js";
 
-/* -----------------------------------------------------------------------------
-   Color keys y paleta de colores
------------------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------------
+   Constantes
+--------------------------------------------------------------------------- */
 
-// Claves predefinidas visibles en el dropdown
 const PRESET_COLOR_KEYS = ["MMA - GENERAL", "SPARRING", "PRIVADA"];
 
-// Colores fijos para las predefinidas
 const COLOR_MAP = {
-  "MMA - GENERAL": "#3b82f6", // azul
-  SPARRING: "#f97316",        // naranja
-  PRIVADA: "#22c55e",         // verde
+  "MMA - GENERAL": "#3b82f6",
+  SPARRING: "#f97316",
+  PRIVADA: "#22c55e",
 };
 
-// Paleta de respaldo para keys personalizadas
 const FALLBACK_COLORS = [
-  "#ec4899", // rosa
-  "#8b5cf6", // violeta
-  "#eab308", // amarillo
-  "#06b6d4", // turquesa
-  "#f97316", // naranja
-  "#10b981", // verde
+  "#ec4899",
+  "#8b5cf6",
+  "#eab308",
+  "#06b6d4",
+  "#f97316",
+  "#10b981",
 ];
 
-/**
- * Devuelve un color "bonito" y estable para cada key.
- * - Predefinidas usan COLOR_MAP.
- * - Keys personalizadas usan un hash sobre FALLBACK_COLORS.
- */
+const EXCEPTIONS_COLLECTION = "calendarExceptions";
+
+/* ---------------------------------------------------------------------------
+   Helpers colores
+--------------------------------------------------------------------------- */
+
 function getColorForKey(rawKey) {
   const key = (rawKey || "").trim();
   if (!key) return "#3b6cff";
 
   if (COLOR_MAP[key]) return COLOR_MAP[key];
 
-  // Hash simple para elegir siempre el mismo color para una key dada
   let hash = 0;
   for (let i = 0; i < key.length; i++) {
     hash = (hash + key.charCodeAt(i) * (i + 1)) % 2147483647;
@@ -61,15 +54,9 @@ function getColorForKey(rawKey) {
   return FALLBACK_COLORS[idx];
 }
 
-/**
- * Resuelve la colorKey efectiva combinando dropdown + campo personalizado.
- * - Si el select es "_custom" y hay texto en el input, se usa ese texto.
- * - En cualquier otro caso, se usa el valor del select.
- */
 function resolveColorKey(selectId, customId) {
   const sel = document.getElementById(selectId);
   const custom = document.getElementById(customId);
-
   if (!sel) return "";
 
   if (sel.value === "_custom" && custom && custom.value.trim()) {
@@ -78,10 +65,6 @@ function resolveColorKey(selectId, customId) {
   return sel.value || "";
 }
 
-/**
- * Configura el comportamiento de los dropdowns de color:
- * - Muestran/ocultan el campo de texto personalizado cuando se elige "_custom".
- */
 function setupColorKeyDropdowns() {
   wireColorDropdown("createColorKey", "createColorKeyCustom");
   wireColorDropdown("editColorKey", "editColorKeyCustom");
@@ -101,18 +84,19 @@ function wireColorDropdown(selectId, customId) {
     }
   };
 
-  // Estado inicial
   toggle();
-  // Cambio de valor
   select.addEventListener("change", toggle);
 }
 
-/* -----------------------------------------------------------------------------
-   Arranque del módulo
------------------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------------
+   Arranque
+--------------------------------------------------------------------------- */
 
 document.addEventListener("DOMContentLoaded", () => {
   setupColorKeyDropdowns();
+  setupSpecialDaysToggle();
+  enhanceSpecialDateInput();
+  setupSpecialDaysFormHandlers();
 
   initAdminScheduleCalendar().catch((err) => {
     console.error("[admin-calendario] Error inicializando calendario:", err);
@@ -120,14 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-/* -----------------------------------------------------------------------------
-   Carga de datos desde Firestore
------------------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------------
+   Carga de datos base (horario + profesores)
+--------------------------------------------------------------------------- */
 
-/**
- * Lee todos los bloques de clase desde la colección classSchedule.
- * Cada documento representa un bloque recurrente semanal.
- */
 async function loadClassSchedule() {
   const ref = collection(db, "classSchedule");
   const snap = await getDocs(ref);
@@ -140,15 +120,11 @@ async function loadClassSchedule() {
   return blocks;
 }
 
-/**
- * Obtiene la lista de profesores (users con rol "professor").
- */
 async function loadProfessors() {
   const ref = collection(db, "users");
   const snap = await getDocs(ref);
 
   const result = [];
-
   snap.forEach((docSnap) => {
     const d = docSnap.data();
     if (Array.isArray(d.roles) && d.roles.includes("professor")) {
@@ -164,13 +140,9 @@ async function loadProfessors() {
   return result;
 }
 
-/**
- * Rellena los selects de profesor en los modales de crear/editar.
- */
 function fillProfessorSelects(list) {
   const createSelect = document.getElementById("createProfessor");
   const editSelect = document.getElementById("editProfessor");
-
   if (!createSelect || !editSelect) return;
 
   list.forEach((p) => {
@@ -186,22 +158,17 @@ function fillProfessorSelects(list) {
   });
 }
 
-/* -----------------------------------------------------------------------------
-   Construcción de eventos para FullCalendar
------------------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------------
+   Construcción de eventos de calendario
+--------------------------------------------------------------------------- */
 
-/**
- * Construye los eventos recurrentes a partir de los bloques de Firestore.
- * Usa colorKey para decidir el color del evento.
- */
 function buildEvents(blocks) {
   return blocks
-    .filter((b) => b.active !== false) // si no existe, se considera activo
+    .filter((b) => b.active !== false)
     .map((b) => {
       const isPermanent =
         typeof b.permanent === "boolean" ? b.permanent : true;
 
-      // Si no hubiera colorKey guardado, usamos el tipo como base
       const rawKey = b.colorKey || b.type || "MMA - GENERAL";
       const color = getColorForKey(rawKey);
 
@@ -225,26 +192,20 @@ function buildEvents(blocks) {
     });
 }
 
-/**
- * Devuelve un conjunto con los días (0–6) que tienen al menos
- * UNA clase activa (permanente o no).
- * Se usa para marcar visualmente los días bloqueados en el calendario.
- */
 function getActiveDays(blocks) {
   const set = new Set();
   blocks.forEach((b) => {
     const isActive = b.active !== false;
     if (!isActive) return;
-
     const dow = Number(b.dayOfWeek ?? NaN);
     if (!Number.isNaN(dow)) set.add(dow);
   });
   return set;
 }
 
-/* -----------------------------------------------------------------------------
-   Inicialización del calendario de configuración (FullCalendar)
------------------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------------
+   Inicialización FullCalendar
+--------------------------------------------------------------------------- */
 
 async function initAdminScheduleCalendar() {
   const calendarEl = document.getElementById("calendarAdmin");
@@ -258,7 +219,6 @@ async function initAdminScheduleCalendar() {
     return;
   }
 
-  // Cargar datos base
   const [classBlocks, professors] = await Promise.all([
     loadClassSchedule(),
     loadProfessors(),
@@ -267,7 +227,6 @@ async function initAdminScheduleCalendar() {
   fillProfessorSelects(professors);
   const activeDays = getActiveDays(classBlocks);
 
-  // Altura mínima para que no quede mucho hueco en móvil
   if (!calendarEl.style.minHeight) {
     calendarEl.style.minHeight = "560px";
   }
@@ -283,50 +242,44 @@ async function initAdminScheduleCalendar() {
     slotMaxTime: "22:30:00",
     expandRows: true,
     height: "auto",
-
-    // NUEVO / AJUSTADO
     nowIndicator: true,
     slotLabelFormat: {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     },
     eventTimeFormat: {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     },
     dayHeaderFormat: {
-      weekday: 'short',
-      day: '2-digit'
+      weekday: "short",
+      day: "2-digit",
     },
 
-  // Eventos desde Firestore
-      events: buildEvents(classBlocks),
+    events: buildEvents(classBlocks),
 
-      // Marca días sin clases como deshabilitados
-      dayCellClassNames(arg) {
-        const dow = arg.date.getDay(); // 0 = dom, 6 = sáb
-        return activeDays.has(dow) ? [] : ["disabled-day"];
-      },
+    dayCellClassNames(arg) {
+      const dow = arg.date.getDay();
+      return activeDays.has(dow) ? [] : ["disabled-day"];
+    },
 
-      // Crear clase al hacer click en una celda
-      dateClick(info) {
-        openCreateModal(info, professors);
-      },
+    dateClick(info) {
+      openCreateModal(info, professors);
+    },
 
-      // Editar clase al hacer click en un evento
-      eventClick(info) {
-        openEditModal(info, professors, classBlocks);
-      },
-    });
+    eventClick(info) {
+      openEditModal(info, professors, classBlocks);
+    },
+  });
 
   calendar.render();
 }
 
-/* -----------------------------------------------------------------------------
-   Modales: creación de bloque
------------------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------------
+   Modales crear / editar bloques
+--------------------------------------------------------------------------- */
 
 function openCreateModal(info, professors) {
   const modal = document.getElementById("modalCreateClass");
@@ -337,20 +290,17 @@ function openCreateModal(info, professors) {
   const btnCancel = document.getElementById("btnCreateCancel");
   const btnSave = document.getElementById("btnCreateSave");
 
-  if (btnCancel) {
-    btnCancel.onclick = () => {
+  btnCancel &&
+    (btnCancel.onclick = () => {
       modal.classList.add("hidden");
-    };
-  }
+    });
 
   if (btnSave) {
     btnSave.onclick = async () => {
-      const type =
-        document.getElementById("createType")?.value.trim() ?? "";
+      const type = document.getElementById("createType")?.value.trim() ?? "";
       const startTime =
         document.getElementById("createStartTime")?.value ?? "";
-      const endTime =
-        document.getElementById("createEndTime")?.value ?? "";
+      const endTime = document.getElementById("createEndTime")?.value ?? "";
       const minCap = Number(
         document.getElementById("createMinCap")?.value || 0
       );
@@ -367,7 +317,7 @@ function openCreateModal(info, professors) {
         document.getElementById("createProfessor")?.value ?? "";
       const permanent = document.getElementById("createPermanent")
         ? document.getElementById("createPermanent").checked
-        : true; // por defecto, todo nuevo horario se considera permanente
+        : true;
 
       const prof = professors.find((p) => p.uid === profId);
 
@@ -378,7 +328,7 @@ function openCreateModal(info, professors) {
 
       try {
         await addDoc(collection(db, "classSchedule"), {
-          dayOfWeek: info.date.getUTCDay(), // 0=domingo, 6=sábado
+          dayOfWeek: info.date.getUTCDay(),
           startTime,
           endTime,
           type,
@@ -395,7 +345,6 @@ function openCreateModal(info, professors) {
 
         modal.classList.add("hidden");
         showAlert("Horario creado correctamente.", "success");
-        // Recargar para refrescar días deshabilitados y eventos
         location.reload();
       } catch (err) {
         console.error("[admin-calendario] Error al crear horario:", err);
@@ -404,10 +353,6 @@ function openCreateModal(info, professors) {
     };
   }
 }
-
-/* -----------------------------------------------------------------------------
-   Modales: edición / eliminación de bloque
------------------------------------------------------------------------------ */
 
 function openEditModal(info, professors, classBlocks) {
   const modal = document.getElementById("modalEditClass");
@@ -418,13 +363,10 @@ function openEditModal(info, professors, classBlocks) {
   const id = info.event.id;
   document.getElementById("editId").value = id;
 
-  // Buscar el bloque completo para recuperar permanent, min/max, colorKey, etc.
   const block = classBlocks.find((b) => b.id === id) || {};
-
   const [typeFromTitle, professorNameFromTitle] =
     (info.event.title || "").split(" - ");
 
-  // Referencias a campos
   const typeInput = document.getElementById("editType");
   const startInput = document.getElementById("editStartTime");
   const endInput = document.getElementById("editEndTime");
@@ -465,7 +407,6 @@ function openEditModal(info, professors, classBlocks) {
     maxCapInput.value = block.maxCapacity ?? "";
   }
 
-  // Asignación inicial del colorKey en el dropdown/campo personalizado
   const rawKey = (block.colorKey || "").trim();
 
   if (colorSelect && colorCustom) {
@@ -500,16 +441,14 @@ function openEditModal(info, professors, classBlocks) {
     permanentCheck.checked = isPermanent;
   }
 
-  // Botones
   const btnCancel = document.getElementById("btnEditCancel");
   const btnDelete = document.getElementById("btnEditDelete");
   const btnSave = document.getElementById("btnEditSave");
 
-  if (btnCancel) {
-    btnCancel.onclick = () => {
+  btnCancel &&
+    (btnCancel.onclick = () => {
       modal.classList.add("hidden");
-    };
-  }
+    });
 
   if (btnDelete) {
     btnDelete.onclick = async () => {
@@ -532,10 +471,7 @@ function openEditModal(info, professors, classBlocks) {
       const type = typeInput?.value.trim() ?? "";
       const minCap = Number(minCapInput?.value || 0);
       const maxCap = Number(maxCapInput?.value || 0);
-      const colorKey = resolveColorKey(
-        "editColorKey",
-        "editColorKeyCustom"
-      );
+      const colorKey = resolveColorKey("editColorKey", "editColorKeyCustom");
       const profId = profSelect?.value ?? "";
       const permanent = permanentCheck ? permanentCheck.checked : true;
 
@@ -568,5 +504,334 @@ function openEditModal(info, professors, classBlocks) {
         showAlert("No se pudo actualizar el horario.", "error");
       }
     };
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   UI: Accordion + input fecha
+--------------------------------------------------------------------------- */
+
+function setupSpecialDaysToggle() {
+  const btn = document.getElementById("specialDaysToggle");
+  const body = document.getElementById("specialDaysBody");
+  if (!btn || !body) return;
+
+  btn.setAttribute("aria-expanded", "true");
+  body.classList.remove("collapsed");
+
+  btn.addEventListener("click", () => {
+    const isOpen = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", isOpen ? "false" : "true");
+    body.classList.toggle("collapsed", isOpen);
+  });
+}
+
+function enhanceSpecialDateInput() {
+  const dateInput = document.getElementById("specialDate");
+  if (!dateInput) return;
+
+  dateInput.addEventListener("focus", () => {
+    if (typeof dateInput.showPicker === "function") {
+      dateInput.showPicker();
+    }
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   Lógica DÍAS ESPECIALES (calendarExceptions)
+--------------------------------------------------------------------------- */
+
+function getSpecialDateISO() {
+  const input = document.getElementById("specialDate");
+  if (!input || !input.value) return null;
+  // type="date" => "YYYY-MM-DD"
+  return input.value;
+}
+
+function clearSpecialFormFields() {
+  const ids = [
+    "specialReason",
+    "specialTitle",
+    "specialStart",
+    "specialEnd",
+    "specialMinCap",
+    "specialMaxCap",
+    "specialProfessor",
+  ];
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+}
+
+async function clearSpecialConfigForDate(dateStr) {
+  const blockId = `${dateStr}-block`;
+  const overrideId = `${dateStr}-override`;
+  try {
+    await deleteDoc(doc(db, EXCEPTIONS_COLLECTION, blockId));
+  } catch (e) {
+    /* ignore */
+  }
+  try {
+    await deleteDoc(doc(db, EXCEPTIONS_COLLECTION, overrideId));
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+async function loadSpecialConfigForDate(dateStr) {
+  const typeNone = document.getElementById("specialTypeNone");
+  const typeBlock = document.getElementById("specialTypeBlock");
+  const typeOverride = document.getElementById("specialTypeOverride");
+
+  const reasonInput = document.getElementById("specialReason");
+  const titleInput = document.getElementById("specialTitle");
+  const startInput = document.getElementById("specialStart");
+  const endInput = document.getElementById("specialEnd");
+  const minCapInput = document.getElementById("specialMinCap");
+  const maxCapInput = document.getElementById("specialMaxCap");
+  const profInput = document.getElementById("specialProfessor");
+
+  clearSpecialFormFields();
+  if (typeNone) typeNone.checked = true;
+  if (typeBlock) typeBlock.checked = false;
+  if (typeOverride) typeOverride.checked = false;
+
+  const blockId = `${dateStr}-block`;
+  const overrideId = `${dateStr}-override`;
+
+  const [blockSnap, overrideSnap] = await Promise.all([
+    getDoc(doc(db, EXCEPTIONS_COLLECTION, blockId)),
+    getDoc(doc(db, EXCEPTIONS_COLLECTION, overrideId)),
+  ]);
+
+  if (overrideSnap.exists()) {
+    const data = overrideSnap.data() || {};
+    const slot =
+      Array.isArray(data.overrideSlots) && data.overrideSlots[0]
+        ? data.overrideSlots[0]
+        : {};
+
+    if (typeOverride) typeOverride.checked = true;
+    if (typeNone) typeNone.checked = false;
+
+    if (reasonInput) reasonInput.value = data.reason || "";
+    if (titleInput) titleInput.value = slot.type || "";
+    if (startInput) startInput.value = slot.startTime || "";
+    if (endInput) endInput.value = slot.endTime || "";
+    if (minCapInput)
+      minCapInput.value =
+        typeof slot.minCapacity === "number" ? slot.minCapacity : "";
+    if (maxCapInput)
+      maxCapInput.value =
+        typeof slot.maxCapacity === "number" ? slot.maxCapacity : "";
+    if (profInput) profInput.value = slot.professorName || "";
+
+    showAlert("Se cargó la configuración especial de ese día.", "success");
+    return;
+  }
+
+  if (blockSnap.exists()) {
+    const data = blockSnap.data() || {};
+    if (typeBlock) typeBlock.checked = true;
+    if (typeNone) typeNone.checked = false;
+    if (reasonInput) reasonInput.value = data.reason || "";
+    showAlert("Se cargó la configuración de día bloqueado.", "success");
+    return;
+  }
+
+  showAlert(
+    "No hay configuración especial guardada para esa fecha.",
+    "error"
+  );
+}
+
+async function saveSpecialConfig() {
+  const dateStr = getSpecialDateISO();
+  if (!dateStr) {
+    showAlert("Selecciona una fecha para la excepción.", "error");
+    return;
+  }
+
+  const typeRadio = document.querySelector(
+    'input[name="specialType"]:checked'
+  );
+  const typeValue = typeRadio ? typeRadio.value : "none";
+
+  const reasonInput = document.getElementById("specialReason");
+  const titleInput = document.getElementById("specialTitle");
+  const startInput = document.getElementById("specialStart");
+  const endInput = document.getElementById("specialEnd");
+  const minCapInput = document.getElementById("specialMinCap");
+  const maxCapInput = document.getElementById("specialMaxCap");
+  const profInput = document.getElementById("specialProfessor");
+
+  const reason = reasonInput?.value.trim() || "";
+
+  if (typeValue === "none") {
+    await clearSpecialConfigForDate(dateStr);
+    clearSpecialFormFields();
+    showAlert(
+      "Se eliminaron las configuraciones especiales y el día vuelve al horario base.",
+      "success"
+    );
+    return;
+  }
+
+  if (typeValue === "block") {
+    const docId = `${dateStr}-block`;
+    await setDoc(
+      doc(db, EXCEPTIONS_COLLECTION, docId),
+      {
+        action: "block",
+        date: dateStr,
+        reason: reason || null,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    // Por si existía un override viejo lo borramos
+    try {
+      await deleteDoc(
+        doc(db, EXCEPTIONS_COLLECTION, `${dateStr}-override`)
+      );
+    } catch (e) {
+      /* ignore */
+    }
+
+    clearSpecialFormFields();
+    showAlert("Se guardó el día como bloqueado.", "success");
+    return;
+  }
+
+  if (typeValue === "override") {
+    const title = titleInput?.value.trim() || "";
+    const startTime = startInput?.value || "";
+    const endTime = endInput?.value || "";
+    const minCapRaw = minCapInput?.value || "";
+    const maxCapRaw = maxCapInput?.value || "";
+    const professorName = profInput?.value.trim() || "";
+
+    if (!title || !startTime || !endTime) {
+      showAlert(
+        "Completa el tipo de clase/evento y las horas de inicio y fin.",
+        "error"
+      );
+      return;
+    }
+
+    const minCapNum = Number(minCapRaw);
+    const maxCapNum = Number(maxCapRaw);
+
+    const slot = {
+      type: title,
+      startTime,
+      endTime,
+      minCapacity:
+        Number.isFinite(minCapNum) && minCapNum > 0 ? minCapNum : null,
+      maxCapacity:
+        Number.isFinite(maxCapNum) && maxCapNum > 0 ? maxCapNum : null,
+      professorId: null,
+      professorName: professorName || null,
+    };
+
+    const docId = `${dateStr}-override`;
+    await setDoc(
+      doc(db, EXCEPTIONS_COLLECTION, docId),
+      {
+        action: "override",
+        date: dateStr,
+        reason: reason || null,
+        overrideSlots: [slot],
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    // Por si existía un block viejo lo borramos
+    try {
+      await deleteDoc(
+        doc(db, EXCEPTIONS_COLLECTION, `${dateStr}-block`)
+      );
+    } catch (e) {
+      /* ignore */
+    }
+
+    showAlert("Se guardó el horario especial para ese día.", "success");
+  }
+}
+
+async function onSpecialClearClicked() {
+  const dateStr = getSpecialDateISO();
+  if (!dateStr) {
+    showAlert("Selecciona una fecha primero.", "error");
+    return;
+  }
+
+  await clearSpecialConfigForDate(dateStr);
+  clearSpecialFormFields();
+
+  const typeNone = document.getElementById("specialTypeNone");
+  if (typeNone) typeNone.checked = true;
+
+  showAlert("Se quitó la excepción para ese día.", "success");
+}
+
+function setupSpecialDaysFormHandlers() {
+  const btnLoad = document.getElementById("btnSpecialLoadDay");
+  const btnSave = document.getElementById("btnSpecialSave");
+  const btnClear = document.getElementById("btnSpecialClear");
+
+  if (btnLoad && !btnLoad.dataset.bound) {
+    btnLoad.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const dateStr = getSpecialDateISO();
+      if (!dateStr) {
+        showAlert(
+          "Selecciona una fecha para cargar la configuración.",
+          "error"
+        );
+        return;
+      }
+      try {
+        await loadSpecialConfigForDate(dateStr);
+      } catch (err) {
+        console.error(err);
+        showAlert(
+          "No se pudo cargar la configuración de ese día.",
+          "error"
+        );
+      }
+    });
+    btnLoad.dataset.bound = "1";
+  }
+
+  if (btnSave && !btnSave.dataset.bound) {
+    btnSave.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try {
+        await saveSpecialConfig();
+      } catch (err) {
+        console.error(err);
+        showAlert("No se pudo guardar la configuración.", "error");
+      }
+    });
+    btnSave.dataset.bound = "1";
+  }
+
+  if (btnClear && !btnClear.dataset.bound) {
+    btnClear.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try {
+        await onSpecialClearClicked();
+      } catch (err) {
+        console.error(err);
+        showAlert("No se pudo quitar la excepción.", "error");
+      }
+    });
+    btnClear.dataset.bound = "1";
   }
 }

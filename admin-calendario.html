@@ -10,9 +10,8 @@
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon" />
 
   <!-- FullCalendar unificado -->
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css">
- <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 </head>
 
 <body>
@@ -35,10 +34,170 @@
   </nav>
 
   <main class="main-content">
-    <h1>Configuración del Calendario</h1>
+  <h1>Configuración del Calendario</h1>
 
-    <div id="calendarAdmin"></div>
-  </main>
+  <div id="calendarAdmin" class="calendar-admin-wrapper"></div>
+
+  <!-- Card DÍAS ESPECIALES -->
+  <section id="specialDaysCard" class="special-days-card">
+    <!-- Botón cabecera colapsable -->
+    <button
+      type="button"
+      id="specialDaysToggle"
+      class="special-days-toggle"
+      aria-expanded="true"
+    >
+      <div class="special-header" style="text-align: center;">
+        <h2>Días especiales</h2>
+        <p>
+          Bloquea todas las clases de un día concreto o define un horario especial
+          sólo para ese día (feriados, seminarios, eventos con academias aliadas, etc.).
+        </p>
+      </div>
+      <i class="bi bi-chevron-up special-toggle-icon" aria-hidden="true"></i>
+    </button>
+
+    <!-- Cuerpo que se abre / cierra -->
+    <div id="specialDaysBody" class="special-days-body">
+      <!-- Tipo de excepción -->
+      <div class="special-type-block">
+        <p class="special-label-top">Tipo de excepción</p>
+        <div class="special-type-row">
+          <label class="special-type-pill">
+            <input
+              type="radio"
+              name="specialType"
+              id="specialTypeNone"
+              value="none"
+              checked
+            />
+            <span>Sin excepción</span>
+          </label>
+
+          <label class="special-type-pill">
+            <input
+              type="radio"
+              name="specialType"
+              id="specialTypeBlock"
+              value="block"
+            />
+            <span>Bloquear todas las clases</span>
+          </label>
+
+          <label class="special-type-pill">
+            <input
+              type="radio"
+              name="specialType"
+              id="specialTypeOverride"
+              value="override"
+            />
+            <span>Horario especial sólo ese día</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Fecha + motivo -->
+      <div class="special-grid special-date-block">
+        <div class="special-field">
+          <label for="specialDate">Fecha</label>
+          <input
+            id="specialDate"
+            type="date"
+          />
+        </div>
+
+        <div class="special-field">
+          <label for="specialReason">Motivo (opcional)</label>
+          <input
+            id="specialReason"
+            type="text"
+            placeholder="Ej. Feriado, seminario, visita"
+          />
+        </div>
+      </div>
+
+      <!-- Subtítulo horario especial -->
+      <div class="special-subtitle">
+        <span>Horario especial de ese día</span>
+      </div>
+
+      <!-- Datos del horario especial -->
+      <div class="special-grid special-override-block">
+        <div class="special-field">
+          <label for="specialTitle">Tipo de clase / Evento</label>
+          <input
+            id="specialTitle"
+            type="text"
+            placeholder="Ej. Seminario MMA avanzado"
+          />
+        </div>
+
+        <div class="special-field">
+          <label for="specialStart">Hora inicio</label>
+          <input id="specialStart" type="time" />
+        </div>
+
+        <div class="special-field">
+          <label for="specialEnd">Hora fin</label>
+          <input id="specialEnd" type="time" />
+        </div>
+
+        <div class="special-field">
+          <label for="specialMinCap">Cupo mínimo</label>
+          <input
+            id="specialMinCap"
+            type="number"
+            min="0"
+            placeholder="Cupo mínimo"
+          />
+        </div>
+
+        <div class="special-field">
+          <label for="specialMaxCap">Cupo máximo</label>
+          <input
+            id="specialMaxCap"
+            type="number"
+            min="1"
+            placeholder="Cupo máximo"
+          />
+        </div>
+
+        <div class="special-field">
+          <label for="specialProfessor">Profesor / Academia</label>
+          <input
+            id="specialProfessor"
+            type="text"
+            placeholder="Nombre del profesor o academia"
+          />
+        </div>
+      </div>
+
+      <!-- Botón cargar datos del día -->
+      <div class="special-actions-row special-actions-top">
+        <button id="btnSpecialLoadDay" class="btn special-btn-ghost">
+          <i class="bi bi-cloud-download"></i> Cargar datos del día
+        </button>
+      </div>
+
+      <!-- Botones principales -->
+      <div class="special-actions-row special-actions-bottom">
+        <button id="btnSpecialSave" class="btn">
+          <i class="bi bi-check2-circle"></i> Guardar configuración
+        </button>
+        <button id="btnSpecialClear" class="btn error">
+          <i class="bi bi-x-circle"></i> Quitar excepción
+        </button>
+      </div>
+
+      <p class="special-tip">
+        Tip: si eliges <strong>“Sin excepción”</strong> y guardas, se eliminan las
+        configuraciones especiales y el día vuelve a usar el horario base semanal.
+      </p>
+    </div>
+  </section>
+
+</main>
+
 
   <!-- Modal crear clase -->
   <div id="modalCreateClass" class="modal-overlay hidden">
@@ -74,12 +233,14 @@
       </select>
 
       <input id="createColorKeyCustom"
-            type="text"
-            class="hidden"
-            placeholder="Ej: MMA Niños">
+             type="text"
+             class="hidden"
+             placeholder="Ej: MMA Niños">
 
-
-      <label class="modal-flag"><input id="createPermanent" type="checkbox" checked>Horario permanente (se repite todas las semanas)</label>
+      <label class="modal-flag">
+        <input id="createPermanent" type="checkbox" checked>
+        Horario permanente (se repite todas las semanas)
+      </label>
 
       <div class="modal-buttons">
         <button id="btnCreateSave">Guardar</button>
@@ -108,7 +269,7 @@
       <input id="editEndTime" type="time">
 
       <label>Capacidad mínima</label>
-      <input id="editMinCap" type="number" min="0">
+      <input id="editMinCap" type="number" min="2">
 
       <label>Capacidad máxima</label>
       <input id="editMaxCap" type="number" min="1">
@@ -120,14 +281,16 @@
         <option value="PRIVADA">PRIVADA</option>
         <option value="_custom">Otro (personalizado)...</option>
       </select>
-      
+
       <input id="editColorKeyCustom"
-            type="text"
-            class="hidden"
-            placeholder="Ej: MMA Niños">
+             type="text"
+             class="hidden"
+             placeholder="Ej: MMA Niños">
 
-
-     <label class="modal-flag"><input id="editPermanent" type="checkbox">Horario permanente (se repite todas las semanas)</label>
+      <label class="modal-flag">
+        <input id="editPermanent" type="checkbox">
+        Horario permanente (se repite todas las semanas)
+      </label>
 
       <div class="modal-buttons">
         <button id="btnEditSave">Guardar</button>
@@ -140,13 +303,11 @@
   <script type="module" src="./js/firebase-config.js"></script>
 
   <!-- Iconos (lucide) como en admin-dashboard -->
-<script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-<!-- Lógica común de admin: sidebar, logout, gateo de rol, etc. -->
-<script type="module" src="./js/admin.js"></script>
+  <!-- Lógica común de admin: sidebar, logout, gateo de rol, etc. -->
+  <script type="module" src="./js/admin.js"></script>
 
-<script type="module" src="./js/admin-calendario.js"></script>
-  
-
+  <script type="module" src="./js/admin-calendario.js"></script>
 </body>
 </html>

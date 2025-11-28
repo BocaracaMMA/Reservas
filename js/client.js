@@ -16,8 +16,19 @@ let unsubStaff   = null;
 /* Horario de clases configurado en admin-calendario */
 let scheduleBlocks   = [];
 let availableDaysSet = new Set();
+
 /* Mapa de ocupación por día para pintar el calendario */
 let dayOccupancyMap  = {}; // dateStr -> { full: bool, busy: bool }
+
+/* Mapa de excepciones de calendario:
+   dateStr "YYYY-MM-DD" -> {
+     action: "block" | "override" | "add" | "none",
+     overrideSlots: [...],
+     addSlots: [...],
+     reason: string
+   }
+*/
+let calendarExceptionsMap = {};
 
 /* ───────── Sidebar (mismo comportamiento que admin) ───────── */
 function ensureSidebarRuntimeDefaults() {
@@ -277,20 +288,45 @@ async function loadClassScheduleForBookings() {
   }
 }
 
+/* ───────── Excepciones de calendario (calendarExceptions) ───────── */
+
 /**
- * Devuelve los bloques de clase para la fecha dada.
+ * Carga todas las excepciones de calendario.
+ * Dado que la colección será pequeña, es más robusto que trabajar por rangos.
  */
-function getBlocksForDate(dateObj) {
-  if (!scheduleBlocks.length) return [];
-  const dow = dateObj.getUTCDay();
-  return scheduleBlocks
-    .filter(b => {
-      const isActive = b.active !== false;
-      if (!isActive) return false;
-      const bdow = Number(b.dayOfWeek ?? NaN);
-      return !Number.isNaN(bdow) && bdow === dow;
-    })
-    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+async function loadCalendarExceptions(force = false) {
+  if (!force && Object.keys(calendarExceptionsMap).length) {
+    return;
+  }
+
+  try {
+    const snap = await getDocs(collection(db, 'calendarExceptions'));
+    const map  = {};
+    snap.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      const date = data.date;
+      if (!date) return;
+      map[date] = {
+        action: data.action || 'block',
+        overrideSlots: Array.isArray(data.overrideSlots) ? data.overrideSlots : [],
+        addSlots: Array.isArray(data.addSlots) ? data.addSlots : [],
+        reason: data.reason || ''
+      };
+    });
+    calendarExceptionsMap = map;
+    console.log('[client] calendarExceptions cargadas:', calendarExceptionsMap);
+  } catch (err) {
+    console.error('[client] Error leyendo calendarExceptions:', err);
+    calendarExceptionsMap = {};
+  }
+}
+
+/**
+ * Compatibilidad con el código que pedía cargar por rango.
+ * Ahora simplemente nos aseguramos de que el mapa esté cargado.
+ */
+async function loadCalendarExceptionsForRange(startDateStr, endDateStr) {
+  await loadCalendarExceptions(false);
 }
 
 /* ───────── Helpers de cupos (min/max) ───────── */
@@ -299,6 +335,86 @@ function normalizeCapacity(value) {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
+
+/**
+ * Devuelve los bloques de clase efectivos para una fecha concreta (string YYYY-MM-DD),
+ * combinando el horario base semanal (classSchedule) + calendarExceptions (block/override/add).
+ */
+function getBlocksForDate(dateStr) {
+  if (!scheduleBlocks.length || !dateStr) return [];
+
+  let dow = NaN;
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    dow = dt.getUTCDay(); // 0=dom ... 6=sáb, independiente de la zona local
+  } catch {
+    return [];
+  }
+
+  // Horario base según día de semana
+  let blocksForDay = scheduleBlocks
+    .filter(b => {
+      const isActive = b.active !== false;
+      if (!isActive) return false;
+      const bdow = Number(b.dayOfWeek ?? NaN);
+      return !Number.isNaN(bdow) && bdow === dow;
+    })
+    .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+  const ex = calendarExceptionsMap[dateStr];
+  if (!ex) return blocksForDay;
+
+  const action = ex.action || 'block';
+
+  // Día completamente bloqueado
+  if (action === 'block') {
+    return [];
+  }
+
+  // Normaliza slots de override/add a la misma estructura de classSchedule
+  const normalizeSlots = (slots, prefix) => {
+    if (!Array.isArray(slots)) return [];
+    return slots.map((slot, idx) => {
+      const s = slot || {};
+      return {
+        id: s.id || `${prefix}-${dateStr}-${idx}`,
+        dayOfWeek: dow,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        type: s.type || s.classType || 'Clase especial',
+        minCapacity: normalizeCapacity(s.minCapacity),
+        maxCapacity: normalizeCapacity(s.maxCapacity),
+        professorId: s.professorId || s.profId || '',
+        professorName: s.professorName || s.profName || '',
+        colorKey: s.colorKey || s.type || s.classType || 'Evento especial',
+        active: true,
+        permanent: false
+      };
+    });
+  };
+
+  const overrideBlocks = normalizeSlots(ex.overrideSlots, 'override');
+  const addBlocks      = normalizeSlots(ex.addSlots, 'add');
+
+  if (action === 'override') {
+    return overrideBlocks.sort((a, b) =>
+      (a.startTime || '').localeCompare(b.startTime || '')
+    );
+  }
+
+  if (action === 'add') {
+    const merged = blocksForDay.concat(addBlocks).sort((a, b) =>
+      (a.startTime || '').localeCompare(b.startTime || '')
+    );
+    return merged;
+  }
+
+  // Acción desconocida → usamos sólo el horario semanal
+  return blocksForDay;
+}
+
+/* ───────── Estadísticas de reservas (cupos) ───────── */
 
 async function getReservationStatsForDate(dateStr) {
   // 1) Reservas NUEVAS en colección "reservations"
@@ -321,33 +437,25 @@ async function getReservationStatsForDate(dateStr) {
   });
 
   // 2) Registros VIEJOS en "asistencias/{fecha}/usuarios"
-  //    Solo contamos los que NO tienen "_" en el id,
-  //    para no duplicar los que vienen del sistema nuevo (uid_hh-mm).
+  //    Solo contamos los que NO tienen "_" en el id
   const legacyByTime = {};
-
   try {
     const attSnap = await getDocs(collection(db, 'asistencias', dateStr, 'usuarios'));
     attSnap.forEach(docSnap => {
       const docId = docSnap.id || '';
       const data  = docSnap.data() || {};
-
-      // Docs nuevos creados al reservar: id "uid_hh-mm" → los ignoramos aquí
-      if (docId.includes('_')) return;
+      if (docId.includes('_')) return; // nuevos → ignorar aquí
 
       const time = data.hora || null;
       if (!time) return;
-
       legacyByTime[time] = (legacyByTime[time] || 0) + 1;
     });
   } catch (err) {
     console.warn('[getReservationStatsForDate] No se pudo leer asistencias legacy:', err);
   }
 
-  // Devolvemos las tres estructuras
   return { byClassId, byTimeNew, legacyByTime };
 }
-
-
 
 function getReservationCountForBlock(stats, block, fallbackTime) {
   if (!stats) return 0;
@@ -358,14 +466,12 @@ function getReservationCountForBlock(stats, block, fallbackTime) {
 
   let base = 0;
 
-  // Primero contamos las reservas NUEVAS del bloque
   if (classId && Object.prototype.hasOwnProperty.call(byClassId, classId)) {
     base = byClassId[classId];
   } else if (time && Object.prototype.hasOwnProperty.call(byTimeNew, time)) {
     base = byTimeNew[time];
   }
 
-  // Luego sumamos las reservas VIEJAS de ese mismo horario
   let legacy = 0;
   if (time && legacyByTime && Object.prototype.hasOwnProperty.call(legacyByTime, time)) {
     legacy = legacyByTime[time];
@@ -373,7 +479,6 @@ function getReservationCountForBlock(stats, block, fallbackTime) {
 
   return base + legacy;
 }
-
 
 /**
  * Rellena textos de cupos en las tarjetas del modal de selección.
@@ -439,7 +544,7 @@ async function recomputeDayOccupancyForRange(startDateStr, endDateStr) {
     const q = query(
       collection(db, 'reservations'),
       where('date', '>=', startDateStr),
-      where('date', '<', endDateStr)
+      where('date', '<',  endDateStr)
     );
     const snap = await getDocs(q);
 
@@ -455,18 +560,7 @@ async function recomputeDayOccupancyForRange(startDateStr, endDateStr) {
     const map = {};
 
     Object.entries(byDate).forEach(([dateStr, reservations]) => {
-      let dow = NaN;
-      try {
-        const d = new Date(`${dateStr}T12:00:00${CR_OFFSET}`);
-        dow = d.getUTCDay();
-      } catch {}
-
-      const blocksForDay = scheduleBlocks.filter(b => {
-        const isActive = b.active !== false;
-        if (!isActive) return false;
-        const bdow = Number(b.dayOfWeek ?? NaN);
-        return !Number.isNaN(bdow) && bdow === dow;
-      });
+      const blocksForDay = getBlocksForDate(dateStr);
       if (!blocksForDay.length) return;
 
       let totalSlots = 0;
@@ -587,6 +681,8 @@ function buildStudentCalendar(holderEl) {
               };
             }).filter(Boolean);
 
+            // Cargamos excepciones y ocupación para el rango visible
+            await loadCalendarExceptionsForRange(start, end);
             await recomputeDayOccupancyForRange(start, end);
 
             success(evs);
@@ -605,7 +701,7 @@ function buildStudentCalendar(holderEl) {
       return { html: '<div style="font-size:20px;text-align:center;">✅</div>' };
     },
 
-    dateClick(info) {
+    async dateClick(info) {
       const dateStr = info.dateStr.slice(0, 10);
 
       if (!isDateInCurrentMonthCR(dateStr)) {
@@ -613,7 +709,19 @@ function buildStudentCalendar(holderEl) {
         return;
       }
 
-      const dayBlocks = getBlocksForDate(info.date);
+      // Asegurarnos de tener excepciones frescas (por si cambió algo)
+      await loadCalendarExceptionsForRange(dateStr, dateStr);
+
+      const ex = calendarExceptionsMap[dateStr];
+      if (ex && ex.action === 'block') {
+        const msg = ex.reason
+          ? `No hay clases en este día: ${ex.reason}`
+          : 'No hay clases en este día.';
+        showAlert(msg, 'error');
+        return;
+      }
+
+      const dayBlocks = getBlocksForDate(dateStr);
       if (!dayBlocks.length) {
         showAlert('No hay clases disponibles en este día.', 'error');
         return;
@@ -638,14 +746,30 @@ function buildStudentCalendar(holderEl) {
 
     dayCellClassNames(arg) {
       const classes = [];
-      if (!availableDaysSet || !availableDaysSet.size) return classes;
-
-      const dow = arg.date.getUTCDay();
-      if (!availableDaysSet.has(dow)) {
-        classes.push('disabled-day');
-      }
 
       const dateStr = arg.dateStr ? arg.dateStr.slice(0, 10) : arg.date.toISOString().slice(0, 10);
+      const ex      = calendarExceptionsMap[dateStr];
+
+      const dow        = arg.date.getUTCDay();
+      const hasBaseDay = availableDaysSet && availableDaysSet.has(dow);
+
+      // Día bloqueado por excepción → se marca como bloqueado y deshabilitado
+      if (ex?.action === 'block') {
+        classes.push('day-blocked', 'disabled-day');
+      } else {
+        // Si no hay horario base y tampoco excepción override/add → deshabilitado
+        const hasExceptionSlots = ex && (ex.action === 'override' || ex.action === 'add');
+        if (!hasBaseDay && !hasExceptionSlots) {
+          classes.push('disabled-day');
+        }
+
+        if (ex?.action === 'override') {
+          classes.push('day-override');
+        } else if (ex?.action === 'add') {
+          classes.push('day-add');
+        }
+      }
+
       const meta = dayOccupancyMap[dateStr];
       if (meta?.full) {
         classes.push('day-full');
@@ -708,6 +832,7 @@ function buildStaffCalendar(holderEl) {
               extendedProps: { names, count: names.length }
             }));
 
+            await loadCalendarExceptionsForRange(start, end);
             await recomputeDayOccupancyForRange(start, end);
 
             success(list);
@@ -745,14 +870,28 @@ function buildStaffCalendar(holderEl) {
 
     dayCellClassNames(arg) {
       const classes = [];
-      if (!availableDaysSet || !availableDaysSet.size) return classes;
-
-      const dow = arg.date.getUTCDay();
-      if (!availableDaysSet.has(dow)) {
-        classes.push('disabled-day');
-      }
 
       const dateStr = arg.dateStr ? arg.dateStr.slice(0, 10) : arg.date.toISOString().slice(0, 10);
+      const ex      = calendarExceptionsMap[dateStr];
+
+      const dow        = arg.date.getUTCDay();
+      const hasBaseDay = availableDaysSet && availableDaysSet.has(dow);
+
+      if (ex?.action === 'block') {
+        classes.push('day-blocked', 'disabled-day');
+      } else {
+        const hasExceptionSlots = ex && (ex.action === 'override' || ex.action === 'add');
+        if (!hasBaseDay && !hasExceptionSlots) {
+          classes.push('disabled-day');
+        }
+
+        if (ex?.action === 'override') {
+          classes.push('day-override');
+        } else if (ex?.action === 'add') {
+          classes.push('day-add');
+        }
+      }
+
       const meta = dayOccupancyMap[dateStr];
       if (meta?.full) {
         classes.push('day-full');
@@ -783,7 +922,11 @@ async function addReservation(date, time, slotMeta) {
 
     const userData = userSnap.data();
 
-    if (!userData.autorizado || userData.banned === true) {
+    // Admin / Dev están siempre autorizados (reglas de negocio).
+    const roles = Array.isArray(userData.roles) ? userData.roles : [];
+    const isAdminOrDev = roles.includes('admin') || roles.includes('dev');
+
+    if (!isAdminOrDev && (!userData.autorizado || userData.banned === true)) {
       showAlert('Tu cuenta no está autorizada para reservar clases.', 'error');
       return null;
     }
@@ -1011,7 +1154,10 @@ function openConfirmReservationModal(date, block) {
       }
       const uData = uDoc.data();
 
-      const isAuthorized = uData.autorizado === true && uData.banned !== true;
+      const roles = Array.isArray(uData.roles) ? uData.roles : [];
+      const isAdminOrDev = roles.includes('admin') || roles.includes('dev');
+      const isAuthorized = isAdminOrDev || (uData.autorizado === true && uData.banned !== true);
+
       if (!isAuthorized) {
         showAlert('Tu cuenta no está autorizada para reservar clases.', 'error');
         return;
@@ -1132,18 +1278,7 @@ function openAttendancePopup(list, day) {
   });
   const hours = Object.keys(byHour).sort();
 
-  let dow = NaN;
-  try {
-    const dateObj = new Date(`${day}T12:00:00${CR_OFFSET}`);
-    dow = dateObj.getUTCDay();
-  } catch {}
-
-  const blocksForDay = scheduleBlocks.filter(b => {
-    const isActive = b.active !== false;
-    if (!isActive) return false;
-    const bdow = Number(b.dayOfWeek ?? NaN);
-    return !Number.isNaN(bdow) && bdow === dow;
-  });
+  const blocksForDay = getBlocksForDate(day);
 
   hours.forEach(hora => {
     const group = byHour[hora];
@@ -1234,7 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (e) { console.error(e); }
 
-    const isStaff    = roles.includes('professor') || roles.includes('admin');
+    const isStaff    = roles.includes('professor') || roles.includes('admin') || roles.includes('dev');
     const switchWrap = document.getElementById('roleSwitchWrap');
     const deck       = document.getElementById('calendarDeck');
     const elStudent  = document.getElementById('calendarStudent');
@@ -1257,7 +1392,11 @@ document.addEventListener('DOMContentLoaded', () => {
       setInterval(tick, 1000);
     }
 
-    await loadClassScheduleForBookings();
+    // Cargar horario base + excepciones antes de dibujar los calendarios
+    await Promise.all([
+      loadClassScheduleForBookings(),
+      loadCalendarExceptions(true)
+    ]);
 
     buildStudentCalendar(elStudent);
 

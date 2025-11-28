@@ -991,30 +991,46 @@ main.container > h1:first-of-type{
   font-weight: 700;
 }
 
-/* botón X arriba a la derecha – reutiliza #cerrarPopupBtn */
+/* Popup asistencia admin: contenedor */
+#popupAsistencia .popup-contenido {
+  position: relative; /* la X se posiciona respecto al card, no a la pantalla */
+}
+
+/* Botón X del popup de asistencia (admin-dashboard) */
 #cerrarPopupBtn{
   position: absolute;
-  top: 10px; right: 10px;
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  background: #0f141a;
-  border: 1px solid #2b3138;
-  color: var(--text-100);
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  background: #1f2937;
+  border: 1px solid #334155;
+  color: #e5e7eb;
   cursor: pointer;
-  font-size: 0;                   /* oculta el “Cerrar” textual */
-  transition: transform .15s ease, background .2s ease, border-color .2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0; /* ocultamos el texto "Cerrar" si lo hubiera */
+  transition:
+    transform .15s ease,
+    background .2s ease,
+    border-color .2s ease,
+    box-shadow .2s ease;
 }
+
 #cerrarPopupBtn::before{
   content: "✕";
-  font-size: 18px;
-  line-height: 36px;
-  display: block;
-  text-align: center;
+  font-size: 16px;
+  line-height: 1;
 }
-#cerrarPopupBtn:hover{
-  background: #111a22;
-  border-color: var(--brand-yellow);
-  transform: scale(1.04);
+
+#cerrarPopupBtn:hover {
+  background: #ef4444;
+  border-color: rgba(248, 113, 113, 0.95);
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.55);
+  transform: translateY(-1px);
 }
 
 /* lista scrolleable y limpia */
@@ -1406,22 +1422,82 @@ body.client-page .container{ max-width: 760px; }
 .role-switch{ margin: 10px auto 8px; }
 
 /* Modal de asistencia (staff) */
+/* Modal de asistencia (staff) */
 #attModal{
-  position: fixed; inset: 0; display: none; place-items: center;
-  z-index: 12000; background: rgba(13,17,23,.55); backdrop-filter: blur(3px);
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  z-index: 12000;
+  background: rgba(13,17,23,.55);
+  backdrop-filter: blur(3px);
 }
-#attModal.active{ display: grid; }
+
+#attModal.active{
+  display: grid;
+}
+
 #attModal .att-card{
-  width: min(92vw, 520px);
-  background: var(--surface-800); color: var(--text-100);
-  border: 1px solid #22303d; border-radius: 16px;
+  /* ANTES: width: min(92vw, 520px); sin margen */
+  width: 100%;
+  max-width: 520px;
+  margin: 0 14px;                /* <-- deja margen a los lados, ya no toca el borde */
+  background: var(--surface-800);
+  color: var(--text-100);
+  border: 1px solid #22303d;
+  border-radius: 16px;
   box-shadow: 0 18px 60px rgba(0,0,0,.45);
   padding: 16px 16px 14px;
 }
-#attModal .att-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
-#attModal .att-list{ display:grid; gap:8px; max-height:50vh; overflow:auto; padding-right:4px; }
-#attModal .att-item{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid #233140; border-radius:10px; background:#0f1720; }
-#attModal .close-btn{ padding:8px 12px; border-radius:10px; background:#1f2937; border:1px solid #334155; color:#e5e7eb; cursor:pointer; }
+
+#attModal .att-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+#attModal .att-list{
+  display:grid;
+  gap:8px;
+  max-height:50vh;
+  overflow:auto;
+  padding-right:4px;
+}
+
+#attModal .att-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border:1px solid #233140;
+  border-radius:10px;
+  background:#0f1720;
+}
+
+/* BOTÓN CERRAR – ahora es un circulito fijo dentro del card */
+#attModal .close-btn{
+  width: 28px;
+  height: 28px;
+  padding: 0;                    /* <-- sin padding para que no “crezca” hacia afuera */
+  border-radius: 999px;
+  background:#1f2937;
+  border:1px solid #334155;
+  color:#e5e7eb;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+#attModal .close-btn::before{
+  content: "✕";
+  font-size: 16px;
+  line-height: 1;
+}
+
 
 /* Tooltip de nombres (staff) */
 .custom-tooltip{
@@ -2870,4 +2946,522 @@ body.page-register.auth-center{
 /* Si no existía antes: util para ocultar secciones */
 .hidden {
   display: none !important;
+}
+
+/* ===========================================================
+   Calendario (FullCalendar) – estados de días
+   ========================================================== */
+
+/* Día actual (hoy) */
+.fc .fc-daygrid-day.fc-day-today {
+  background: rgba(34, 197, 94, 0.08); /* verdoso suave */
+}
+
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(34, 197, 94, 0.18);
+  color: #bbf7d0;
+  font-weight: 600;
+}
+
+/* Día totalmente bloqueado (sin clases: feriado, cerrado, etc.) */
+.fc .day-blocked {
+  position: relative;
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.fc .day-blocked::after {
+  content: "Cerrado";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  font-size: 0.65rem;
+  text-align: center;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: rgba(248, 113, 113, 0.18); /* rojo suave */
+  color: #fecaca;
+}
+
+/* Día con horario especial sólo para ese día (override) */
+.fc .day-override {
+  position: relative;
+}
+
+.fc .day-override::after {
+  content: "⭐";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: #0f172a;
+}
+
+/* Días con mucha ocupación / llenos */
+.fc .day-busy .fc-daygrid-day-number {
+  border-bottom: 2px solid #facc15; /* amarillo = casi lleno */
+}
+
+.fc .day-full .fc-daygrid-day-number {
+  border-bottom: 2px solid #22c55e; /* verde = lleno */
+}
+
+
+/* ============================================================================
+   Admin calendario – Días especiales / calendarExceptions
+   ========================================================================== */
+
+.calendar-exceptions-card {
+  background: #020617;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  margin-top: 18px;
+}
+
+.calendar-exceptions-title {
+  font-size: 1rem;
+  margin: 0 0 6px;
+}
+
+.calendar-exceptions-subtitle {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.calendar-exceptions-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calendar-exceptions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.calendar-exceptions-field label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.calendar-exceptions-field input[type="date"],
+.calendar-exceptions-field input[type="time"],
+.calendar-exceptions-field input[type="number"],
+.calendar-exceptions-field input[type="text"] {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.calendar-exceptions-field input:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.45);
+}
+
+.calendar-exceptions-type {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calendar-exceptions-type label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.06s ease;
+}
+
+.calendar-exceptions-type input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #22c55e;
+}
+
+.calendar-exceptions-type label:hover {
+  background: rgba(22, 163, 74, 0.10);
+  border-color: rgba(34, 197, 94, 0.65);
+  transform: translateY(-1px);
+}
+
+@supports selector(label:has(input:checked)) {
+  .calendar-exceptions-type label:has(input:checked) {
+    background: rgba(22, 163, 74, 0.18);
+    border-color: rgba(34, 197, 94, 0.85);
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.55);
+  }
+}
+
+.calendar-exceptions-extra {
+  margin-top: 6px;
+}
+
+.calendar-exceptions-subsection {
+  font-size: 0.85rem;
+  margin: 0 0 6px;
+}
+
+.calendar-exceptions-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.calendar-exceptions-hint {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Variante de botón secundario si no existía */
+.btn.secondary {
+  background: transparent;
+  border: 1px solid rgba(34, 197, 94, 0.9);
+  color: #22c55e;
+}
+
+.btn.secondary:hover {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+/* ============================================================================
+   ADMIN CALENDARIO – DÍAS ESPECIALES
+   ========================================================================== */
+
+.calendar-admin-wrapper {
+  margin-bottom: 24px;
+}
+
+
+/* Header */
+
+#specialDaysCard .special-header {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+#specialDaysCard .special-header h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+#specialDaysCard .special-header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+/* Etiqueta "Tipo de excepción" */
+
+#specialDaysCard .special-label-top {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+/* Píldoras de tipo de excepción centradas */
+
+#specialDaysCard .special-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+#specialDaysCard .special-type-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  min-width: 140px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.9);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.06s ease;
+}
+
+#specialDaysCard .special-type-pill:hover {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(34, 197, 94, 0.7);
+  transform: translateY(-1px);
+}
+
+#specialDaysCard .special-type-pill input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#specialDaysCard .special-type-pill span {
+  pointer-events: none;
+}
+
+/* Seleccionado – fallback y :has */
+
+#specialDaysCard .special-type-pill input:checked + span {
+  font-weight: 600;
+}
+
+@supports selector(label:has(input:checked)) {
+  #specialDaysCard .special-type-pill:has(input:checked) {
+    background: rgba(22, 163, 74, 0.2);
+    border-color: rgba(34, 197, 94, 0.9);
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.65);
+  }
+}
+
+/* Layout general de campos */
+
+#specialDaysCard .special-grid {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Fecha + motivo: una columna en móvil, dos en pantallas medias */
+
+#specialDaysCard .special-date-block {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  #specialDaysCard .special-date-block {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+}
+
+/* Campos del horario especial: dos columnas responsivas */
+
+#specialDaysCard .special-override-block {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  #specialDaysCard .special-override-block {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #specialDaysCard .special-override-block .special-field:first-child {
+    grid-column: 1 / -1; /* Tipo de clase a lo ancho */
+  }
+}
+
+/* Estilo de cada campo */
+
+#specialDaysCard .special-field label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: left;
+}
+
+#specialDaysCard .special-field input {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  outline: none;
+}
+
+#specialDaysCard .special-field input:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.45);
+}
+
+/* Subtítulo "Horario especial de ese día" */
+
+#specialDaysCard .special-subtitle {
+  margin: 6px 0 8px;
+  text-align: center;
+}
+
+#specialDaysCard .special-subtitle span {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+/* Botones */
+
+#specialDaysCard .special-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+#specialDaysCard .special-actions-top {
+  margin-top: 2px;
+}
+
+#specialDaysCard .special-actions-bottom {
+  margin-top: 10px;
+}
+
+#specialDaysCard #btnSpecialSave,
+#specialDaysCard #btnSpecialClear {
+  min-width: 180px;
+}
+
+#specialDaysCard #btnSpecialLoadDay {
+  min-width: 210px;
+}
+
+/* Estilo ghost para el botón "Cargar datos del día" */
+#specialDaysCard .special-btn-ghost {
+  background: transparent;
+  border: 1px solid #22c55e;
+  color: #22c55e;
+}
+
+#specialDaysCard .special-btn-ghost:hover {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+/* Tip final */
+
+#specialDaysCard .special-tip {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+/* --- Cabecera colapsable ("gavetita") --- */
+
+#specialDaysCard.special-days-card {
+  max-width: 520px;
+  margin: 0 auto 24px;
+  background: #020617;
+  border-radius: 16px;
+  padding: 16px 18px 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+#specialDaysCard .special-days-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0 0 8px;
+  cursor: pointer;
+}
+
+#specialDaysCard .special-days-toggle:focus-visible {
+  outline: 2px solid #22c55e;
+  border-radius: 12px;
+}
+
+#specialDaysCard .special-header {
+  text-align: left;
+  margin: 0;
+}
+
+#specialDaysCard .special-header h2 {
+  margin: 0 0 2px;
+  font-size: 1.05rem;
+}
+
+#specialDaysCard .special-header p {
+  margin: 0;
+  font-size: 0.83rem;
+  color: #9ca3af;
+}
+
+#specialDaysCard .special-toggle-icon {
+  margin-left: 10px;
+  font-size: 1rem;
+  color: #9ca3af;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+#specialDaysCard .special-days-toggle:hover .special-toggle-icon {
+  color: #22c55e;
+}
+
+#specialDaysCard .special-days-toggle[aria-expanded="false"] .special-toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* Cuerpo que se abre/cierra */
+
+#specialDaysCard .special-days-body {
+  max-height: 1000px;         /* suficiente para todo el contenido */
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.22s ease, opacity 0.22s ease;
+}
+
+#specialDaysCard .special-days-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Input de fecha con aspecto de calendario --- */
+
+#specialDaysCard .special-field input[type="date"] {
+  cursor: pointer;
+}
+
+/* icono de calendario claro sobre fondo oscuro */
+#specialDaysCard .special-field input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
+}
+
+/* texto siempre legible */
+#specialDaysCard .special-field input[type="date"]::-webkit-datetime-edit {
+  color: #e5e7eb;
+}
+
+/* En algunos navegadores (Firefox), aseguramos color del texto */
+#specialDaysCard .special-field input[type="date"] {
+  color-scheme: dark;
 }
