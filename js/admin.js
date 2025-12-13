@@ -1,9 +1,9 @@
 // ./js/admin.js
-// Lógica común del panel admin:
-// - Navbar / sidebar
-// - Logout
-// - Calendario mensual de reservas + asistencia
-// - Días bloqueados leídos desde classSchedule (admin-calendario)
+// Panel Admin:
+// - Sidebar / logout
+// - Calendario mensual de reservas
+// - Modal de asistencia con botón Compartir
+// - Días habilitados leídos desde classSchedule
 
 import { auth, db } from './firebase-config.js';
 import { signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -39,6 +39,24 @@ function formatTime12(hhmm) {
   return `${h}:${mm} ${suffix}`;
 }
 
+// Fecha larga en español, estilo "viernes, 12 de diciembre de 2025"
+function formatLongDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const base = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    return new Intl.DateTimeFormat('es-CR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'America/Costa_Rica'
+    }).format(base);
+  } catch {
+    return dateStr;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Bootstrap de la página admin                                               */
 /* -------------------------------------------------------------------------- */
@@ -69,12 +87,7 @@ onReady(() => {
     }
   });
 
-  // Cerrar popup de asistencia (X)
-  document.getElementById('cerrarPopupBtn')?.addEventListener('click', () => {
-    document.getElementById('asistenciaPopup')?.classList.remove('active');
-  });
-
-  // Gateo por rol y luego inicializar calendario admin (si existe en la página)
+  // Gateo por rol y luego inicializar calendario admin
   (async () => {
     await gateAdminPage();
     await iniciarPanelAdmin();
@@ -85,13 +98,6 @@ onReady(() => {
 /* classSchedule → días de la semana con clases activas                       */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Devuelve un Set<number> con los días (0–6) que tienen clases
- * activas en la colección classSchedule (permanentes o no).
- *
- * Si no hay datos o hay error, se devuelve un fallback con todos
- * los días habilitados, para no bloquear el calendario.
- */
 async function loadEnabledDaysFromSchedule() {
   const fallback = new Set([0, 1, 2, 3, 4, 5, 6]); // todos los días habilitados
 
@@ -120,24 +126,17 @@ async function loadEnabledDaysFromSchedule() {
 /* FullCalendar admin (mensual)                                              */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Calendario mensual que muestra cuántas reservas hay por día y permite
- * abrir el popup de asistencia. Ahora respeta los días habilitados desde
- * classSchedule (los demás se marcan como disabled-day).
- */
 async function iniciarPanelAdmin() {
   const calendarEl = document.getElementById('calendar-admin');
   if (!calendarEl || !window.FullCalendar) return;
 
-  // Días de la semana con clases activas (cualquier tipo)
   const enabledDays = await loadEnabledDaysFromSchedule();
 
-  // Altura mínima razonable para móvil
   if (!calendarEl.style.minHeight) calendarEl.style.minHeight = '560px';
 
   const calendar = new window.FullCalendar.Calendar(calendarEl, {
     locale: 'es',
-    firstDay: 1,                // Lunes como primer día de la semana
+    firstDay: 1,
     initialView: 'dayGridMonth',
     height: 'auto',
     expandRows: true,
@@ -178,7 +177,6 @@ async function iniciarPanelAdmin() {
         }
       );
 
-      // Cleanup cuando FullCalendar lo necesite
       return () => { try { unsub(); } catch {} };
     },
 
@@ -219,7 +217,6 @@ async function iniciarPanelAdmin() {
 
   calendar.render();
 
-  // Ajuste de tamaño por si el sidebar cambia el ancho
   setTimeout(() => { try { calendar.updateSize(); } catch {} }, 0);
   window.addEventListener('resize', () => {
     try { calendar.updateSize(); } catch {}
@@ -231,9 +228,8 @@ async function iniciarPanelAdmin() {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Lee asistencias para un día concreto desde:
+ * Lee asistencias para un día concreto:
  *   /asistencias/{day}/usuarios/{uid}
- * Incluye hora y tipo de clase para poder agrupar.
  */
 async function getReservasPorDia(day) {
   const snap = await getDocs(collection(db, 'asistencias', day, 'usuarios'));
@@ -243,65 +239,89 @@ async function getReservasPorDia(day) {
       uid: d.id,
       nombre: data.nombre,
       presente: data.presente || false,
-      hora: data.hora || '',
-      classType: data.classType || '',
-      professorName: data.professorName || ''
+      hora: data.hora || ''
     };
   });
 }
 
 /**
- * Pinta la lista de usuarios en el popup y permite marcar asistencia.
- * Agrupa por hora de clase para manejar varios horarios en el mismo día.
+ * Agrupa las reservas por hora, devolviendo:
+ * [{ hour, hourLabel, names[], presence{nombre->bool}, total?, minCap?, maxCap? }]
  */
-function abrirPopupAsistencia(list, day) {
-  const popup = document.getElementById('asistenciaPopup');
-  const ul    = document.getElementById('listaUsuarios');
-  const fd    = document.getElementById('fechaReserva');
-  if (!popup || !ul || !fd) return;
+function groupAttendanceByHour(list) {
+  const map = new Map();
 
-  ul.innerHTML = '';
-  fd.textContent = day;
+  list.forEach((u) => {
+    const hour = u.hora || '';
+    const key  = hour || 'sin-horario';
 
-  const sorted = [...list].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
-  let lastHour = null;
-
-  sorted.forEach((u) => {
-    const hourLabel = u.hora ? formatTime12(u.hora) : null;
-
-    // Cabecera de horario cuando cambia la hora
-    if (hourLabel && hourLabel !== lastHour) {
-      const headerLi = document.createElement('li');
-      headerLi.className = 'asistencia-slot-title';
-      headerLi.textContent = `Horario ${hourLabel}`;
-      ul.appendChild(headerLi);
-      lastHour = hourLabel;
+    if (!map.has(key)) {
+      map.set(key, {
+        hour,
+        hourLabel: hour ? formatTime12(hour) : 'Sin horario',
+        names: [],
+        presence: {}
+      });
     }
 
-    const li = document.createElement('li');
-    li.className = 'asistencia-item';
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = u.presente;
-    cb.id = u.uid;
-    cb.addEventListener('change', () =>
-      guardarAsistencia(day, u.uid, cb.checked)
-    );
-
-    const span = document.createElement('span');
-    const extra = u.classType ? ` – ${u.classType}` : '';
-    span.textContent = `${u.nombre}${extra}`;
-
-    li.append(cb, span);
-    ul.append(li);
+    const slot = map.get(key);
+    const name = u.nombre || 'Sin nombre';
+    slot.names.push(name);
+    slot.presence[name] = !!u.presente;
   });
 
-  popup.classList.add('active');
+  return Array.from(map.values()).sort((a, b) =>
+    (a.hour || '').localeCompare(b.hour || '')
+  );
 }
 
 /**
- * Guarda el estado de asistencia de un usuario para un día concreto.
+ * Enriquecemos los slots con min/maxCapacity a partir de classSchedule.
+ */
+async function enrichSlotsWithCapacity(day, slots) {
+  try {
+    const dt  = new Date(`${day}T12:00:00-06:00`);
+    const dow = dt.getUTCDay();
+
+    const snap = await getDocs(collection(db, 'classSchedule'));
+    const byHour = {};
+
+    snap.forEach(docSnap => {
+      const data  = docSnap.data() || {};
+      const active = data.active !== false;
+      if (!active) return;
+
+      const bdow = Number(data.dayOfWeek ?? NaN);
+      if (!Number.isFinite(bdow) || bdow !== dow) return;
+
+      const startTime = data.startTime;
+      if (!startTime) return;
+
+      const maxCap = Number(data.maxCapacity);
+      const minCap = Number(data.minCapacity);
+
+      byHour[startTime] = {
+        maxCap: Number.isFinite(maxCap) && maxCap > 0 ? maxCap : null,
+        minCap: Number.isFinite(minCap) && minCap > 0 ? minCap : null
+      };
+    });
+
+    slots.forEach(slot => {
+      slot.total = slot.names.length;
+      const caps = byHour[slot.hour];
+      if (caps) {
+        slot.maxCap = caps.maxCap;
+        slot.minCap = caps.minCap;
+      }
+    });
+  } catch (err) {
+    console.warn('[admin] No se pudo cargar capacities para el día', day, err);
+    slots.forEach(slot => { slot.total = slot.names.length; });
+  }
+}
+
+/**
+ * Guarda el estado de asistencia para un usuario concreto.
  */
 async function guardarAsistencia(day, uid, presente) {
   try {
@@ -313,26 +333,184 @@ async function guardarAsistencia(day, uid, presente) {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Cerrar popup de asistencia (overlay + ESC)                                 */
-/* -------------------------------------------------------------------------- */
-(() => {
-  const overlay  = document.getElementById('asistenciaPopup');
-  const btnClose = document.getElementById('cerrarPopupBtn');
-  if (!overlay || !btnClose) return;
+/**
+ * Abre el popup de asistencia de admin con el mismo look que el modal
+ * de profesores/estudiantes y añade el botón Compartir.
+ */
+function abrirPopupAsistencia(list, day) {
+  const overlay = document.getElementById('asistenciaPopup');
+  if (!overlay) return;
 
-  const close = () => overlay.classList.remove('active');
+  const slots = groupAttendanceByHour(list);
 
-  // Botón X
-  btnClose.addEventListener('click', close);
+  // Plantilla del modal (reutiliza clases .att-*)
+  overlay.innerHTML = `
+    <div class="att-card">
+      <div class="att-head">
+        <h3 class="att-title">
+          Asistencia para el día:
+          <span>${formatLongDate(day)}</span>
+        </h3>
+        <button type="button" class="close-btn" aria-label="Cerrar"></button>
+      </div>
+      <div class="att-list"></div>
+      <div class="att-footer">
+        <button type="button" class="att-share-btn">Compartir</button>
+      </div>
+    </div>
+  `;
 
-  // Clic fuera de la tarjeta
+  const listEl   = overlay.querySelector('.att-list');
+  const shareBtn = overlay.querySelector('.att-share-btn');
+  const closeBtn = overlay.querySelector('.close-btn');
+
+  listEl.innerHTML = '';
+
+  if (!slots.length) {
+    const p = document.createElement('p');
+    p.className = 'att-empty';
+    p.textContent = 'No hay reservas para este día.';
+    listEl.appendChild(p);
+  } else {
+    slots.forEach(slot => {
+      // Cabecera de horario
+      const header = document.createElement('div');
+      header.className = 'att-slot-title';
+
+      const main = document.createElement('div');
+      main.className = 'att-slot-title-main';
+      main.textContent = `Horario ${slot.hourLabel}`;
+
+      const cap = document.createElement('div');
+      cap.className = 'att-slot-title-capacity';
+      cap.textContent = `${slot.names.length} reservas`;
+
+      header.append(main, cap);
+      listEl.appendChild(header);
+
+      // Guardamos referencia para actualizar luego con cupos reales
+      slot._capEl = cap;
+
+      // Filas de usuarios
+      slot.names.forEach(name => {
+        const row = document.createElement('div');
+        row.className = 'att-item';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !!slot.presence[name];
+
+        // Buscamos el registro correspondiente para actualizar Firestore
+        const record = list.find(u =>
+          (u.nombre || 'Sin nombre') === name &&
+          (u.hora || '') === slot.hour
+        );
+
+        if (record) {
+          cb.addEventListener('change', () => {
+            guardarAsistencia(day, record.uid, cb.checked);
+          });
+        }
+
+        const label = document.createElement('label');
+        label.style.flex = '1';
+        label.textContent = name;
+
+        row.append(cb, label);
+        listEl.appendChild(row);
+      });
+    });
+
+    // Enriquecemos con min/maxCapacity y actualizamos los textos
+    enrichSlotsWithCapacity(day, slots).then(() => {
+      slots.forEach(slot => {
+        if (!slot._capEl) return;
+        const n = slot.total ?? slot.names.length;
+        let text = `${n} reservados`;
+        if (slot.maxCap) {
+          const free = Math.max(slot.maxCap - n, 0);
+          text = `${n} reservados · ${free} libres`;
+        }
+        if (slot.minCap) {
+          text += ` (mín. ${slot.minCap})`;
+        }
+        slot._capEl.textContent = text;
+      });
+    }).catch(() => {});
+  }
+
+  const closeOverlay = () => {
+    overlay.classList.remove('active');
+  };
+
+  closeBtn?.addEventListener('click', closeOverlay);
+
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
+    if (e.target === overlay) closeOverlay();
   });
 
-  // Tecla ESC
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlay.classList.contains('active')) close();
+  shareBtn?.addEventListener('click', async () => {
+    if (!slots.length) {
+      showAlert('No hay datos para compartir.', 'error');
+      return;
+    }
+    shareBtn.disabled = true;
+    try {
+      await shareAdminAttendanceCard();
+    } finally {
+      shareBtn.disabled = false;
+    }
   });
-})();
+
+  overlay.classList.add('active');
+}
+
+/**
+ * Captura el modal de asistencia de admin y lo comparte como imagen
+ * (mismo estilo que el modal real).
+ */
+async function shareAdminAttendanceCard() {
+  const card = document.querySelector('#asistenciaPopup .att-card');
+  if (!card) {
+    showAlert('No se encontró el contenido para compartir.', 'error');
+    return;
+  }
+
+  if (typeof html2canvas !== 'function') {
+    showAlert('No se pudo cargar el generador de imágenes.', 'error');
+    return;
+  }
+
+  try {
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: window.devicePixelRatio || 2
+    });
+
+    const dataUrl = canvas.toDataURL('image/png');
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const fileName = `asistencia-${Date.now()}.png`;
+    const file = new File([blob], fileName, { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Asistencia de clase',
+        text: 'Resumen de reservas y asistencia generado desde Bocaraca.'
+      });
+    } else {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showAlert('Imagen descargada. Puedes compartirla desde tu galería.', 'success');
+    }
+  } catch (err) {
+    console.error('[admin] Error al compartir asistencia:', err);
+    showAlert('No se pudo generar la imagen para compartir.', 'error');
+  }
+}
+

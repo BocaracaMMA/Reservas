@@ -167,21 +167,111 @@ function showLoader() { ensureLoader(); document.getElementById('global-loader')
 function hideLoader() { const el = document.getElementById('global-loader'); if (el) el.style.display = 'none'; }
 
 /* ───────── Modal asistencia (profesor) ───────── */
+// Crea el modal de asistencia (solo una vez) y añade el botón "Compartir".
+// Este modal se usa únicamente por admin/profesores (no estudiantes).
 function ensureAttendancePopup() {
   if (document.getElementById('attModal')) return;
+
   const m = document.createElement('div');
   m.id = 'attModal';
   m.innerHTML = `
     <div class="att-card">
       <div class="att-head">
-        <h3 id="attDate" class="att-title">—</h3>
+        <h3 class="att-title">
+          Asistencia para el día:
+          <span id="attDate"></span>
+        </h3>
         <button id="attClose" class="close-btn" aria-label="Cerrar"></button>
       </div>
+
+      <!-- Lista dinámica de usuarios por clase -->
       <div id="attList" class="att-list"></div>
-    </div>`;
+
+      <!-- Footer con botón Compartir -->
+      <div class="att-footer">
+        <button id="attShare" class="att-share-btn">
+          Compartir
+        </button>
+      </div>
+    </div>
+  `;
+
   document.body.appendChild(m);
-  m.querySelector('#attClose').onclick = () => { m.classList.remove('active'); killTooltips(); };
+
+  // Botón cerrar
+  m.querySelector('#attClose').onclick = () => {
+    m.classList.remove('active');
+    killTooltips();
+  };
+
+  // Botón compartir → genera la imagen y abre el menú de apps
+  const shareBtn = m.querySelector('#attShare');
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+      shareAttendanceCardAsImage();
+    };
+  }
 }
+
+/**
+ * Genera una imagen del modal de asistencia (attModal)
+ * y abre el menú de compartir del sistema (WhatsApp, Instagram, etc.)
+ * Si el navegador no soporta compartir archivos, descarga la imagen.
+ */
+async function shareAttendanceCardAsImage() {
+  const card = document.querySelector('#attModal .att-card');
+  if (!card) {
+    showAlert('No se encontró el contenido para compartir.', 'error');
+    return;
+  }
+
+  if (typeof html2canvas !== 'function') {
+    showAlert('No se pudo cargar el generador de imágenes.', 'error');
+    return;
+  }
+
+  try {
+    showLoader();
+
+    // Captura el contenido del modal tal y como se ve en pantalla
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: window.devicePixelRatio || 2
+    });
+
+    const dataUrl = canvas.toDataURL('image/png');
+
+    // Convierte la captura a Blob/File para usar con navigator.share
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const fileName = `asistencia-${Date.now()}.png`;
+    const file = new File([blob], fileName, { type: 'image/png' });
+
+    // Si el dispositivo soporta compartir archivos → abrir el menú de apps
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Asistencia de clase',
+        text: 'Resumen de reservas y asistencia generada desde Bocaraca.'
+      });
+    } else {
+      // Fallback: descarga la imagen para compartir manualmente
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showAlert('Imagen descargada. Puedes compartirla desde tu galería.', 'success');
+    }
+  } catch (err) {
+    console.error('[shareAttendanceCardAsImage] Error:', err);
+    showAlert('No se pudo generar la imagen para compartir.', 'error');
+  } finally {
+    hideLoader();
+  }
+}
+
 function killTooltips() { document.querySelectorAll('.custom-tooltip').forEach(el => el.remove()); }
 
 /* ───────── Helpers horarios CR + reglas de reserva/cancelación ───────── */
@@ -1259,7 +1349,7 @@ function openAttendancePopup(list, day) {
   const d = document.getElementById('attDate');
   if (!m || !l || !d) return;
 
-  d.textContent = formatLongDate(day);
+  if (d) d.textContent = formatLongDate(day);
   l.innerHTML = '';
 
   if (!Array.isArray(list) || !list.length) {

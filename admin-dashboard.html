@@ -16,7 +16,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest?v=2025.11.19.v3">
+  <link rel="manifest" href="./manifest.webmanifest?v=2025.11.19.v4">
   <meta name="theme-color" content="#0d1117">
   <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
   <meta name="mobile-web-app-capable" content="yes">
@@ -62,8 +62,19 @@
   <!-- Pop-up asistencia -->
   <div id="asistenciaPopup" class="asistencia-modal">
     <div class="modal-content">
-      <h3>Asistencia para el día: <span id="fechaReserva"></span></h3>
+      <h3>
+        Asistencia para el día:
+        <span id="fechaReserva"></span>
+      </h3>
+
       <ul id="listaUsuarios"></ul>
+
+      <div class="asistencia-footer">
+        <button id="btnShareAttendance" class="btn asistencia-share-btn">
+          Compartir
+        </button>
+      </div>
+
       <button id="cerrarPopupBtn">Cerrar</button>
     </div>
   </div>
@@ -76,6 +87,9 @@
   <script type="module" src="./js/pwa-install.js"></script>
   
   <script type="module" src="./js/sw-register.js"></script>
+
+  <!-- Generador de imágenes del modal -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 </body>
 </html>
