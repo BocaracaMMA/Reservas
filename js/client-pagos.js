@@ -5,204 +5,358 @@ import { doc, getDoc, serverTimestamp, collection, addDoc } from "https://www.gs
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 import { showAlert } from './showAlert.js';
 
-/* ======= Sidebar mínimo ======= */
-(function sidebar(){
+const WA_NUMBER = '50664289694';
+
+/**
+ * Sidebar móvil.
+ */
+(function initSidebar() {
   const btn = document.getElementById('toggleNav');
-  const sb  = document.getElementById('sidebar');
-  if (!btn || !sb) return;
+  const sidebar = document.getElementById('sidebar');
 
-  const back = document.createElement('div');
-  back.id = 'sidebarBackdrop'; back.className = 'sidebar-backdrop';
-  document.body.appendChild(back);
+  if (!btn || !sidebar) return;
 
-  const toggle = (open)=> {
-    const will = typeof open==='boolean' ? open : !sb.classList.contains('active');
-    sb.classList.toggle('active', will);
-    back.classList.toggle('active', will);
-    document.body.style.overflow = will ? 'hidden' : '';
+  const backdrop = document.createElement('div');
+  backdrop.id = 'sidebarBackdrop';
+  backdrop.className = 'sidebar-backdrop';
+  document.body.appendChild(backdrop);
+
+  const toggleSidebar = (open) => {
+    const shouldOpen = typeof open === 'boolean' ? open : !sidebar.classList.contains('active');
+    sidebar.classList.toggle('active', shouldOpen);
+    backdrop.classList.toggle('active', shouldOpen);
+    document.body.style.overflow = shouldOpen ? 'hidden' : '';
   };
-  btn.addEventListener('click', ()=> toggle());
-  back.addEventListener('click', ()=> toggle(false));
-  sb.addEventListener('click', e=>{ if (e.target.closest('a[href]')) toggle(false); });
 
-  document.getElementById('logoutSidebar')?.addEventListener('click', async (e)=>{
-    e.preventDefault();
-    try{ await signOut(auth); } finally { location.href = 'index.html'; }
+  btn.addEventListener('click', () => toggleSidebar());
+  backdrop.addEventListener('click', () => toggleSidebar(false));
+  sidebar.addEventListener('click', (event) => {
+    if (event.target.closest('a[href]')) {
+      toggleSidebar(false);
+    }
+  });
+
+  document.getElementById('logoutSidebar')?.addEventListener('click', async (event) => {
+    event.preventDefault();
+    try {
+      await signOut(auth);
+    } finally {
+      location.href = 'index.html';
+    }
   });
 })();
 
-/* ======= Refs UI ======= */
 const sessionEmail = document.getElementById('sessionEmail');
-const form     = document.getElementById('payForm');
-const nameEl   = document.getElementById('pfName');
-const idEl     = document.getElementById('pfCedula');
-const mtdEl    = document.getElementById('payMethod');
-const amtEl    = document.getElementById('payAmount');
-const monEl    = document.getElementById('payMonth');
-const codeEl   = document.getElementById('payCode');
-const fileIn   = document.getElementById('payFile');
+const form = document.getElementById('payForm');
+const nameEl = document.getElementById('pfName');
+const idEl = document.getElementById('pfCedula');
+const methodEl = document.getElementById('payMethod');
+const payTypeEl = document.getElementById('payType');
+const monthEl = document.getElementById('payMonth');
+const otherDetailEl = document.getElementById('payOtherDetail');
+const detailLabelEl = document.getElementById('payDetailLabel');
+const amountEl = document.getElementById('payAmount');
+const codeEl = document.getElementById('payCode');
+const fileInput = document.getElementById('payFile');
 const fileName = document.getElementById('fileName');
-const drop     = document.getElementById('drop');
-const sendBtn  = document.getElementById('sendBtn');
-const payStatus= document.getElementById('payStatus');
+const drop = document.getElementById('drop');
+const sendBtn = document.getElementById('sendBtn');
+const payStatus = document.getElementById('payStatus');
 
-const prevWrap = document.getElementById('previewWrap');
-const prevImg  = document.getElementById('previewImg');
-let prevURL    = null;
+const previewWrap = document.getElementById('previewWrap');
+const previewImg = document.getElementById('previewImg');
 
-/* ======= Drag & drop + vista previa ======= */
-function clearPreview(){
-  if (prevURL) { URL.revokeObjectURL(prevURL); prevURL = null; }
-  if (prevImg) prevImg.src = '';
-  if (prevWrap) prevWrap.hidden = true;
-}
-function showPreview(file){
-  clearPreview();
-  if (!file) return;
-  prevURL = URL.createObjectURL(file);
-  prevImg.src = prevURL;
-  prevWrap.hidden = false;
-}
-function updateFileName(){
-  const f = fileIn.files?.[0];
-  if (fileName) fileName.textContent = f?.name || '';
-  showPreview(f || null);
-}
+let previewURL = null;
 
-drop.addEventListener('click', ()=> fileIn.click());
-drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
-drop.addEventListener('dragleave', ()=> drop.classList.remove('drag'));
-drop.addEventListener('drop', e => {
-  e.preventDefault(); drop.classList.remove('drag');
-  if (e.dataTransfer.files?.[0]) { fileIn.files = e.dataTransfer.files; updateFileName(); }
-});
-fileIn.addEventListener('change', updateFileName);
-
-/* ======= Util ======= */
-const WA_NUMBER = '50664289694'; // número de la academia
-
-// Normaliza un monto a número: acepta "₡20.000", "20 000", "20000.50", etc.
-function parseMonto(v){
-  if (!v) return NaN;
-  // quita todo menos dígitos, punto y coma; luego usa el último separador como decimal
-  let s = String(v).trim();
-  s = s.replace(/[^\d.,-]/g, '');
-  // si hay ambas , y ., asumimos que el decimal es el último
-  const lastComma = s.lastIndexOf(',');
-  const lastDot   = s.lastIndexOf('.');
-  if (lastComma > lastDot) {
-    s = s.replace(/\./g, '').replace(',', '.'); // formato 20.000,50 -> 20000.50
-  } else {
-    s = s.replace(/,/g, ''); // formato 20,000.50 -> 20000.50
+/**
+ * Limpia la preview del archivo.
+ */
+function clearPreview() {
+  if (previewURL) {
+    URL.revokeObjectURL(previewURL);
+    previewURL = null;
   }
-  return Number(s);
+
+  if (previewImg) previewImg.src = '';
+  if (previewWrap) previewWrap.hidden = true;
 }
 
-const fmtMonth = (ym) => {
-  if (!ym) return '—';
-  const [y,m] = ym.split('-').map(Number);
-  return new Date(y, m-1, 1).toLocaleDateString('es-CR', { month:'long', year:'numeric' });
-};
+/**
+ * Muestra preview del comprobante.
+ */
+function showPreview(file) {
+  clearPreview();
 
-/* ======= Prefill usuario ======= */
-onAuthStateChanged(auth, async user=>{
-  if (!user){ location.href = 'index.html'; return; }
-  sessionEmail.textContent = `Sesión: ${user.email || '—'}`;
+  if (!file) return;
 
-  // Mes actual por defecto
-  try{
-    const now = new Date();
-    monEl.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  }catch{}
+  previewURL = URL.createObjectURL(file);
+  previewImg.src = previewURL;
+  previewWrap.hidden = false;
+}
 
-  try{
-    const docSnap = await getDoc(doc(db,'users', user.uid));
-    const u = docSnap.exists() ? docSnap.data() : {};
-    if (u.nombre) nameEl.value = u.nombre;
-    if (u.cedula) idEl.value   = u.cedula;
-  }catch(e){ console.warn('No se pudo precargar perfil', e); }
+/**
+ * Actualiza nombre y preview del archivo.
+ */
+function updateFileName() {
+  const file = fileInput.files?.[0];
+  if (fileName) fileName.textContent = file?.name || '';
+  showPreview(file || null);
+}
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', (event) => {
+  event.preventDefault();
+  drop.classList.add('drag');
 });
+drop.addEventListener('dragleave', () => {
+  drop.classList.remove('drag');
+});
+drop.addEventListener('drop', (event) => {
+  event.preventDefault();
+  drop.classList.remove('drag');
 
-/* ======= Submit ======= */
-form.addEventListener('submit', async (e)=>{
-  e.preventDefault();
+  if (event.dataTransfer.files?.[0]) {
+    fileInput.files = event.dataTransfer.files;
+    updateFileName();
+  }
+});
+fileInput.addEventListener('change', updateFileName);
 
-  const file = fileIn.files?.[0];
-  if (!file) { showAlert('Adjunta la imagen del comprobante.','error'); return; }
-  if (!/^image\//i.test(file.type || '')) { showAlert('El comprobante debe ser una imagen.','error'); return; }
-  if (file.size > 10 * 1024 * 1024) { showAlert('Máximo 10 MB por imagen.','error'); return; }
+/**
+ * Convierte un monto de entrada a número.
+ */
+function parseMonto(value) {
+  if (!value) return NaN;
 
-  // Validaciones de campos
-  const nombre = nameEl.value.trim();
-  const cedula = idEl.value.trim();
-  const metodo = mtdEl.value.trim();
-  const mesStr = monEl.value;              // "YYYY-MM"
-  const monto  = parseMonto(amtEl.value);  // número robusto
-  const codigo = codeEl.value.trim();
+  let normalized = String(value).trim();
+  normalized = normalized.replace(/[^\d.,-]/g, '');
 
-  if (!nombre || !cedula || !metodo || !mesStr || !Number.isFinite(monto)) {
-    showAlert('Revisa los datos: método, mes y monto numérico son obligatorios.','error');
+  const lastComma = normalized.lastIndexOf(',');
+  const lastDot = normalized.lastIndexOf('.');
+
+  if (lastComma > lastDot) {
+    normalized = normalized.replace(/\./g, '').replace(',', '.');
+  } else {
+    normalized = normalized.replace(/,/g, '');
+  }
+
+  return Number(normalized);
+}
+
+/**
+ * Formatea mes YYYY-MM a texto.
+ */
+function formatMonthLabel(ym) {
+  if (!ym) return '—';
+
+  const parts = String(ym).split('-').map(Number);
+  if (parts.length !== 2 || parts.some(n => !Number.isFinite(n))) return String(ym);
+
+  const [year, month] = parts;
+  return new Date(year, month - 1, 1).toLocaleDateString('es-CR', {
+    month: 'long',
+    year: 'numeric'
+  });
+}
+
+/**
+ * Coloca el mes actual.
+ */
+function setDefaultMonth() {
+  const now = new Date();
+  monthEl.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Ajusta el formulario según el tipo de pago seleccionado.
+ */
+function syncPaymentModeUI() {
+  const paymentType = payTypeEl.value;
+
+  if (paymentType === 'otro') {
+    detailLabelEl.textContent = 'Detalle del pago';
+    monthEl.hidden = true;
+    monthEl.required = false;
+    otherDetailEl.hidden = false;
+    otherDetailEl.required = true;
+  } else {
+    detailLabelEl.textContent = 'Mes que estás pagando';
+    monthEl.hidden = false;
+    monthEl.required = true;
+    otherDetailEl.hidden = true;
+    otherDetailEl.required = false;
+    otherDetailEl.value = '';
+    setDefaultMonth();
+  }
+}
+
+/**
+ * Sube el comprobante, registra el pago y abre WhatsApp.
+ */
+async function submitPaymentProof({
+  uid,
+  nombre,
+  cedula,
+  metodo,
+  monto,
+  mesStr,
+  codigo,
+  file,
+  paymentType,
+  detallePago,
+  origin = 'client-pagos'
+}) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const timestamp = now.getTime();
+  const safeName = file.name.replace(/[^\w.\-]/g, '_');
+  const filePath = `payments/${uid}/${year}/${month}/${timestamp}_${safeName}`;
+
+  const storageRef = ref(storage, filePath);
+  await uploadBytes(storageRef, file, {
+    contentType: file.type || 'image/jpeg'
+  });
+
+  const fileURL = await getDownloadURL(storageRef);
+
+  const payload = {
+    uid,
+    nombre,
+    cedula,
+    metodo,
+    monto,
+    filePath,
+    fileURL,
+    status: 'pendiente',
+    paymentType,
+    detallePago: paymentType === 'otro' ? detallePago : null,
+    codigo: codigo || null,
+    createdAt: serverTimestamp(),
+    origin
+  };
+
+  if (paymentType === 'membresia') {
+    payload.mesPagado = mesStr;
+    payload.mes = mesStr;
+    payload.mesPagadoHuman = formatMonthLabel(mesStr);
+  }
+
+  const paymentDoc = await addDoc(collection(db, 'payments'), payload);
+
+  const message = [
+    '*Nuevo comprobante de pago*',
+    `Nombre: ${nombre}`,
+    `Cédula: ${cedula}`,
+    `Método: ${metodo}`,
+    `Monto: ${monto}`,
+    `Tipo: ${paymentType === 'otro' ? 'OTRO' : 'PAGO MEMBRESIA'}`,
+    paymentType === 'otro'
+      ? `Detalle: ${detallePago}`
+      : `Mes: ${formatMonthLabel(mesStr)} (${mesStr})`,
+    codigo ? `Código: ${codigo}` : null,
+    `Archivo: ${fileURL}`,
+    `ID registro: ${paymentDoc.id}`
+  ].filter(Boolean).join('\n');
+
+  window.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    location.href = 'index.html';
     return;
   }
 
-  try{
-    sendBtn.disabled = true; payStatus.classList.add('show');
+  sessionEmail.textContent = `Sesión: ${user.email || '—'}`;
+  setDefaultMonth();
+  syncPaymentModeUI();
 
-    const user = auth.currentUser;
+  try {
+    const userSnap = await getDoc(doc(db, 'users', user.uid));
+    const userData = userSnap.exists() ? userSnap.data() : {};
 
-    // Ruta: payments/<uid>/<yyyy>/<mm>/<ts>_<name>
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth()+1).padStart(2,'0');
-    const ts = now.getTime();
-    const safeName = file.name.replace(/[^\w.\-]/g,'_');
-    const path = `payments/${user.uid}/${yyyy}/${mm}/${ts}_${safeName}`;
+    if (userData.nombre) nameEl.value = userData.nombre;
+    if (userData.cedula) idEl.value = userData.cedula;
+  } catch (error) {
+    console.warn('No se pudo precargar perfil:', error);
+  }
+});
 
-    // Subir a Storage
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
-    const url = await getDownloadURL(storageRef);
+payTypeEl.addEventListener('change', syncPaymentModeUI);
 
-    // Registrar en Firestore — incluye alias `mes` para reglas antiguas
-    const payload = {
-      uid: user.uid,
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const file = fileInput.files?.[0];
+  if (!file) {
+    showAlert('Adjunta la imagen del comprobante.', 'error');
+    return;
+  }
+
+  if (!/^image\//i.test(file.type || '')) {
+    showAlert('El comprobante debe ser una imagen.', 'error');
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    showAlert('Máximo 10 MB por imagen.', 'error');
+    return;
+  }
+
+  const nombre = nameEl.value.trim();
+  const cedula = idEl.value.trim();
+  const metodo = methodEl.value.trim();
+  const paymentType = payTypeEl.value;
+  const mesStr = monthEl.value;
+  const detallePago = otherDetailEl.value.trim();
+  const monto = parseMonto(amountEl.value);
+  const codigo = codeEl.value.trim();
+
+  if (!nombre || !cedula || !metodo || !Number.isFinite(monto)) {
+    showAlert('Revisa los datos: nombre, cédula, método y monto son obligatorios.', 'error');
+    return;
+  }
+
+  if (paymentType === 'membresia' && !mesStr) {
+    showAlert('Selecciona el mes que estás pagando.', 'error');
+    return;
+  }
+
+  if (paymentType === 'otro' && !detallePago) {
+    showAlert('Escribe el detalle del pago.', 'error');
+    return;
+  }
+
+  try {
+    sendBtn.disabled = true;
+    payStatus.classList.add('show');
+
+    const currentUser = auth.currentUser;
+
+    await submitPaymentProof({
+      uid: currentUser.uid,
       nombre,
       cedula,
       metodo,
-      monto,                 // number
-      mesPagado: mesStr,     // "YYYY-MM"
-      mes: mesStr,           // ← alias por compatibilidad con reglas estrictas
-      mesPagadoHuman: fmtMonth(mesStr),
-      codigo: codigo || null,
-      filePath: path,        // string
-      fileURL: url,          // string
-      status: 'pendiente',
-      createdAt: serverTimestamp()
-    };
+      monto,
+      mesStr,
+      codigo,
+      file,
+      paymentType,
+      detallePago,
+      origin: 'client-pagos'
+    });
 
-    const payDoc = await addDoc(collection(db,'payments'), payload);
-
-    // Abrir WhatsApp con mensaje
-    const texto = [
-      `*Nuevo comprobante de pago*`,
-      `Nombre: ${nombre}`,
-      `Cédula: ${cedula}`,
-      `Método: ${metodo}`,
-      `Monto: ${monto}`,
-      `Mes: ${fmtMonth(mesStr)} (${mesStr})`,
-      codigo ? `Código: ${codigo}` : null,
-      `Archivo: ${url}`,
-      `ID registro: ${payDoc.id}`
-    ].filter(Boolean).join('\n');
-
-    window.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(texto)}`;
-
-    showAlert('Comprobante enviado a WhatsApp.','success');
-    form.reset(); updateFileName(); // limpia preview
-  }catch(err){
-    console.error(err);
-    showAlert('No se pudo subir/enviar el comprobante.','error');
-  }finally{
+    showAlert('Comprobante enviado a WhatsApp.', 'success');
+    form.reset();
+    setDefaultMonth();
+    syncPaymentModeUI();
+    updateFileName();
+  } catch (error) {
+    console.error('Error enviando comprobante:', error);
+    showAlert('No se pudo subir o enviar el comprobante.', 'error');
+  } finally {
     payStatus.classList.remove('show');
     sendBtn.disabled = false;
   }

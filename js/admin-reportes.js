@@ -4,107 +4,40 @@ import {
   collection,
   onSnapshot,
   query,
-  orderBy,
-  getDocs
+  orderBy
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-//
-// ─────────────────────────────────────────────────────────────
-// UTILIDADES PARA RENDERIZAR
-// ─────────────────────────────────────────────────────────────
+const monthNames = {
+  "01": "Enero",
+  "02": "Febrero",
+  "03": "Marzo",
+  "04": "Abril",
+  "05": "Mayo",
+  "06": "Junio",
+  "07": "Julio",
+  "08": "Agosto",
+  "09": "Septiembre",
+  "10": "Octubre",
+  "11": "Noviembre",
+  "12": "Diciembre"
+};
 
-// Genera el HTML de la tarjeta + tabla para una fecha concreta
-function generarTablaPorFecha(fecha, data) {
-  const total     = data.length;
-  const presentes = data.filter(u => u.presente).length;
-  const ausentes  = total - presentes;
+let dayListeners = [];
+let attendanceByDate = {};
 
-  let tableHTML = `
-    <article class="report-day-card">
-      <header class="report-day-header">
-        <div class="report-day-title">
-          <i class="bi bi-calendar-event"></i>
-          <span>Asistencia · ${fecha}</span>
-        </div>
-        <div class="report-day-summary">
-          ${presentes} presentes · ${ausentes} ausentes · ${total} registros
-        </div>
-      </header>
-      <div class="report-day-body">
-        <table class="asistencia-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Hora</th>
-              <th>Presente</th>
-            </tr>
-          </thead>
-          <tbody>
-  `;
-
-  data.forEach((user) => {
-    tableHTML += `
-      <tr>
-        <td>${user.nombre}</td>
-        <td>${user.hora}</td>
-        <td>${user.presente ? "✅" : "❌"}</td>
-      </tr>
-    `;
-  });
-
-  tableHTML += `
-          </tbody>
-        </table>
-      </div>
-    </article>
-  `;
-  return tableHTML;
-}
-
-// Renderiza/actualiza la tarjeta de un día concreto
-function renderizarTablaEnDOM(fecha, asistenciaData) {
-  const container = document.getElementById("reporte-container");
-  if (!container) return;
-
-  const wrapperId = `tabla-${fecha.replace(/:/g, "-")}`;
-
-  let wrapper = document.getElementById(wrapperId);
-  if (wrapper) {
-    wrapper.innerHTML = generarTablaPorFecha(fecha, asistenciaData);
-  } else {
-    wrapper = document.createElement("div");
-    wrapper.id = wrapperId;
-    wrapper.classList.add("report-day-wrapper");
-    wrapper.innerHTML = generarTablaPorFecha(fecha, asistenciaData);
-    container.appendChild(wrapper);
-  }
-}
-
-// Elimina la tarjeta de una fecha (cuando deja de pertenecer al mes)
-function eliminarTablaDeDOM(fecha) {
-  const wrapperId = `tabla-${fecha.replace(/:/g, "-")}`;
-  const wrapper = document.getElementById(wrapperId);
-  if (wrapper) wrapper.remove();
-}
-
-//
-// ─────────────────────────────────────────────────────────────
-// LÓGICA EN TIEMPO REAL
-// ─────────────────────────────────────────────────────────────
-
-let subUnsubsUsuarios = {};
-let unsubscribeAsistencias = null;
-
-// Rellena el select de año con un pequeño rango [Año-2, Año+1]
+/**
+ * Llena el select de años.
+ */
 function initYearSelect() {
   const sel = document.getElementById("yearSelect");
   if (!sel) return;
 
   const currentYear = new Date().getFullYear();
-  const startYear   = currentYear - 2;
-  const endYear     = currentYear + 1;
+  const startYear = currentYear - 2;
+  const endYear = currentYear + 1;
 
   sel.innerHTML = "";
+
   for (let y = startYear; y <= endYear; y++) {
     const opt = document.createElement("option");
     opt.value = String(y);
@@ -114,121 +47,273 @@ function initYearSelect() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", initYearSelect);
+/**
+ * Selecciona por defecto el mes actual.
+ */
+function initCurrentMonth() {
+  const monthSelect = document.getElementById("monthSelect");
+  if (!monthSelect) return;
+
+  const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+  monthSelect.value = currentMonth;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
 
 /**
- * startRealTimeReporting(year, month)
- *
- * 1) Limpia el contenedor de reportes.
- * 2) Hace un getDocs() sobre "asistencias" y filtra por prefijo "YYYY-MM".
- * 3) Se suscribe con onSnapshot() a cada subcolección "asistencias/{fecha}/usuarios".
- * 4) Cancela listeners de fechas que ya no pertenecen al mes.
- * 5) Listener global en "asistencias" para detectar nuevas fechas del mes.
+ * Retorna todas las fechas YYYY-MM-DD del mes.
  */
-export async function startRealTimeReporting(year, month) {
+function buildMonthDates(year, month) {
+  const y = Number(year);
+  const m = Number(month);
+  const lastDay = new Date(y, m, 0).getDate();
+
+  return Array.from({ length: lastDay }, (_, i) => {
+    return `${y}-${pad2(m)}-${pad2(i + 1)}`;
+  });
+}
+
+/**
+ * Formatea la fecha para mostrarla más limpia.
+ */
+function formatDateLabel(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+
+  return dt.toLocaleDateString("es-CR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric"
+  });
+}
+
+/**
+ * Limpia listeners activos del reporte.
+ */
+function cleanupDayListeners() {
+  dayListeners.forEach((unsub) => {
+    try {
+      unsub();
+    } catch {}
+  });
+
+  dayListeners = [];
+}
+
+/**
+ * Reinicia tarjetas de métricas.
+ */
+function resetStats() {
+  const ids = {
+    statDays: "0",
+    statTotal: "0",
+    statPresent: "0",
+    statAbsent: "0"
+  };
+
+  Object.entries(ids).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  });
+}
+
+/**
+ * Actualiza el resumen superior.
+ */
+function renderStats(dateMap) {
+  const dates = Object.keys(dateMap).filter((date) => (dateMap[date] || []).length > 0);
+  const rows = dates.flatMap((date) => dateMap[date]);
+
+  const total = rows.length;
+  const present = rows.filter((r) => !!r.presente).length;
+  const absent = total - present;
+
+  const statDays = document.getElementById("statDays");
+  const statTotal = document.getElementById("statTotal");
+  const statPresent = document.getElementById("statPresent");
+  const statAbsent = document.getElementById("statAbsent");
+
+  if (statDays) statDays.textContent = String(dates.length);
+  if (statTotal) statTotal.textContent = String(total);
+  if (statPresent) statPresent.textContent = String(present);
+  if (statAbsent) statAbsent.textContent = String(absent);
+}
+
+/**
+ * Genera una tarjeta visual por día.
+ */
+function generateDayCard(date, rows) {
+  const total = rows.length;
+  const present = rows.filter((u) => !!u.presente).length;
+  const absent = total - present;
+
+  return `
+    <article class="report-day-card modern">
+      <header class="report-day-header modern">
+        <div class="report-day-title-block">
+          <div class="report-day-title">
+            <i class="bi bi-calendar-event"></i>
+            <span>${formatDateLabel(date)}</span>
+          </div>
+          <small class="report-day-code">${date}</small>
+        </div>
+
+        <div class="report-day-badges">
+          <span class="report-badge report-badge-blue">${total} registros</span>
+          <span class="report-badge report-badge-green">${present} presentes</span>
+          <span class="report-badge report-badge-red">${absent} ausentes</span>
+        </div>
+      </header>
+
+      <div class="report-day-body">
+        <div class="table-container report-table-wrap">
+          <table class="asistencia-table report-table-modern">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Hora</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((user) => `
+                <tr>
+                  <td>${user.nombre || ""}</td>
+                  <td>${user.hora || ""}</td>
+                  <td>
+                    <span class="report-status-pill ${user.presente ? "ok" : "bad"}">
+                      ${user.presente ? "Presente" : "Ausente"}
+                    </span>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+/**
+ * Estado vacío del reporte.
+ */
+function generateEmptyState(year, month) {
+  const monthLabel = monthNames[month] || month;
+
+  return `
+    <div class="report-empty-state">
+      <div class="report-empty-icon">
+        <i class="bi bi-inbox"></i>
+      </div>
+      <h3>Sin registros para ${monthLabel} ${year}</h3>
+      <p>
+        No se encontraron asistencias en el período seleccionado.
+      </p>
+    </div>
+  `;
+}
+
+/**
+ * Render completo del reporte.
+ */
+function renderReport(year, month) {
   const container = document.getElementById("reporte-container");
   if (!container) return;
 
-  container.innerHTML = "";
+  const dates = Object.keys(attendanceByDate)
+    .filter((date) => (attendanceByDate[date] || []).length > 0)
+    .sort((a, b) => b.localeCompare(a));
 
-  const yearStr = String(year || new Date().getFullYear());
-  const prefijo = `${yearStr}-${month}`; // ej. "2025-06"
+  renderStats(attendanceByDate);
 
-  try {
-    const asistenciasColl = collection(db, "asistencias");
-
-    // 2) getDocs puntual
-    const snapshotAll = await getDocs(asistenciasColl);
-    const fechasDisponibles = snapshotAll.docs.map((doc) => doc.id);
-    const fechasDelMes = fechasDisponibles.filter((fecha) =>
-      fecha.startsWith(prefijo)
-    );
-
-    if (fechasDelMes.length === 0) {
-      container.innerHTML = `<p>No hay reportes para el mes seleccionado.</p>`;
-      // Limpiamos listeners antiguos
-      Object.values(subUnsubsUsuarios).forEach(unsub => unsub());
-      subUnsubsUsuarios = {};
-      if (unsubscribeAsistencias) {
-        unsubscribeAsistencias();
-        unsubscribeAsistencias = null;
-      }
-      return;
-    }
-
-    // 3) Suscribirse a cada subcolección "usuarios"
-    fechasDelMes.forEach((fecha) => {
-      if (!subUnsubsUsuarios[fecha]) {
-        const usuariosRef = collection(db, "asistencias", fecha, "usuarios");
-        const qUsuarios   = query(usuariosRef, orderBy("hora", "asc"));
-
-        const unsubUsuarios = onSnapshot(
-          qUsuarios,
-          (usuariosSnap) => {
-            const asistenciaData = [];
-            usuariosSnap.forEach((docUser) => {
-              const data = docUser.data();
-              asistenciaData.push({ id: docUser.id, ...data });
-            });
-            renderizarTablaEnDOM(fecha, asistenciaData);
-          },
-          (err) => {
-            console.error(
-              `Error escuchando subcolección usuarios de ${fecha}: `,
-              err
-            );
-          }
-        );
-
-        subUnsubsUsuarios[fecha] = unsubUsuarios;
-      }
-    });
-
-    // 4) Cancelar listeners de fechas que ya no están en el mes
-    Object.keys(subUnsubsUsuarios).forEach((fechaRegistrada) => {
-      if (!fechasDelMes.includes(fechaRegistrada)) {
-        subUnsubsUsuarios[fechaRegistrada]();
-        delete subUnsubsUsuarios[fechaRegistrada];
-        eliminarTablaDeDOM(fechaRegistrada);
-      }
-    });
-
-    // 5) Listener global sobre "asistencias" para detectar nuevas fechas en el mes
-    if (unsubscribeAsistencias) unsubscribeAsistencias();
-    unsubscribeAsistencias = onSnapshot(
-      asistenciasColl,
-      (snapshotGlobal) => {
-        const todasFechas = snapshotGlobal.docs.map((d) => d.id);
-        const fechasNuevasDelMes = todasFechas.filter((f) =>
-          f.startsWith(prefijo)
-        );
-
-        if (
-          JSON.stringify([...fechasNuevasDelMes].sort()) !==
-          JSON.stringify([...fechasDelMes].sort())
-        ) {
-          // Si cambia la lista de fechas del mes, recargamos el reporte
-          startRealTimeReporting(yearStr, month);
-        }
-      },
-      (err) => {
-        console.error("Error en listener global de asistencias: ", err);
-      }
-    );
-  } catch (err) {
-    console.error("❌ Error en startRealTimeReporting:", err);
-    container.innerHTML = `<p>Error al cargar los reportes. Revisa la consola.</p>`;
+  if (!dates.length) {
+    container.innerHTML = generateEmptyState(year, month);
+    return;
   }
+
+  container.innerHTML = dates
+    .map((date) => generateDayCard(date, attendanceByDate[date]))
+    .join("");
 }
 
-// Exponer getAsistencia al global para el botón
+/**
+ * Suscribe cada día del mes directamente a /asistencias/{fecha}/usuarios.
+ * Esto evita depender de que exista el documento padre /asistencias/{fecha}.
+ */
+export function startRealTimeReporting(year, month) {
+  cleanupDayListeners();
+  attendanceByDate = {};
+  resetStats();
+
+  const container = document.getElementById("reporte-container");
+  if (container) {
+    container.innerHTML = `
+      <div class="report-loading-state">
+        <span class="dot"></span>
+        <span>Cargando reporte...</span>
+      </div>
+    `;
+  }
+
+  const dates = buildMonthDates(year, month);
+
+  dates.forEach((date) => {
+    const usuariosRef = collection(db, "asistencias", date, "usuarios");
+    const qUsuarios = query(usuariosRef, orderBy("hora", "asc"));
+
+    const unsub = onSnapshot(
+      qUsuarios,
+      (snap) => {
+        const rows = [];
+
+        snap.forEach((docSnap) => {
+          const data = docSnap.data() || {};
+          rows.push({
+            id: docSnap.id,
+            nombre: data.nombre || "",
+            hora: data.hora || "",
+            presente: !!data.presente
+          });
+        });
+
+        attendanceByDate[date] = rows;
+        renderReport(year, month);
+      },
+      (error) => {
+        console.error(`Error escuchando asistencias de ${date}:`, error);
+      }
+    );
+
+    dayListeners.push(unsub);
+  });
+}
+
+/**
+ * Expone la acción del botón Ver reporte.
+ */
 window.getAsistencia = function () {
-  const mesEl  = document.getElementById("monthSelect");
+  const mesEl = document.getElementById("monthSelect");
   const yearEl = document.getElementById("yearSelect");
-  if (!mesEl) return;
 
-  const mes  = mesEl.value;
-  const year = yearEl ? yearEl.value : String(new Date().getFullYear());
+  if (!mesEl || !yearEl) return;
 
-  startRealTimeReporting(year, mes);
+  startRealTimeReporting(yearEl.value, mesEl.value);
 };
+
+document.addEventListener("DOMContentLoaded", () => {
+  initYearSelect();
+  initCurrentMonth();
+
+  const yearEl = document.getElementById("yearSelect");
+  const monthEl = document.getElementById("monthSelect");
+
+  if (yearEl && monthEl) {
+    startRealTimeReporting(yearEl.value, monthEl.value);
+  }
+});
+
+window.addEventListener("beforeunload", cleanupDayListeners);

@@ -3564,3 +3564,1503 @@ body.page-register.auth-center{
 #specialDaysCard .special-field input[type="date"] {
   color-scheme: dark;
 }
+
+/* ==========================================================================
+   LOGIN – Modal de mensualidad vencida
+   Se usa en index.html cuando el usuario inicia sesión pero está vencido.
+   ========================================================================== */
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.expired-modal[hidden] {
+  display: none !important;
+}
+
+.expired-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 13000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.expired-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.expired-card {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 520px);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--surface-800);
+  border: 1px solid #22303d;
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+  padding: 18px 16px 16px;
+  color: var(--text-100);
+}
+
+.expired-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.expired-close:hover {
+  background: #1f2937;
+}
+
+.expired-icon-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 12px;
+}
+
+.expired-icon {
+  width: 82px;
+  height: 82px;
+  border-radius: 999px;
+  border: 2px solid #f87171;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+}
+
+.expired-card h3 {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: clamp(1.3rem, 4vw, 1.7rem);
+  font-weight: 800;
+  color: #e6edf3;
+}
+
+.expired-desc {
+  margin: 0 auto 16px;
+  max-width: 420px;
+  text-align: center;
+  font-size: 0.96rem;
+  line-height: 1.45;
+  color: #9fb0c2;
+}
+
+.expired-summary {
+  display: grid;
+  gap: 10px;
+  background: #0f1623;
+  border: 1px solid #273247;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.expired-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.expired-row span {
+  color: #aab6c2;
+  font-size: 0.9rem;
+}
+
+.expired-row strong {
+  color: #e6edf3;
+  font-size: 0.95rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.expired-form {
+  display: grid;
+  gap: 10px;
+}
+
+.expired-form .field {
+  display: grid;
+  gap: 6px;
+  background: #0f1623;
+  border: 1px solid #273247;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.expired-form label {
+  color: #aab6c2;
+  font-size: 0.92rem;
+}
+
+.expired-form input[type="text"],
+.expired-form input[type="number"],
+.expired-form input[type="month"],
+.expired-form select {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0f1720;
+  color: #e6edf3;
+  border: 1px solid #2b3446;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  appearance: none;
+}
+
+.expired-form input:focus,
+.expired-form select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.expired-form input[type="month"] {
+  min-height: 42px;
+  min-width: 0;
+}
+
+.expired-form .drop {
+  background: #0f1720;
+  border: 1px dashed #334155;
+  color: #9fb0c2;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.expired-form .drop.drag {
+  background: #0f1a27;
+  border-color: #3b82f6;
+}
+
+.expired-form .preview {
+  display: flex;
+  justify-content: center;
+}
+
+.expired-form .preview img {
+  max-width: 100%;
+  max-height: 220px;
+  margin-top: 8px;
+  border-radius: 12px;
+  border: 1px solid #2b3446;
+}
+
+.expired-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.expired-actions .btn {
+  min-width: 160px;
+  text-align: center;
+}
+
+.btn.btn-secondary {
+  background: #64748b;
+  color: #ffffff;
+}
+
+.btn.btn-secondary:hover {
+  background: #556579;
+}
+
+#expiredPayStatus {
+  text-align: center;
+  color: #9fb0c2;
+  display: none;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+#expiredPayStatus.show {
+  display: flex;
+}
+
+#expiredPayStatus .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.25);
+  border-top-color: #58a6ff;
+  animation: spin 1s linear infinite;
+}
+
+@media (max-width: 520px) {
+  .expired-card {
+    width: min(94vw, 520px);
+    padding: 16px 14px 14px;
+    border-radius: 16px;
+  }
+
+  .expired-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .expired-row strong {
+    text-align: left;
+  }
+
+  .expired-actions {
+    flex-direction: column;
+  }
+
+  .expired-actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* ==========================================================================
+   MENSUALIDADES – Acciones Guardar / Anular
+   ========================================================================== */
+
+#mensualidades-table th:nth-child(7),
+#mensualidades-table td:nth-child(7){
+  width: 200px;
+  text-align: center;
+}
+
+.mensualidad-actions{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+#mensualidades-table td:nth-child(7) .btn{
+  padding: 6px 10px;
+  border-radius: 10px;
+  min-width: 84px;
+}
+
+.btn-danger-soft{
+  background:#b4233c;
+  color:#fff;
+  border:1px solid #c93b56;
+}
+
+.btn-danger-soft:hover{
+  background:#cf304d;
+}
+
+@media (max-width: 768px){
+  #mensualidades-table th:nth-child(7),
+  #mensualidades-table td:nth-child(7){
+    width: 220px;
+  }
+
+  .mensualidad-actions{
+    gap:6px;
+  }
+
+  #mensualidades-table td:nth-child(7) .btn{
+    min-width: 78px;
+    padding: 6px 8px;
+  }
+}
+
+/* ==========================================================================
+   REPORTES – Rediseño visual y estados modernos
+   ========================================================================== */
+
+.reports-page-main{
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-bottom: 28px;
+}
+
+.reports-hero{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin: 8px 0 18px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(15,23,42,0.98), rgba(10,16,29,0.95));
+  border: 1px solid rgba(88,166,255,.16);
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.35);
+}
+
+.reports-hero-copy{
+  flex:1;
+  min-width:0;
+}
+
+.reports-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: rgba(88,166,255,.10);
+  border: 1px solid rgba(88,166,255,.20);
+  color: #9cc9ff;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.reports-hero h1{
+  margin: 0 0 6px;
+  font-size: clamp(1.45rem, 4vw, 2rem);
+  color:#e8edf3;
+}
+
+.reports-hero p{
+  margin:0;
+  color:#a8b4c3;
+  line-height:1.5;
+  max-width: 700px;
+}
+
+.reports-hero-icon{
+  flex:0 0 auto;
+  width:72px;
+  height:72px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(59,130,246,.16));
+  border: 1px solid rgba(148,163,184,.18);
+  color:#dcecff;
+  font-size: 1.8rem;
+}
+
+.report-card{
+  background: linear-gradient(180deg, rgba(5,10,20,.98), rgba(3,8,18,.95));
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.34);
+}
+
+.report-card-top{
+  margin-bottom: 16px;
+}
+
+.report-top-header,
+.report-card-header-modern{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.report-card-title{
+  margin:0 0 6px;
+  font-size:1.02rem;
+  color:#e8edf3;
+}
+
+.report-card-subtitle{
+  margin:0;
+  color:#99a8ba;
+  font-size:.9rem;
+  line-height:1.45;
+}
+
+.report-filters-grid-modern{
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:14px;
+}
+
+.report-field label{
+  display:block;
+  margin-bottom:6px;
+  font-size:.82rem;
+  color:#9fb0c2;
+}
+
+.report-field select{
+  width:100%;
+  min-height:44px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,.25);
+  background: #0b1220;
+  color:#e8edf3;
+  font-size:.92rem;
+  outline:none;
+  appearance:none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #9ca3af 50%),
+    linear-gradient(135deg, #9ca3af 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.report-field select:focus{
+  border-color:#58a6ff;
+  box-shadow:0 0 0 3px rgba(88,166,255,.14);
+}
+
+.report-actions-modern{
+  align-items:flex-end;
+  justify-content:flex-start;
+}
+
+.report-primary-btn,
+.report-download-btn{
+  min-height:44px;
+  min-width:180px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.report-stats-grid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap:12px;
+  margin-bottom: 18px;
+}
+
+.report-stat-card{
+  background: linear-gradient(180deg, rgba(7,14,26,.98), rgba(5,10,20,.96));
+  border:1px solid rgba(148,163,184,.12);
+  border-radius:16px;
+  padding:14px 16px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.25);
+}
+
+.report-stat-label{
+  display:block;
+  font-size:.82rem;
+  color:#95a3b6;
+  margin-bottom:8px;
+}
+
+.report-stat-card strong{
+  display:block;
+  font-size:1.5rem;
+  color:#f2f6fb;
+  line-height:1;
+}
+
+.report-download-grid-modern{
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap:14px;
+}
+
+.report-config-group{
+  background: #0b1220;
+  border:1px solid rgba(148,163,184,.12);
+  border-radius:16px;
+  padding:14px;
+}
+
+.report-config-group h3{
+  margin:0 0 10px;
+  font-size:.9rem;
+  color:#e8edf3;
+}
+
+.report-config-group label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:.84rem;
+  margin-bottom:8px;
+  padding:8px 10px;
+  border-radius:12px;
+  background: rgba(15,23,42,.88);
+  border:1px solid rgba(148,163,184,.18);
+  cursor:pointer;
+  transition: .16s ease;
+}
+
+.report-config-group input[type="radio"],
+.report-config-group input[type="checkbox"]{
+  width:15px;
+  height:15px;
+  accent-color:#22c55e;
+}
+
+.report-config-group label:hover{
+  background: rgba(22,163,74,.10);
+  border-color: rgba(34,197,94,.45);
+  transform: translateY(-1px);
+}
+
+@supports selector(label:has(input:checked)) {
+  .report-config-group label:has(input:checked){
+    background: rgba(22,163,74,.14);
+    border-color: rgba(34,197,94,.72);
+    box-shadow: 0 0 0 1px rgba(34,197,94,.32);
+  }
+}
+
+.report-download-actions-modern{
+  justify-content:flex-end;
+}
+
+.reporte-container{
+  display:grid;
+  gap:14px;
+}
+
+.report-day-card.modern{
+  background: #0b1220;
+  border:1px solid rgba(148,163,184,.12);
+  border-radius:18px;
+  padding:16px;
+}
+
+.report-day-header.modern{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.report-day-title-block{
+  min-width:0;
+}
+
+.report-day-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:1rem;
+  font-weight:700;
+  color:#e8edf3;
+}
+
+.report-day-title i{
+  color:#58a6ff;
+}
+
+.report-day-code{
+  display:block;
+  margin-top:5px;
+  color:#94a3b8;
+  font-size:.8rem;
+}
+
+.report-day-badges{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.report-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:.78rem;
+  font-weight:700;
+  border:1px solid transparent;
+  white-space:nowrap;
+}
+
+.report-badge-blue{
+  background: rgba(59,130,246,.14);
+  color:#b8d7ff;
+  border-color: rgba(59,130,246,.24);
+}
+
+.report-badge-green{
+  background: rgba(34,197,94,.14);
+  color:#bdf4cb;
+  border-color: rgba(34,197,94,.24);
+}
+
+.report-badge-red{
+  background: rgba(239,68,68,.14);
+  color:#ffc7c7;
+  border-color: rgba(239,68,68,.24);
+}
+
+.report-table-wrap{
+  margin-top: 2px;
+}
+
+.report-table-modern{
+  margin-top:0;
+  overflow:hidden;
+  border-radius:14px;
+}
+
+.report-table-modern thead th{
+  background:#0f1728;
+  color:#9fb0c2;
+  border-bottom:1px solid rgba(148,163,184,.18);
+}
+
+.report-table-modern tbody td{
+  background:#0b1220;
+}
+
+.report-table-modern tbody tr:nth-child(even) td{
+  background: rgba(15,23,42,.72);
+}
+
+.report-status-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:.78rem;
+  font-weight:700;
+  border:1px solid transparent;
+}
+
+.report-status-pill.ok{
+  background: rgba(34,197,94,.14);
+  color:#bdf4cb;
+  border-color: rgba(34,197,94,.22);
+}
+
+.report-status-pill.bad{
+  background: rgba(239,68,68,.14);
+  color:#ffc8c8;
+  border-color: rgba(239,68,68,.22);
+}
+
+.report-empty-state{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:34px 18px;
+  border-radius:18px;
+  background:#0b1220;
+  border:1px dashed rgba(148,163,184,.20);
+}
+
+.report-empty-icon{
+  width:66px;
+  height:66px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(88,166,255,.10);
+  color:#a9cdfb;
+  font-size:1.5rem;
+  margin-bottom:12px;
+}
+
+.report-empty-state h3{
+  margin:0 0 6px;
+  color:#e8edf3;
+  font-size:1.05rem;
+}
+
+.report-empty-state p{
+  margin:0;
+  color:#9aa8ba;
+  max-width:420px;
+}
+
+.report-loading-state{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-height:120px;
+  color:#a8b4c3;
+  text-align:center;
+}
+
+.report-loading-state .dot{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,.18);
+  border-top-color:#58a6ff;
+  animation:spin 1s linear infinite;
+}
+
+.excel-preview{
+  width:100%;
+  margin-top:8px;
+  padding-bottom:6px;
+  overflow-x:auto;
+  overflow-y:auto;
+  max-height:420px;
+  -webkit-overflow-scrolling:touch;
+}
+
+.excel-preview .asistencia-table{
+  width:max-content;
+  min-width:520px;
+}
+
+.report-preview-note{
+  font-size:.86rem;
+  color:#9fb0c2;
+  margin:0 0 10px;
+}
+
+@media (max-width: 980px){
+  .report-stats-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .report-download-grid-modern{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px){
+  .reports-hero{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .reports-hero-icon{
+    width:60px;
+    height:60px;
+    border-radius:16px;
+  }
+
+  .report-filters-grid-modern{
+    grid-template-columns: 1fr;
+  }
+
+  .report-actions-modern{
+    justify-content:stretch;
+  }
+
+  .report-primary-btn,
+  .report-download-btn{
+    width:100%;
+  }
+
+  .report-day-header.modern{
+    flex-direction:column;
+  }
+
+  .report-day-badges{
+    justify-content:flex-start;
+  }
+}
+
+@media (max-width: 560px){
+  .report-stats-grid,
+  .report-download-grid-modern{
+    grid-template-columns: 1fr;
+  }
+
+  .report-card{
+    padding:14px;
+  }
+
+  .reports-hero{
+    padding:16px;
+    border-radius:18px;
+  }
+}
+
+/* ==========================================================================
+   REPORTES – Ajustes visuales
+   ========================================================================== */
+
+/* Hero principal centrado */
+.reports-hero {
+  justify-content: center;
+}
+
+.reports-hero-copy-centered {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.reports-hero-copy-centered h1 {
+  width: 100%;
+  text-align: center;
+}
+
+.reports-hero-copy-centered p {
+  width: 100%;
+  max-width: 720px;
+  text-align: center;
+}
+
+/* Se elimina el badge viejo */
+.reports-eyebrow {
+  display: none !important;
+}
+
+/* Icono arriba del título y centrado */
+.reports-hero-icon-centered {
+  margin: 0 auto 12px;
+  order: -1;
+}
+
+/* Títulos y subtítulos de cards centrados en móvil */
+@media (max-width: 768px) {
+  .report-top-header,
+  .report-card-header-modern {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .report-card-title,
+  .report-card-subtitle {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Grid de métricas: 2 columnas x 2 filas en móvil */
+@media (max-width: 768px) {
+  .report-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .report-stat-card {
+    min-height: 92px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .report-stat-label {
+    margin-bottom: 8px;
+    text-align: left;
+  }
+
+  .report-stat-card strong {
+    text-align: left;
+  }
+}
+
+/* En celulares muy pequeños, sí pasar a 1 columna si hace falta */
+@media (max-width: 360px) {
+  .report-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   ADMIN CALENDARIO – Lavado de cara visual mobile-first
+   ========================================================================== */
+
+.calendar-admin-page{
+  padding-bottom: 26px;
+}
+
+.calendar-admin-shell{
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.calendar-admin-hero{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(180deg, rgba(5,10,20,.98), rgba(3,8,18,.95));
+  border: 1px solid rgba(88,166,255,.14);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.32);
+}
+
+.calendar-admin-hero-icon{
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(34,197,94,.12));
+  border: 1px solid rgba(148,163,184,.16);
+  color: #e5f0ff;
+  font-size: 1.45rem;
+  flex: 0 0 auto;
+}
+
+.calendar-admin-hero-copy{
+  min-width: 0;
+}
+
+.calendar-admin-hero-copy h1{
+  margin: 0 0 6px;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  line-height: 1.1;
+  color: #edf4fb;
+  text-wrap: balance;
+}
+
+.calendar-admin-hero-copy p{
+  margin: 0;
+  color: #9fb0c2;
+  font-size: .95rem;
+  line-height: 1.5;
+}
+
+.calendar-admin-card{
+  background: linear-gradient(180deg, rgba(5,10,20,.98), rgba(3,8,18,.95));
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.32);
+}
+
+.calendar-card-head{
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.calendar-card-head h2{
+  margin: 0 0 5px;
+  font-size: 1rem;
+  color: #e8edf3;
+}
+
+.calendar-card-head p{
+  margin: 0;
+  color: #9fb0c2;
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+/* Calendario */
+#calendarAdmin{
+  background: linear-gradient(180deg, rgba(8,15,28,.98), rgba(4,9,18,.98));
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.02), 0 12px 28px rgba(0,0,0,.22);
+}
+
+#calendarAdmin .fc{
+  font-size: .86rem;
+}
+
+#calendarAdmin .fc-toolbar{
+  margin-bottom: 10px;
+  gap: 10px;
+  align-items: center;
+}
+
+#calendarAdmin .fc-toolbar-title{
+  font-size: clamp(.98rem, 3vw, 1.2rem);
+  font-weight: 800;
+  color: #edf4fb;
+  letter-spacing: -.01em;
+}
+
+#calendarAdmin .fc-toolbar-chunk{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#calendarAdmin .fc-button-primary{
+  background: #0f172a;
+  border: 1px solid rgba(148,163,184,.18);
+  color: #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: .78rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+#calendarAdmin .fc-button-primary:hover{
+  background: #172033;
+  border-color: rgba(88,166,255,.35);
+}
+
+#calendarAdmin .fc-button-primary:disabled{
+  opacity: .55;
+}
+
+#calendarAdmin .fc-scrollgrid{
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,.10);
+}
+
+#calendarAdmin .fc-col-header-cell{
+  background: #0b1220;
+  border-color: rgba(148,163,184,.10);
+}
+
+#calendarAdmin .fc-col-header-cell-cushion{
+  display: block;
+  padding: 7px 4px;
+  color: #8fc1ff;
+  font-size: .8rem;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+#calendarAdmin .fc-timegrid-slot,
+#calendarAdmin .fc-timegrid-slot-label,
+#calendarAdmin .fc-theme-standard td,
+#calendarAdmin .fc-theme-standard th{
+  border-color: rgba(148,163,184,.08);
+}
+
+#calendarAdmin .fc-timegrid-slot-label{
+  font-size: .76rem;
+  color: #9ca3af;
+}
+
+#calendarAdmin .fc-timegrid-col.fc-day-today{
+  background: rgba(59,130,246,.05);
+}
+
+#calendarAdmin .fc-event{
+  border: 0;
+  border-radius: 12px;
+  padding: 2px 5px;
+  box-shadow: 0 8px 16px rgba(0,0,0,.30);
+  font-size: .8rem;
+}
+
+#calendarAdmin .fc-event-main{
+  padding: 1px 2px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+#calendarAdmin .fc-timegrid-col.disabled-day,
+#calendarAdmin .fc-col-header-cell.disabled-day{
+  background: rgba(2,6,23,.92);
+  filter: grayscale(.18) opacity(.9);
+}
+
+/* Card de días especiales */
+.special-days-card-modern{
+  background: linear-gradient(180deg, rgba(5,10,20,.98), rgba(3,8,18,.95));
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.32);
+}
+
+#specialDaysCard .special-days-toggle{
+  padding: 0;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+#specialDaysCard .special-header-modern{
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+#specialDaysCard .special-header-icon{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(34,197,94,.14), rgba(59,130,246,.12));
+  border: 1px solid rgba(148,163,184,.16);
+  color: #d9fbe5;
+  font-size: 1.1rem;
+  flex: 0 0 auto;
+}
+
+#specialDaysCard .special-header-copy{
+  min-width: 0;
+}
+
+#specialDaysCard .special-header{
+  margin: 0;
+}
+
+#specialDaysCard .special-header h2{
+  margin: 0 0 4px;
+  font-size: 1.02rem;
+  color: #ecf3fb;
+}
+
+#specialDaysCard .special-header p{
+  margin: 0;
+  font-size: .86rem;
+  color: #9fb0c2;
+  line-height: 1.45;
+}
+
+#specialDaysCard .special-toggle-icon{
+  margin-left: 0;
+  margin-top: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  border: 1px solid rgba(148,163,184,.18);
+  color: #9fb0c2;
+}
+
+#specialDaysCard .special-days-body{
+  margin-top: 12px;
+}
+
+#specialDaysCard .special-label-top{
+  margin: 0 0 8px;
+  font-size: .84rem;
+  color: #9fb0c2;
+  text-align: center;
+}
+
+#specialDaysCard .special-type-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+#specialDaysCard .special-type-pill{
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #0b1220;
+  border: 1px solid rgba(148,163,184,.16);
+  color: #cbd5e1;
+  font-size: .82rem;
+}
+
+#specialDaysCard .special-grid{
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+#specialDaysCard .special-field{
+  background: rgba(11,18,32,.72);
+  border: 1px solid rgba(148,163,184,.10);
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+
+#specialDaysCard .special-field label{
+  margin-bottom: 6px;
+  font-size: .81rem;
+  color: #a6b5c8;
+}
+
+#specialDaysCard .special-field input{
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.20);
+  background: #07101d;
+  color: #e5e7eb;
+  font-size: .88rem;
+  padding: 10px 12px;
+  min-height: 42px;
+}
+
+#specialDaysCard .special-field input:focus{
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34,197,94,.14);
+}
+
+#specialDaysCard .special-subtitle{
+  margin: 6px 0 10px;
+}
+
+#specialDaysCard .special-subtitle span{
+  font-size: .8rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(15,23,42,.95);
+  border: 1px solid rgba(148,163,184,.16);
+  color: #dbe7f5;
+}
+
+#specialDaysCard .special-actions-row{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+#specialDaysCard .special-actions-top{
+  margin: 4px 0 12px;
+}
+
+#specialDaysCard .special-actions-bottom{
+  margin-top: 2px;
+}
+
+#specialDaysCard .special-actions-row .btn{
+  min-height: 42px;
+  border-radius: 12px;
+  min-width: 220px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#specialDaysCard .special-btn-ghost{
+  background: #07101d;
+  border: 1px solid rgba(34,197,94,.55);
+  color: #50f29a;
+}
+
+#specialDaysCard .special-btn-ghost:hover{
+  background: rgba(34,197,94,.10);
+}
+
+#specialDaysCard .special-tip{
+  margin: 12px 0 0;
+  text-align: center;
+  color: #9fb0c2;
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
+/* Responsive fino para PWA/celular */
+@media (max-width: 768px){
+  .calendar-admin-shell{
+    gap: 14px;
+  }
+
+  .calendar-admin-hero{
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .calendar-admin-card,
+  .special-days-card-modern{
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  #calendarAdmin{
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  #calendarAdmin .fc-toolbar{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #calendarAdmin .fc-toolbar-chunk{
+    justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  #calendarAdmin .fc-toolbar-title{
+    text-align: center;
+    width: 100%;
+  }
+
+  #calendarAdmin .fc-button-group{
+    display: inline-flex;
+    gap: 6px;
+  }
+
+  #calendarAdmin .fc-col-header-cell-cushion{
+    font-size: .74rem;
+    padding: 6px 2px;
+  }
+
+  #calendarAdmin .fc-timegrid-slot-label{
+    font-size: .72rem;
+  }
+
+  #calendarAdmin .fc-event{
+    font-size: .74rem;
+    border-radius: 10px;
+  }
+
+  #specialDaysCard .special-header-modern{
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  #specialDaysCard .special-header-copy,
+  #specialDaysCard .special-header,
+  #specialDaysCard .special-header h2,
+  #specialDaysCard .special-header p{
+    text-align: center;
+  }
+
+  #specialDaysCard .special-days-toggle{
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #specialDaysCard .special-toggle-icon{
+    margin-top: 0;
+  }
+
+  #specialDaysCard .special-actions-row{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #specialDaysCard .special-actions-row .btn{
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px){
+  .calendar-admin-hero{
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .calendar-admin-hero-copy h1,
+  .calendar-admin-hero-copy p{
+    text-align: center;
+  }
+
+  .calendar-admin-hero-icon{
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 1.25rem;
+  }
+
+  .calendar-card-head{
+    text-align: center;
+  }
+
+  #calendarAdmin .fc{
+    font-size: .8rem;
+  }
+
+  #calendarAdmin .fc-button-primary{
+    min-height: 36px;
+    padding: 5px 9px;
+    font-size: .74rem;
+    border-radius: 10px;
+  }
+
+  #calendarAdmin .fc-toolbar-title{
+    font-size: .96rem;
+    line-height: 1.2;
+  }
+
+  #calendarAdmin .fc-col-header-cell-cushion{
+    font-size: .68rem;
+  }
+
+  #calendarAdmin .fc-timegrid-slot-label{
+    font-size: .68rem;
+  }
+
+  #calendarAdmin .fc-event{
+    font-size: .7rem;
+    padding: 1px 4px;
+  }
+
+  #specialDaysCard .special-type-row{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #specialDaysCard .special-type-pill{
+    width: 100%;
+  }
+
+  #specialDaysCard .special-field{
+    padding: 9px 10px;
+    border-radius: 14px;
+  }
+
+  #specialDaysCard .special-field input{
+    min-height: 40px;
+    font-size: .84rem;
+    padding: 9px 10px;
+  }
+
+  #specialDaysCard .special-tip{
+    font-size: .78rem;
+  }
+}
+
+@media (max-width: 360px){
+  .calendar-admin-hero,
+  .calendar-admin-card,
+  .special-days-card-modern,
+  #calendarAdmin{
+    border-radius: 14px;
+  }
+
+  .calendar-admin-hero-copy h1{
+    font-size: 1.16rem;
+  }
+
+  .calendar-admin-hero-copy p,
+  .calendar-card-head p{
+    font-size: .82rem;
+  }
+
+  #calendarAdmin .fc-button-primary{
+    font-size: .7rem;
+    padding: 4px 8px;
+  }
+
+  #calendarAdmin .fc-toolbar-title{
+    font-size: .9rem;
+  }
+}

@@ -10,8 +10,8 @@
 </head>
 <body class="pagos-page">
 
-  <!-- Botón hamburguesa / Sidebar (igual que cliente) -->
   <button id="toggleNav" class="hamburger-btn" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+
   <nav id="sidebar" class="sidebar">
     <ul>
       <li><a href="./client-profile.html"><i class="bi bi-person-circle"></i>Mi perfil</a></li>
@@ -50,13 +50,22 @@
         </div>
 
         <div class="field">
-          <label for="payAmount">Monto exacto pagado (₡ o $)</label>
-          <input id="payAmount" type="number" inputmode="numeric" min="0" step="1" placeholder="Ej: 20000" required>
+          <label for="payType">Tipo de pago</label>
+          <select id="payType" required>
+            <option value="membresia" selected>PAGO MEMBRESIA</option>
+            <option value="otro">OTRO</option>
+          </select>
+        </div>
+
+        <div class="field" id="payDetailField">
+          <label for="payMonth" id="payDetailLabel">Mes que estás pagando</label>
+          <input id="payMonth" type="month" required>
+          <input id="payOtherDetail" type="text" placeholder="Ej: Camisa negra talla M" hidden>
         </div>
 
         <div class="field">
-          <label for="payMonth">Mes que estás pagando</label>
-          <input id="payMonth" type="month" required>
+          <label for="payAmount">Monto exacto pagado (₡ o $)</label>
+          <input id="payAmount" type="number" inputmode="numeric" min="0" step="1" placeholder="Ej: 20000" required>
         </div>
 
         <div class="field">
@@ -67,15 +76,17 @@
         <div class="field">
           <label>Comprobante (imagen)</label>
           <div id="drop" class="drop">Arrastra una imagen o toca para seleccionar</div>
-            <div id="previewWrap" class="preview" hidden>
-                <img id="previewImg" alt="">
-            </div>
+
+          <div id="previewWrap" class="preview" hidden>
+            <img id="previewImg" alt="">
+          </div>
+
           <input id="payFile" type="file" accept="image/*" hidden required>
           <small id="fileName" class="text-muted"></small>
         </div>
 
         <div class="pay-actions">
-          <button id="sendBtn" class="btn">Enviar a WhatsApp</button>
+          <button id="sendBtn" class="btn" type="submit">Enviar a WhatsApp</button>
         </div>
 
         <div id="payStatus" class="pay-status">
@@ -84,7 +95,6 @@
         </div>
       </form>
     </section>
-
   </main>
 
   <script type="module" src="./js/client-pagos.js"></script>

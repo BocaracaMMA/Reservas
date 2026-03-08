@@ -1,211 +1,421 @@
 // ./js/descargar-reportes.js
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import {
+  collection,
+  collectionGroup,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 import { showAlert } from "./showAlert.js";
 
-// Definición de columnas disponibles para el Excel detallado
 const COLUMN_DEFS = {
   fecha: {
     header: "Fecha",
-    getter: (r) => r.fecha,
+    getter: (r) => r.fecha || ""
   },
   nombre: {
     header: "Nombre",
-    getter: (r) => r.nombre,
+    getter: (r) => r.nombre || ""
   },
   hora: {
     header: "Hora",
-    getter: (r) => r.hora,
+    getter: (r) => r.hora || ""
   },
   presente: {
-    header: "Presente",
-    getter: (r) => (r.presente ? "Sí" : "No"),
+    header: "Estado",
+    getter: (r) => (r.presente ? "Presente" : "Ausente")
   },
   classType: {
     header: "Tipo de clase",
-    getter: (r) => r.classType,
+    getter: (r) => r.classType || ""
   },
   professorName: {
     header: "Profesor",
-    getter: (r) => r.professorName,
+    getter: (r) => r.professorName || ""
   },
   classId: {
     header: "ID Clase",
-    getter: (r) => r.classId,
+    getter: (r) => r.classId || ""
   },
   uid: {
-    header: "ID Asistencia",
-    getter: (r) => r.uid,
-  },
+    header: "ID Registro",
+    getter: (r) => r.uid || ""
+  }
 };
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function todayCRString() {
+  return new Date().toLocaleString("es-CR", {
+    dateStyle: "short",
+    timeStyle: "short"
+  });
+}
+
+function buildMonthDates(year, month) {
+  const y = Number(year);
+  const m = Number(month);
+  const lastDay = new Date(y, m, 0).getDate();
+
+  return Array.from({ length: lastDay }, (_, i) => {
+    return `${y}-${pad2(m)}-${pad2(i + 1)}`;
+  });
+}
+
+function monthLabel(month) {
+  const labels = {
+    "01": "Enero",
+    "02": "Febrero",
+    "03": "Marzo",
+    "04": "Abril",
+    "05": "Mayo",
+    "06": "Junio",
+    "07": "Julio",
+    "08": "Agosto",
+    "09": "Septiembre",
+    "10": "Octubre",
+    "11": "Noviembre",
+    "12": "Diciembre"
+  };
+  return labels[month] || month;
+}
+
 /**
- * Lee toda la asistencia desde Firestore según el alcance:
- *  - scope: "month" => solo el mes seleccionado
- *  - scope: "all"   => todo el histórico
+ * Convierte cualquier documento válido de asistencia
+ * a una fila uniforme para reportes/exportación.
  */
-async function fetchAttendanceData(scope, year, month) {
-  const asistenciaRef = collection(db, "asistencias");
-  const snapshot = await getDocs(asistenciaRef);
+function normalizeAttendanceDoc(docSnap) {
+  const data = docSnap.data() || {};
+  const parts = docSnap.ref.path.split("/");
 
-  if (snapshot.empty) return [];
+  if (parts[0] !== "asistencias") return null;
 
-  const prefix = `${year}-${month}`;
+  let fecha = "";
+  let classId = "";
+  let classType = data.classType || "";
+  let professorName = data.professorName || "";
 
-  // Filtrar fechas según alcance
-  const fechas = snapshot.docs
-    .map((d) => d.id)
-    .filter((id) => (scope === "month" ? id.startsWith(prefix) : true))
-    .sort();
+  if (parts.length === 4 && parts[2] === "usuarios") {
+    fecha = parts[1];
+  } else if (parts.length === 6 && parts[2] === "clases" && parts[4] === "usuarios") {
+    fecha = parts[1];
+    classId = parts[3];
+  } else {
+    return null;
+  }
 
-  if (!fechas.length) return [];
+  return {
+    fecha,
+    uid: docSnap.id,
+    nombre: data.nombre || "",
+    hora: data.hora || "",
+    presente: !!data.presente,
+    classType,
+    professorName,
+    classId
+  };
+}
 
-  const allRows = [];
+/**
+ * Lee asistencias solo del mes seleccionado.
+ */
+async function fetchAttendanceDataForMonth(year, month) {
+  const fechas = buildMonthDates(year, month);
+  const rows = [];
 
   for (const fecha of fechas) {
     const usuariosRef = collection(db, "asistencias", fecha, "usuarios");
     const usuariosSnap = await getDocs(usuariosRef);
 
-    usuariosSnap.forEach((userDoc) => {
-      const data = userDoc.data() || {};
-      allRows.push({
-        fecha,
-        uid: userDoc.id,
-        nombre: data.nombre || "",
-        hora: data.hora || "",
-        presente: !!data.presente,
-        classType: data.classType || "",
-        professorName: data.professorName || "",
-        classId: data.classId || "",
-      });
+    usuariosSnap.forEach((docSnap) => {
+      const row = normalizeAttendanceDoc(docSnap);
+      if (row) rows.push(row);
     });
   }
 
-  return allRows;
+  return rows.sort((a, b) => {
+    if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+    if (a.hora !== b.hora) return String(a.hora).localeCompare(String(b.hora));
+    return String(a.nombre).localeCompare(String(b.nombre));
+  });
 }
 
-/* ─────────────────── Helpers para matrices (detalle / resumen) ─────────────────── */
+/**
+ * Lee todo el histórico real desde subcolecciones "usuarios".
+ */
+async function fetchAttendanceDataForAllHistory() {
+  const snap = await getDocs(collectionGroup(db, "usuarios"));
+  const rows = [];
 
-function buildDetailMatrix(rows, selectedCols) {
+  snap.forEach((docSnap) => {
+    const row = normalizeAttendanceDoc(docSnap);
+    if (row) rows.push(row);
+  });
+
+  return rows.sort((a, b) => {
+    if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+    if (a.hora !== b.hora) return String(a.hora).localeCompare(String(b.hora));
+    return String(a.nombre).localeCompare(String(b.nombre));
+  });
+}
+
+async function fetchAttendanceData(scope, year, month) {
+  if (scope === "all") {
+    return fetchAttendanceDataForAllHistory();
+  }
+  return fetchAttendanceDataForMonth(year, month);
+}
+
+/**
+ * Resumen por alumno.
+ */
+function buildSummaryRows(rows) {
+  const byName = {};
+
+  rows.forEach((row) => {
+    const name = row.nombre || "(Sin nombre)";
+
+    if (!byName[name]) {
+      byName[name] = {
+        nombre: name,
+        total: 0,
+        presentes: 0,
+        ausentes: 0
+      };
+    }
+
+    byName[name].total += 1;
+    if (row.presente) byName[name].presentes += 1;
+    else byName[name].ausentes += 1;
+  });
+
+  return Object.values(byName)
+    .map((item) => ({
+      nombre: item.nombre,
+      total: item.total,
+      presentes: item.presentes,
+      ausentes: item.ausentes,
+      porcentaje:
+        item.total > 0
+          ? `${((item.presentes / item.total) * 100).toFixed(1)}%`
+          : "0.0%"
+    }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+function countDistinctDays(rows) {
+  return new Set(rows.map((r) => r.fecha).filter(Boolean)).size;
+}
+
+function buildMetaRows(rows, scope, year, month) {
+  const total = rows.length;
+  const presentes = rows.filter((r) => r.presente).length;
+  const ausentes = total - presentes;
+  const dias = countDistinctDays(rows);
+
+  return [
+    ["REPORTE DE ASISTENCIA"],
+    [],
+    ["Período", scope === "month" ? `${monthLabel(month)} ${year}` : "Histórico completo"],
+    ["Alcance", scope === "month" ? "Mes seleccionado" : "Todo el histórico"],
+    ["Generado", todayCRString()],
+    ["Días con asistencia", dias],
+    ["Registros totales", total],
+    ["Presentes", presentes],
+    ["Ausentes", ausentes]
+  ];
+}
+
+function buildDetailTable(rows, selectedCols) {
   let cols = selectedCols.filter((c) => COLUMN_DEFS[c]);
 
-  // Fallback por si el usuario desmarca todo
   if (!cols.length) {
     cols = ["fecha", "nombre", "hora", "presente"];
   }
 
   const headers = cols.map((c) => COLUMN_DEFS[c].header);
-  const matrix = [headers];
+  const body = rows.map((row) => cols.map((c) => COLUMN_DEFS[c].getter(row)));
 
-  rows.forEach((row) => {
-    matrix.push(cols.map((c) => COLUMN_DEFS[c].getter(row) ?? ""));
-  });
-
-  return { cols, matrix };
+  return { cols, headers, body };
 }
 
-// Construye hoja detallada
-function buildDetailSheet(rows, selectedCols) {
-  const { matrix } = buildDetailMatrix(rows, selectedCols);
-  return XLSX.utils.aoa_to_sheet(matrix);
+function buildSummaryTable(rows) {
+  const summaryRows = buildSummaryRows(rows);
+  const headers = ["Nombre", "Total clases", "Presentes", "Ausentes", "% asistencia"];
+  const body = summaryRows.map((row) => [
+    row.nombre,
+    row.total,
+    row.presentes,
+    row.ausentes,
+    row.porcentaje
+  ]);
+
+  return { headers, body, summaryRows };
 }
 
-function buildSummaryMatrix(rows) {
-  const byName = {};
+function autoColumnWidths(matrix) {
+  if (!matrix.length) return [];
 
-  rows.forEach((r) => {
-    const name = r.nombre || "(Sin nombre)";
-    if (!byName[name]) {
-      byName[name] = { total: 0, presentes: 0, ausentes: 0 };
+  const colCount = Math.max(...matrix.map((row) => row.length));
+
+  return Array.from({ length: colCount }, (_, colIdx) => {
+    let maxLen = 10;
+
+    for (const row of matrix) {
+      const cell = row[colIdx] ?? "";
+      const len = String(cell).length;
+      if (len > maxLen) maxLen = len;
     }
-    byName[name].total++;
-    if (r.presente) byName[name].presentes++;
-    else byName[name].ausentes++;
+
+    return { wch: Math.min(maxLen + 2, 32) };
   });
+}
+
+function applyAutoFilter(ws, startRow, headers) {
+  if (!headers?.length) return;
+  const endCol = XLSX.utils.encode_col(headers.length - 1);
+  const start = startRow + 1;
+  ws["!autofilter"] = {
+    ref: `A${start}:${endCol}${start}`
+  };
+}
+
+function setSheetCols(ws, matrix) {
+  ws["!cols"] = autoColumnWidths(matrix);
+}
+
+function setSheetMerges(ws, merges) {
+  ws["!merges"] = merges || [];
+}
+
+function makeMetaSheet(rows, scope, year, month) {
+  const metaRows = buildMetaRows(rows, scope, year, month);
+  const ws = XLSX.utils.aoa_to_sheet(metaRows);
+
+  setSheetCols(ws, metaRows);
+  setSheetMerges(ws, [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }
+  ]);
+
+  return ws;
+}
+
+function makeDetailSheet(rows, selectedCols, scope, year, month) {
+  const metaRows = buildMetaRows(rows, scope, year, month);
+  const detail = buildDetailTable(rows, selectedCols);
 
   const matrix = [
-    ["Nombre", "Total clases", "Presentes", "Ausentes", "% asistencia"],
+    ...metaRows,
+    [],
+    detail.headers,
+    ...detail.body
   ];
 
-  Object.entries(byName)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([name, stats]) => {
-      const pct =
-        stats.total > 0 ? (stats.presentes / stats.total) * 100 : 0;
-      matrix.push([
-        name,
-        stats.total,
-        stats.presentes,
-        stats.ausentes,
-        `${pct.toFixed(1)}%`,
-      ]);
-    });
+  const ws = XLSX.utils.aoa_to_sheet(matrix);
 
-  return matrix;
+  setSheetCols(ws, matrix);
+  setSheetMerges(ws, [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(detail.headers.length - 1, 1) } }
+  ]);
+
+  applyAutoFilter(ws, metaRows.length + 1, detail.headers);
+
+  return ws;
 }
 
-// Construye hoja resumen por alumno
-function buildSummarySheet(rows) {
-  const matrix = buildSummaryMatrix(rows);
-  return XLSX.utils.aoa_to_sheet(matrix);
+function makeSummarySheet(rows, scope, year, month) {
+  const metaRows = buildMetaRows(rows, scope, year, month);
+  const summary = buildSummaryTable(rows);
+
+  const matrix = [
+    ...metaRows,
+    [],
+    summary.headers,
+    ...summary.body
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(matrix);
+
+  setSheetCols(ws, matrix);
+  setSheetMerges(ws, [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(summary.headers.length - 1, 1) } }
+  ]);
+
+  applyAutoFilter(ws, metaRows.length + 1, summary.headers);
+
+  return ws;
 }
 
-/* ─────────────────── Vista previa HTML ─────────────────── */
+function makeConfigSheet(scope, mode, selectedCols, year, month) {
+  const rows = [
+    ["CONFIGURACIÓN DEL REPORTE"],
+    [],
+    ["Año", year],
+    ["Mes", month],
+    ["Alcance", scope === "month" ? "Mes seleccionado" : "Todo el histórico"],
+    ["Tipo principal solicitado", mode === "summary" ? "Resumen" : "Detalle"],
+    ["Columnas detalladas", selectedCols.length ? selectedCols.join(", ") : "Por defecto"]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  setSheetCols(ws, rows);
+  setSheetMerges(ws, [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }
+  ]);
+
+  return ws;
+}
 
 function renderPreviewTable(rows, selectedCols, mode, meta) {
   const container = document.getElementById("excel-preview");
-  if (!container) return;
-
-  // Mostrar la card de vista previa (estaba con class="hidden")
   const section = document.getElementById("excel-preview-card");
-  if (section) {
-    section.classList.remove("hidden");
-  }
+  if (!container || !section) return;
 
+  section.classList.remove("hidden");
   container.innerHTML = "";
 
   const MAX_ROWS = 50;
-  let matrix;
 
-  if (mode === "summary") {
-    matrix = buildSummaryMatrix(rows);
-  } else {
-    const m = buildDetailMatrix(rows, selectedCols);
-    matrix = m.matrix;
-  }
-
-  const [headers, ...dataRows] = matrix;
-
-  // Texto arriba de la tabla
   const info = document.createElement("p");
   info.className = "report-preview-note";
-  const scopeLabel =
-    meta && meta.scope === "month"
-      ? `mes ${meta.year}-${meta.month}`
-      : "todo el histórico";
-  info.textContent = `Vista previa (${mode === "summary" ? "resumen por alumno" : "detalle"}) · ${scopeLabel}.`;
+  info.textContent =
+    meta.scope === "month"
+      ? `Vista previa · ${monthLabel(meta.month)} ${meta.year}`
+      : "Vista previa · histórico completo";
   container.appendChild(info);
 
-  // Tabla
+  let headers = [];
+  let body = [];
+
+  if (mode === "summary") {
+    const summary = buildSummaryTable(rows);
+    headers = summary.headers;
+    body = summary.body;
+  } else {
+    const detail = buildDetailTable(rows, selectedCols);
+    headers = detail.headers;
+    body = detail.body;
+  }
+
   const table = document.createElement("table");
-  table.className = "asistencia-table"; // reutiliza el estilo de las otras tablas
+  table.className = "asistencia-table";
 
   const thead = document.createElement("thead");
   const trHead = document.createElement("tr");
-  headers.forEach((h) => {
+  headers.forEach((header) => {
     const th = document.createElement("th");
-    th.textContent = h;
+    th.textContent = header;
     trHead.appendChild(th);
   });
   thead.appendChild(trHead);
 
   const tbody = document.createElement("tbody");
-
-  dataRows.slice(0, MAX_ROWS).forEach((row) => {
+  body.slice(0, MAX_ROWS).forEach((row) => {
     const tr = document.createElement("tr");
     row.forEach((cell) => {
       const td = document.createElement("td");
-      td.textContent = cell;
+      td.textContent = cell ?? "";
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -215,45 +425,65 @@ function renderPreviewTable(rows, selectedCols, mode, meta) {
   table.appendChild(tbody);
   container.appendChild(table);
 
-  if (dataRows.length > MAX_ROWS) {
-    const note = document.createElement("p");
-    note.className = "report-preview-note";
-    note.textContent = `Mostrando ${MAX_ROWS} filas de ${dataRows.length}. El Excel incluirá todos los registros.`;
-    container.appendChild(note);
-  }
-
-  // Scroll suave hasta la vista previa
-  if (section) {
-    section.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  const note = document.createElement("p");
+  note.className = "report-preview-note";
+  note.textContent =
+    body.length > MAX_ROWS
+      ? `Mostrando ${MAX_ROWS} filas de ${body.length}. El Excel descargado incluirá todos los registros.`
+      : `Total de filas: ${body.length}.`;
+  container.appendChild(note);
 }
 
-/* ─────────────────── Generar Excel + Vista previa ─────────────────── */
+function buildProfessionalWorkbook(rows, selectedCols, scope, mode, year, month) {
+  const wb = XLSX.utils.book_new();
+
+  const wsMeta = makeMetaSheet(rows, scope, year, month);
+  const wsSummary = makeSummarySheet(rows, scope, year, month);
+  const wsDetail = makeDetailSheet(rows, selectedCols, scope, year, month);
+  const wsConfig = makeConfigSheet(scope, mode, selectedCols, year, month);
+
+  if (mode === "summary") {
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen");
+    XLSX.utils.book_append_sheet(wb, wsDetail, "Detalle");
+  } else {
+    XLSX.utils.book_append_sheet(wb, wsDetail, "Detalle");
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen");
+  }
+
+  XLSX.utils.book_append_sheet(wb, wsMeta, "Información");
+  XLSX.utils.book_append_sheet(wb, wsConfig, "Configuración");
+
+  return wb;
+}
+
+function buildFileName(scope, mode, year, month) {
+  const suffix = scope === "month" ? `${year}-${month}` : "historico";
+  const modeLabel = mode === "summary" ? "resumen" : "detalle";
+  return `bocaraca_reporte_asistencia_${modeLabel}_${suffix}.xlsx`;
+}
 
 async function descargarReporteAsistencia(arg) {
-  // Si se llama como descargarReporteAsistencia({ preview: true }) mostramos solo vista previa.
   const previewOnly = !!(arg && typeof arg === "object" && arg.preview);
-
   const boton = document.getElementById("btnDescargar");
   if (boton) boton.disabled = true;
 
   try {
     if (typeof XLSX === "undefined") {
-      showAlert("La librería XLSX no está cargada", "error");
+      showAlert("La librería XLSX no está cargada.", "error");
       return;
     }
 
-    const yearSelect  = document.getElementById("yearSelect");
+    const yearSelect = document.getElementById("yearSelect");
     const monthSelect = document.getElementById("monthSelect");
 
-    const year  = yearSelect ? yearSelect.value : String(new Date().getFullYear());
+    const year = yearSelect ? yearSelect.value : String(new Date().getFullYear());
     const month = monthSelect ? monthSelect.value : "01";
 
     const scopeInput = document.querySelector('input[name="reportScope"]:checked');
-    const modeInput  = document.querySelector('input[name="reportMode"]:checked');
+    const modeInput = document.querySelector('input[name="reportMode"]:checked');
 
-    const scope = scopeInput ? scopeInput.value : "month";   // "month" | "all"
-    const mode  = modeInput ? modeInput.value : "detail";    // "detail" | "summary"
+    const scope = scopeInput ? scopeInput.value : "month";
+    const mode = modeInput ? modeInput.value : "detail";
 
     const selectedCols = Array.from(
       document.querySelectorAll(".report-col-checkbox:checked")
@@ -262,76 +492,47 @@ async function descargarReporteAsistencia(arg) {
     const rows = await fetchAttendanceData(scope, year, month);
 
     if (!rows.length) {
-      showAlert(
-        "No hay registros de asistencia para el rango seleccionado.",
-        "error"
-      );
+      showAlert("No hay registros de asistencia para el rango seleccionado.", "error");
       return;
     }
 
-    // Siempre generamos vista previa
     renderPreviewTable(rows, selectedCols, mode, { scope, year, month });
 
-    // Si solo queremos vista previa, no descargamos archivo
     if (previewOnly) {
-      showAlert(
-        "Vista previa generada. Si todo se ve bien, pulsa “Descargar Excel”.",
-        "success"
-      );
+      showAlert("Vista previa generada.", "success");
       return;
     }
 
-    // Modo descarga real
-    const wb = XLSX.utils.book_new();
+    const wb = buildProfessionalWorkbook(
+      rows,
+      selectedCols,
+      scope,
+      mode,
+      year,
+      month
+    );
 
-    if (mode === "summary") {
-      const wsSummary = buildSummarySheet(rows);
-      XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen");
-    } else {
-      const wsDetail = buildDetailSheet(rows, selectedCols);
-      XLSX.utils.book_append_sheet(wb, wsDetail, "Detalle");
-    }
-
-    const suffix =
-      scope === "month" ? `${year}-${month}` : "historico";
-
-    const fileName =
-      mode === "summary"
-        ? `reporte_asistencia_resumen_${suffix}.xlsx`
-        : `reporte_asistencia_detalle_${suffix}.xlsx`;
-
+    const fileName = buildFileName(scope, mode, year, month);
     XLSX.writeFile(wb, fileName);
-    showAlert("Reporte descargado exitosamente", "success");
+
+    showAlert("Reporte descargado exitosamente.", "success");
   } catch (error) {
     console.error("Error al generar el reporte:", error);
-    showAlert("Hubo un error al generar el reporte", "error");
+    showAlert("Hubo un error al generar el reporte.", "error");
   } finally {
     if (boton) boton.disabled = false;
   }
 }
 
-// Exponer global
 window.descargarReporteAsistencia = descargarReporteAsistencia;
 
-// Enganchar botones
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("btnDescargar");
   if (btn && !btn.dataset.bound) {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
-      descargarReporteAsistencia(); // vista previa + descarga
+      descargarReporteAsistencia();
     });
     btn.dataset.bound = "1";
-  }
-
-  // Si algún día quieres un botón de solo vista previa:
-  // <button id="btnPreviewExcel">Ver vista previa</button>
-  const btnPrev = document.getElementById("btnPreviewExcel");
-  if (btnPrev && !btnPrev.dataset.bound) {
-    btnPrev.addEventListener("click", (e) => {
-      e.preventDefault();
-      descargarReporteAsistencia({ preview: true }); // solo vista previa
-    });
-    btnPrev.dataset.bound = "1";
   }
 });

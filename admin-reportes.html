@@ -3,37 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reportes - Asistencia Mensual</title>
+  <title>Reportes - Asistencia</title>
 
-  <!-- Bootstrap Icons -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
   />
-
-  <!-- Tu CSS -->
   <link rel="stylesheet" href="./css/style.css">
-
-  <!-- Favicon -->
-  <link
-    rel="icon"
-    href="./assets/favicon-32x32.png"
-    type="image/x-icon"
-  />
-
-  <!-- SheetJS (Excel) -->
+  <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <link rel="manifest" href="./manifest.webmanifest?v=2025.11.19.v4">
+  <link rel="manifest" href="./manifest.webmanifest?v=2026.03.08.v6">
   <meta name="theme-color" content="#0d1117">
 
-  <!-- iOS -->
   <link rel="apple-touch-icon" href="./assets/android-chrome-512x512.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
-  <!-- Hamburguesa + sidebar -->
   <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
     <i class="bi bi-list"></i>
   </button>
@@ -51,16 +38,32 @@
 
   <div class="main-content reports-page">
     <div class="container reports-page-main">
-      <!-- Encabezado -->
-      <header class="reports-header" style="text-align: center;">
-        <h1>Reportes de asistencia</h1>
-        <p>Consulta la asistencia mensual y exporta archivos Excel adaptados a tus métricas.</p>
-      </header>
 
-      <!-- Filtros de periodo -->
-      <section class="report-card">
-        <h2 class="report-card-title" style="text-align: center;">Filtros de período</h2>
-        <div class="report-filters-grid">
+    <header class="reports-hero">
+      <div class="reports-hero-copy reports-hero-copy-centered">
+        <div class="reports-hero-icon reports-hero-icon-centered">
+          <i class="bi bi-bar-chart-line-fill"></i>
+        </div>
+
+        <h1>Reportes de asistencia</h1>
+
+        <p>
+          Consulta la asistencia por mes, revisa el detalle por día y exporta el histórico en Excel.
+        </p>
+      </div>
+    </header>
+
+      <section class="report-card report-card-top">
+        <div class="report-top-header">
+          <div>
+            <h2 class="report-card-title">Filtros de período</h2>
+            <p class="report-card-subtitle">
+              Selecciona el año y el mes que quieres revisar.
+            </p>
+          </div>
+        </div>
+
+        <div class="report-filters-grid report-filters-grid-modern">
           <div class="report-field">
             <label for="yearSelect">Año</label>
             <select id="yearSelect"></select>
@@ -84,25 +87,47 @@
             </select>
           </div>
 
-          <div class="report-actions">
-            <button id="btnVerReporte" class="btn">
+          <div class="report-actions report-actions-modern">
+            <button id="btnVerReporte" class="btn report-primary-btn" type="button">
               <i class="bi bi-search"></i> Ver reporte
             </button>
           </div>
         </div>
       </section>
 
-      <!-- Configuración de descarga -->
+      <section class="report-stats-grid" id="reportStatsGrid">
+        <article class="report-stat-card">
+          <span class="report-stat-label">Días con asistencia</span>
+          <strong id="statDays">0</strong>
+        </article>
+
+        <article class="report-stat-card">
+          <span class="report-stat-label">Registros totales</span>
+          <strong id="statTotal">0</strong>
+        </article>
+
+        <article class="report-stat-card">
+          <span class="report-stat-label">Presentes</span>
+          <strong id="statPresent">0</strong>
+        </article>
+
+        <article class="report-stat-card">
+          <span class="report-stat-label">Ausentes</span>
+          <strong id="statAbsent">0</strong>
+        </article>
+      </section>
+
       <section class="report-card">
-        <div class="report-card-header">
-          <h2 class="report-card-title" style="text-align: center;">Exportar a Excel</h2>
-          <p class="report-card-subtitle">
-            Elige el alcance, el tipo de reporte y las columnas que quieres incluir en el archivo.
-          </p>
+        <div class="report-card-header report-card-header-modern">
+          <div>
+            <h2 class="report-card-title">Exportar a Excel</h2>
+            <p class="report-card-subtitle">
+              Elige el alcance y el tipo de reporte para descargarlo con el formato que necesitas.
+            </p>
+          </div>
         </div>
 
-        <div class="report-download-grid">
-          <!-- Alcance -->
+        <div class="report-download-grid report-download-grid-modern">
           <div class="report-config-group">
             <h3>Alcance</h3>
             <label>
@@ -115,12 +140,11 @@
             </label>
           </div>
 
-          <!-- Tipo de reporte -->
           <div class="report-config-group">
             <h3>Tipo de reporte</h3>
             <label>
               <input type="radio" name="reportMode" value="detail" checked>
-              Detallado (una fila por asistencia)
+              Detallado
             </label>
             <label>
               <input type="radio" name="reportMode" value="summary">
@@ -128,9 +152,8 @@
             </label>
           </div>
 
-          <!-- Columnas -->
           <div class="report-config-group">
-            <h3>Columnas (modo detallado)</h3>
+            <h3>Columnas del detallado</h3>
             <label>
               <input type="checkbox" class="report-col-checkbox" value="fecha" checked>
               Fecha
@@ -157,53 +180,44 @@
             </label>
           </div>
 
-          <!-- Botón descarga -->
-          <div class="report-config-group report-download-actions">
-            <h3>&nbsp;</h3>
-            <button id="btnDescargar" class="btn">
+          <div class="report-config-group report-download-actions report-download-actions-modern">
+            <h3>Archivo</h3>
+            <button id="btnDescargar" class="btn report-download-btn" type="button">
               <i class="bi bi-download"></i> Descargar Excel
             </button>
           </div>
         </div>
       </section>
 
-      <!-- Resultados -->
       <section class="report-card">
-        <div class="report-card-header">
-          <h2 class="report-card-title" style="text-align: center;">Detalle de asistencia</h2>
-          <p class="report-card-subtitle">
-            Se muestran los días del período seleccionado en tiempo real.
-          </p>
+        <div class="report-card-header report-card-header-modern">
+          <div>
+            <h2 class="report-card-title">Detalle de asistencia</h2>
+            <p class="report-card-subtitle">
+              Vista del período seleccionado. Los registros se agrupan por día.
+            </p>
+          </div>
         </div>
-        <div id="reporte-container" class="reporte-container">
-          <!-- tablas generadas por admin-reportes.js -->
-        </div>
+
+        <div id="reporte-container" class="reporte-container"></div>
       </section>
 
       <section id="excel-preview-card" class="report-card hidden">
         <h2 class="report-card-title">Vista previa del Excel</h2>
-          <p class="report-card-subtitle">
-            Aquí se muestra una tabla con las mismas columnas que se exportan.
-          </p>
+        <p class="report-card-subtitle">
+          Esta tabla usa la misma información que se enviará al archivo descargable.
+        </p>
         <div id="excel-preview" class="excel-preview"></div>
-    </section>
+      </section>
 
     </div>
   </div>
 
-  <!-- Firebase -->
   <script type="module" src="./js/firebase-config.js"></script>
-
-  <!-- Lógica de reportes (pantalla) -->
   <script type="module" src="./js/admin-reportes.js"></script>
-
-  <!-- Lógica de descarga Excel -->
   <script type="module" src="./js/descargar-reportes.js"></script>
-
-  <!-- Sidebar / navbar -->
   <script type="module" src="./js/script.js"></script>
 
-  <!-- Asignar botón "Ver reporte" -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const btnVer = document.getElementById("btnVerReporte");
@@ -211,14 +225,8 @@
         btnVer.addEventListener("click", () => {
           if (typeof window.getAsistencia === "function") {
             window.getAsistencia();
-          } else {
-            console.warn("getAsistencia() no está disponible.");
           }
         });
-      }
-
-      if (window.lucide) {
-        lucide.createIcons();
       }
     });
   </script>

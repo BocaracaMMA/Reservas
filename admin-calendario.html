@@ -9,18 +9,15 @@
   <link rel="stylesheet" href="./css/style.css">
   <link rel="icon" href="./assets/favicon-32x32.png" type="image/x-icon" />
 
-  <!-- FullCalendar unificado -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 </head>
 
 <body>
-  <!-- Botón hamburguesa -->
   <button id="toggleNav" class="hamburger-btn" aria-label="Menú">
     <i class="bi bi-list"></i>
   </button>
 
-  <!-- Sidebar -->
   <nav id="sidebar" class="sidebar">
     <ul>
       <li><a href="./admin-dashboard.html"><i class="bi bi-house-fill"></i> Inicio</a></li>
@@ -33,173 +30,191 @@
     </ul>
   </nav>
 
-  <main class="main-content">
-  <h1>Configuración del Calendario</h1>
+  <main class="main-content calendar-admin-page">
+    <div class="calendar-admin-shell">
 
-  <div id="calendarAdmin" class="calendar-admin-wrapper"></div>
-
-  <!-- Card DÍAS ESPECIALES -->
-  <section id="specialDaysCard" class="special-days-card">
-    <!-- Botón cabecera colapsable -->
-    <button
-      type="button"
-      id="specialDaysToggle"
-      class="special-days-toggle"
-      aria-expanded="true"
-    >
-      <div class="special-header" style="text-align: center;">
-        <h2>Días especiales</h2>
-        <p>
-          Bloquea todas las clases de un día concreto o define un horario especial
-          sólo para ese día (feriados, seminarios, eventos con academias aliadas, etc.).
-        </p>
-      </div>
-      <i class="bi bi-chevron-up special-toggle-icon" aria-hidden="true"></i>
-    </button>
-
-    <!-- Cuerpo que se abre / cierra -->
-    <div id="specialDaysBody" class="special-days-body">
-      <!-- Tipo de excepción -->
-      <div class="special-type-block">
-        <p class="special-label-top">Tipo de excepción</p>
-        <div class="special-type-row">
-          <label class="special-type-pill">
-            <input
-              type="radio"
-              name="specialType"
-              id="specialTypeNone"
-              value="none"
-              checked
-            />
-            <span>Sin excepción</span>
-          </label>
-
-          <label class="special-type-pill">
-            <input
-              type="radio"
-              name="specialType"
-              id="specialTypeBlock"
-              value="block"
-            />
-            <span>Bloquear todas las clases</span>
-          </label>
-
-          <label class="special-type-pill">
-            <input
-              type="radio"
-              name="specialType"
-              id="specialTypeOverride"
-              value="override"
-            />
-            <span>Horario especial sólo ese día</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Fecha + motivo -->
-      <div class="special-grid special-date-block">
-        <div class="special-field">
-          <label for="specialDate">Fecha</label>
-          <input
-            id="specialDate"
-            type="date"
-          />
+      <section class="calendar-admin-hero">
+        <div class="calendar-admin-hero-icon">
+          <i class="bi bi-calendar2-week-fill"></i>
         </div>
 
-        <div class="special-field">
-          <label for="specialReason">Motivo (opcional)</label>
-          <input
-            id="specialReason"
-            type="text"
-            placeholder="Ej. Feriado, seminario, visita"
-          />
+        <div class="calendar-admin-hero-copy">
+          <h1>Configuración del Calendario</h1>
+          <p>
+            Administra horarios semanales, clases y días especiales desde una vista más clara y cómoda para móvil.
+          </p>
         </div>
-      </div>
+      </section>
 
-      <!-- Subtítulo horario especial -->
-      <div class="special-subtitle">
-        <span>Horario especial de ese día</span>
-      </div>
-
-      <!-- Datos del horario especial -->
-      <div class="special-grid special-override-block">
-        <div class="special-field">
-          <label for="specialTitle">Tipo de clase / Evento</label>
-          <input
-            id="specialTitle"
-            type="text"
-            placeholder="Ej. Seminario MMA avanzado"
-          />
+      <section class="calendar-admin-card">
+        <div class="calendar-card-head">
+          <div>
+            <h2>Horario semanal</h2>
+            <p>
+              Toca un espacio para crear una clase o toca una clase existente para editarla.
+            </p>
+          </div>
         </div>
 
-        <div class="special-field">
-          <label for="specialStart">Hora inicio</label>
-          <input id="specialStart" type="time" />
-        </div>
+        <div id="calendarAdmin" class="calendar-admin-wrapper"></div>
+      </section>
 
-        <div class="special-field">
-          <label for="specialEnd">Hora fin</label>
-          <input id="specialEnd" type="time" />
-        </div>
+      <section id="specialDaysCard" class="special-days-card special-days-card-modern">
+        <button
+          type="button"
+          id="specialDaysToggle"
+          class="special-days-toggle"
+          aria-expanded="true"
+        >
+          <div class="special-header special-header-modern">
+            <div class="special-header-icon">
+              <i class="bi bi-stars"></i>
+            </div>
 
-        <div class="special-field">
-          <label for="specialMinCap">Cupo mínimo</label>
-          <input
-            id="specialMinCap"
-            type="number"
-            min="0"
-            placeholder="Cupo mínimo"
-          />
-        </div>
+            <div class="special-header-copy">
+              <h2>Días especiales</h2>
+              <p>
+                Bloquea todas las clases de un día concreto o define un horario especial solo para ese día.
+              </p>
+            </div>
+          </div>
 
-        <div class="special-field">
-          <label for="specialMaxCap">Cupo máximo</label>
-          <input
-            id="specialMaxCap"
-            type="number"
-            min="1"
-            placeholder="Cupo máximo"
-          />
-        </div>
-
-        <div class="special-field">
-          <label for="specialProfessor">Profesor / Academia</label>
-          <input
-            id="specialProfessor"
-            type="text"
-            placeholder="Nombre del profesor o academia"
-          />
-        </div>
-      </div>
-
-      <!-- Botón cargar datos del día -->
-      <div class="special-actions-row special-actions-top">
-        <button id="btnSpecialLoadDay" class="btn special-btn-ghost">
-          <i class="bi bi-cloud-download"></i> Cargar datos del día
+          <i class="bi bi-chevron-up special-toggle-icon" aria-hidden="true"></i>
         </button>
-      </div>
 
-      <!-- Botones principales -->
-      <div class="special-actions-row special-actions-bottom">
-        <button id="btnSpecialSave" class="btn">
-          <i class="bi bi-check2-circle"></i> Guardar configuración
-        </button>
-        <button id="btnSpecialClear" class="btn error">
-          <i class="bi bi-x-circle"></i> Quitar excepción
-        </button>
-      </div>
+        <div id="specialDaysBody" class="special-days-body">
+          <div class="special-type-block">
+            <p class="special-label-top">Tipo de excepción</p>
 
-      <p class="special-tip">
-        Tip: si eliges <strong>“Sin excepción”</strong> y guardas, se eliminan las
-        configuraciones especiales y el día vuelve a usar el horario base semanal.
-      </p>
+            <div class="special-type-row">
+              <label class="special-type-pill">
+                <input
+                  type="radio"
+                  name="specialType"
+                  id="specialTypeNone"
+                  value="none"
+                  checked
+                />
+                <span>Sin excepción</span>
+              </label>
+
+              <label class="special-type-pill">
+                <input
+                  type="radio"
+                  name="specialType"
+                  id="specialTypeBlock"
+                  value="block"
+                />
+                <span>Bloquear todas las clases</span>
+              </label>
+
+              <label class="special-type-pill">
+                <input
+                  type="radio"
+                  name="specialType"
+                  id="specialTypeOverride"
+                  value="override"
+                />
+                <span>Horario especial solo ese día</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="special-grid special-date-block">
+            <div class="special-field">
+              <label for="specialDate">Fecha</label>
+              <input id="specialDate" type="date" />
+            </div>
+
+            <div class="special-field">
+              <label for="specialReason">Motivo (opcional)</label>
+              <input
+                id="specialReason"
+                type="text"
+                placeholder="Ej. Feriado, seminario, visita"
+              />
+            </div>
+          </div>
+
+          <div class="special-subtitle">
+            <span>Horario especial de ese día</span>
+          </div>
+
+          <div class="special-grid special-override-block">
+            <div class="special-field">
+              <label for="specialTitle">Tipo de clase / Evento</label>
+              <input
+                id="specialTitle"
+                type="text"
+                placeholder="Ej. Seminario MMA avanzado"
+              />
+            </div>
+
+            <div class="special-field">
+              <label for="specialStart">Hora inicio</label>
+              <input id="specialStart" type="time" />
+            </div>
+
+            <div class="special-field">
+              <label for="specialEnd">Hora fin</label>
+              <input id="specialEnd" type="time" />
+            </div>
+
+            <div class="special-field">
+              <label for="specialMinCap">Cupo mínimo</label>
+              <input
+                id="specialMinCap"
+                type="number"
+                min="0"
+                placeholder="Cupo mínimo"
+              />
+            </div>
+
+            <div class="special-field">
+              <label for="specialMaxCap">Cupo máximo</label>
+              <input
+                id="specialMaxCap"
+                type="number"
+                min="1"
+                placeholder="Cupo máximo"
+              />
+            </div>
+
+            <div class="special-field">
+              <label for="specialProfessor">Profesor / Academia</label>
+              <input
+                id="specialProfessor"
+                type="text"
+                placeholder="Nombre del profesor o academia"
+              />
+            </div>
+          </div>
+
+          <div class="special-actions-row special-actions-top">
+            <button id="btnSpecialLoadDay" class="btn special-btn-ghost" type="button">
+              <i class="bi bi-cloud-download"></i> Cargar datos del día
+            </button>
+          </div>
+
+          <div class="special-actions-row special-actions-bottom">
+            <button id="btnSpecialSave" class="btn" type="button">
+              <i class="bi bi-check2-circle"></i> Guardar configuración
+            </button>
+            <button id="btnSpecialClear" class="btn error" type="button">
+              <i class="bi bi-x-circle"></i> Quitar excepción
+            </button>
+          </div>
+
+          <p class="special-tip">
+            Tip: si eliges <strong>“Sin excepción”</strong> y guardas, se eliminan las
+            configuraciones especiales y el día vuelve a usar el horario base semanal.
+          </p>
+        </div>
+      </section>
+
     </div>
-  </section>
+  </main>
 
-</main>
-
-
-  <!-- Modal crear clase -->
   <div id="modalCreateClass" class="modal-overlay hidden">
     <div class="modal-box">
       <h2>Nueva clase</h2>
@@ -249,7 +264,6 @@
     </div>
   </div>
 
-  <!-- Modal editar clase -->
   <div id="modalEditClass" class="modal-overlay hidden">
     <div class="modal-box">
       <h2>Editar clase</h2>
@@ -301,13 +315,8 @@
   </div>
 
   <script type="module" src="./js/firebase-config.js"></script>
-
-  <!-- Iconos (lucide) como en admin-dashboard -->
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Lógica común de admin: sidebar, logout, gateo de rol, etc. -->
   <script type="module" src="./js/admin.js"></script>
-
   <script type="module" src="./js/admin-calendario.js"></script>
 </body>
 </html>
