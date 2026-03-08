@@ -1,0 +1,69 @@
+site_name: Bocaraca Reservas Docs
+site_description: Documentación técnica y funcional de Bocaraca Reservas
+site_url: https://github.com/luisillo1cr/bocaraca_demo/
+repo_name: luisillo1cr/bocaraca_demo
+repo_url: https://github.com/luisillo1cr/bocaraca_demo
+edit_uri: edit/main/docs/
+site_dir: site
+
+theme:
+  name: material
+  language: es
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: black
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: black
+      accent: green
+      toggle:
+        icon: material/weather-sunny
+        name: Cambiar a modo claro
+
+nav:
+  - Inicio: index.md
+  - Introducción: 01-introduccion.md
+  - Instalación y configuración: 02-instalacion-y-configuracion.md
+  - Arquitectura general: 03-arquitectura-general.md
+  - Autenticación y roles: 04-autenticacion-y-roles.md
+  - Panel admin: 05-panel-admin.md
+  - Panel cliente: 06-panel-cliente.md
+  - Calendario y reservas: 07-calendario-y-reservas.md
+  - Asistencias: 08-asistencias.md
+  - Mensualidades: 09-mensualidades.md
+  - Reportes: 10-reportes.md
+  - Eventos: 11-eventos.md
+  - PWA y modo offline: 12-pwa-y-modo-offline.md
+  - Firebase y seguridad: 13-firebase-y-seguridad.md
+  - Estructura de archivos: 14-estructura-de-archivos.md
+  - Troubleshooting: 15-troubleshooting.md
+  - Roadmap: 16-roadmap.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+
+plugins:
+  - search

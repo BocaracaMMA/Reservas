@@ -1,0 +1,12 @@
+Copyright (c) 2026 Luis David Solórzano Montero.
+Todos los derechos reservados.
+
+Este software, su código fuente, la documentación asociada, su diseño, estructura, lógica de negocio, interfaz y archivos relacionados son propiedad privada del autor.
+
+No se concede permiso para usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar, vender, alquilar, ceder, desplegar o explotar este software, total o parcialmente, sin autorización previa y por escrito del titular.
+
+El acceso al código fuente, repositorio, archivos compilados, documentación o recursos relacionados no implica cesión de derechos de propiedad intelectual ni licencia de uso.
+
+Cualquier uso no autorizado de este software queda expresamente prohibido.
+
+Para solicitar autorización de uso, licencia comercial o permiso de distribución, debe contactarse directamente al propietario.
